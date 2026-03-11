@@ -19,32 +19,80 @@ class SSLAdapter(HTTPAdapter):
         return super(SSLAdapter, self).init_poolmanager(*args, **kwargs)
 
 # 1. Configuración de la página
-st.set_page_config(page_title="Buscador Gasolineras", page_icon="⛽", layout="centered")
+st.set_page_config(page_title="Buscador Gasolineras | Profesionall", page_icon="⛽", layout="centered")
 
-# AJUSTES DE ESPACIADO PRECISOS
+# --- AJUSTES DE ESTILO CSS PROFESIONAL ---
 st.markdown("""
     <style>
-        .block-container {padding-top: 2.8rem;}
-        div[data-testid="stVerticalBlock"] > div:has(div[data-testid="stSlider"]) {
-            margin-top: 1.2rem;
+        /* Reducción general de márgenes superiores de la App */
+        .block-container {padding-top: 1.5rem; padding-bottom: 0rem;}
+        
+        /* Contenedor del Título Profesional */
+        .header-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 0.5rem;
+            margin-top: -1rem;
         }
-        /* Reduce margen del slider */
+
+        /* Icono SVG Minimalista */
+        .header-icon {
+            width: 45px;
+            height: 45px;
+            margin-bottom: 0px;
+        }
+
+        /* Título Principal Adaptable */
+        .header-title {
+            color: #1E3A8A; /* Azul Marino Profesional */
+            font-family: 'Inter', sans-serif;
+            font-weight: 800;
+            font-size: clamp(24px, 7vw, 36px);
+            margin: 0px;
+            line-height: 1.1;
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        /* Subtítulo Profesional */
+        .header-subtitle {
+            color: #10B981; /* Verde Esmeralda (Ahorro) */
+            font-family: 'Inter', sans-serif;
+            font-weight: 400;
+            font-size: clamp(14px, 4vw, 16px);
+            margin-top: 0px;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+
+        /* Ajustes de espaciado para widgets */
+        div[data-testid="stVerticalBlock"] > div:has(div[data-testid="stSlider"]) {
+            margin-top: 1rem;
+        }
         div[data-testid="stSlider"] {margin-bottom: -1rem;}
-        
-        /* AJUSTE SOLICITADO: Reduce espacio entre radio y la línea de debajo */
         div[data-testid="stRadio"] {margin-bottom: -1.5rem;}
-        hr {margin-top: 0rem; margin-bottom: 1rem;}
-        
-        h1 {margin-top: -0.8rem; margin-bottom: 0.8rem;}
+        hr {margin-top: 0.5rem; margin-bottom: 1rem;}
+
     </style>
 """, unsafe_allow_html=True)
 
-# Título
+# --- CABECERA PROFESIONAL HTML (SVG + TÍTULO) ---
 st.markdown(
     """
-    <h1 style='text-align: center; font-size: clamp(22px, 7vw, 38px); white-space: nowrap; overflow: hidden;'>
-        ⛽ Buscador Gasolineras
-    </h1>
+    <div class='header-container'>
+        <svg class='header-icon' viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M19 19V8H20V6H19V4H5V6H4V8H5V19H4V21H20V19H19Z" fill="#1E3A8A"/>
+            <path d="M8 8H11V11H8V8Z" fill="#10B981"/>
+            <path d="M13 8H16V11H13V8Z" fill="white"/>
+            <path d="M8 13H11V16H8V13Z" fill="white"/>
+            <path d="M13 13H16V16H13V13Z" fill="white"/>
+            <path d="M7 6H17V17H7V6Z" stroke="#1E3A8A" stroke-width="2"/>
+        </svg>
+        <h1 class='header-title'>Buscador Gasolineras</h1>
+        <p class='header-subtitle'>Ahorro Inteligente en Combustible</p>
+    </div>
     """, 
     unsafe_allow_html=True
 )
@@ -81,8 +129,9 @@ def calcular_distancia(lat1, lon1, lat2, lon2):
 
 datos, fecha_act = cargar_datos()
 
+# Fecha de actualización con estilo gris minimalista y centrado
 if fecha_act:
-    st.markdown(f"<div style='text-align: center; color: gray; font-size: 0.8rem; margin-bottom: 15px;'>Actualizado: {fecha_act.strftime('%d/%m/%Y %H:%M:%S')}</div>", unsafe_allow_html=True)
+    st.markdown(f"<div style='text-align: center; color: #9CA3AF; font-size: 0.8rem; margin-top: -10px; margin-bottom: 20px;'>Datos actualizados: {fecha_act.strftime('%d/%m/%Y %H:%M:%S')} (Madrid)</div>", unsafe_allow_html=True)
 
 if datos:
     df = pd.DataFrame(datos)
