@@ -20,27 +20,31 @@ class SSLAdapter(HTTPAdapter):
 # 1. Configuración de la página
 st.set_page_config(page_title="Buscador Gasolineras", page_icon="⛽", layout="centered")
 
-# Ajustes de espaciado (Reducción de márgenes superior e intermedio)
+# AJUSTES DE ESPACIADO SUTILES
 st.markdown("""
     <style>
-        .block-container {padding-top: 1rem; padding-bottom: 0rem;}
-        h1 {margin-top: -2rem; margin-bottom: 0rem; padding-bottom: 0.5rem;}
-        .stSlider {margin-top: -1.5rem;}
-        .stDivider {margin-top: 0rem; margin-bottom: 0rem;}
+        /* Reduce el espacio entre el borde de la ventana y el título */
+        .block-container {padding-top: 2.5rem;}
+        
+        /* Ajusta el espacio del slider para que no deje tanto hueco abajo */
+        div[data-testid="stSlider"] {margin-bottom: -1rem;}
+        
+        /* Reducción del margen del título */
+        h1 {margin-top: -1rem; margin-bottom: 0.5rem;}
     </style>
 """, unsafe_allow_html=True)
 
 # Título adaptable en una sola línea
 st.markdown(
     """
-    <h1 style='text-align: center; font-size: clamp(24px, 7vw, 40px); white-space: nowrap; overflow: hidden;'>
+    <h1 style='text-align: center; font-size: clamp(24px, 7vw, 38px); white-space: nowrap; overflow: hidden;'>
         ⛽ Buscador Gasolineras
     </h1>
     """, 
     unsafe_allow_html=True
 )
 
-# 2. Carga de Datos con Backup
+# 2. Carga de Datos
 @st.cache_data(ttl=3600)
 def cargar_datos():
     url = "https://sedeaplicaciones.minetur.gob.es/ServiciosRESTCarburantes/PreciosCarburantes/EstacionesTerrestres/"
@@ -96,10 +100,12 @@ if datos:
         
         if lat_gps and (municipio_manual == muni_gps or municipio_manual is None):
             lat_ref, lon_ref = lat_gps, lon_gps
+            origen_label = "tu ubicación exacta"
             st.success("✅ GPS Activo")
         elif municipio_manual:
             ref = df[df["Municipio"] == municipio_manual].iloc[0]
             lat_ref, lon_ref = ref["lat_num"], ref["lon_num"]
+            origen_label = municipio_manual
         else:
             lat_ref, lon_ref = None, None
             st.info("⌛ Esperando ubicación...")
