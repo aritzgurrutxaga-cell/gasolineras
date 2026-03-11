@@ -4,7 +4,7 @@ import pandas as pd
 import numpy as np
 import os
 import datetime
-import pytz  # Librería para manejar zonas horarias
+import pytz
 from streamlit_js_eval import get_geolocation
 from requests.adapters import HTTPAdapter
 from urllib3.util.ssl_ import create_urllib3_context
@@ -28,12 +28,14 @@ st.markdown("""
         div[data-testid="stVerticalBlock"] > div:has(div[data-testid="stSlider"]) {
             margin-top: 1.2rem;
         }
-        div[data-testid="stSlider"] {margin-bottom: -2.2rem;}
+        div[data-testid="stSlider"] {margin-bottom: -1rem;}
         h1 {margin-top: -0.8rem; margin-bottom: 0.8rem;}
+        /* Estilo para el radio selector de combustible */
+        div[data-testid="stRadio"] > div {margin-top: -1rem; margin-bottom: 1rem;}
     </style>
 """, unsafe_allow_html=True)
 
-# Título adaptable
+# Título
 st.markdown(
     """
     <h1 style='text-align: center; font-size: clamp(22px, 7vw, 38px); white-space: nowrap; overflow: hidden;'>
@@ -51,8 +53,6 @@ def cargar_datos():
     session = requests.Session()
     session.mount("https://", SSLAdapter())
     archivo_backup = "gasolineras_backup.csv"
-    
-    # Definimos la zona horaria de Madrid
     tz_madrid = pytz.timezone('Europe/Madrid')
     
     try:
@@ -60,12 +60,10 @@ def cargar_datos():
         r.raise_for_status()
         lista = r.json()["ListaEESSPrecio"]
         pd.DataFrame(lista).to_csv(archivo_backup, index=False)
-        # Retorna lista y hora actual en Madrid
         return lista, datetime.datetime.now(tz_madrid)
     except Exception:
         if os.path.exists(archivo_backup):
             df_rec = pd.read_csv(archivo_backup)
-            # Para el backup, convertimos la hora del archivo a Madrid
             mtime = os.path.getmtime(archivo_backup)
             fecha_utc = datetime.datetime.fromtimestamp(mtime, pytz.utc)
             return df_rec.to_dict('records'), fecha_utc.astimezone(tz_madrid)
@@ -77,10 +75,8 @@ def calcular_distancia(lat1, lon1, lat2, lon2):
     a = np.sin(dlat / 2)**2 + np.cos(np.radians(lat1)) * np.cos(np.radians(lat2)) * np.sin(dlon / 2)**2
     return R * 2 * np.arctan2(np.sqrt(a), np.sqrt(1 - a))
 
-# --- LÓGICA DE DATOS ---
 datos, fecha_act = cargar_datos()
 
-# Ubicación de la fecha (entre título y recuadro) con hora de Madrid
 if fecha_act:
     st.markdown(f"<div style='text-align: center; color: gray; font-size: 0.8rem; margin-bottom: 15px;'>Actualizado: {fecha_act.strftime('%d/%m/%Y %H:%M:%S')}</div>", unsafe_allow_html=True)
 
@@ -117,12 +113,17 @@ if datos:
             lat_ref, lon_ref = None, None
             st.info("⌛ Esperando ubicación...")
 
-    # --- BLOQUE RADIO ---
+    # --- BLOQUE CONFIGURACIÓN (RADIO Y COMBUSTIBLE ANTES DE RESULTADOS) ---
     radio_km = st.slider("Radio de búsqueda (Km):", 1, 50, 10)
-
-    if 'tipo_orden' not in st.session_state:
-        st.session_state.tipo_orden = "Diésel"
-    col_orden = "Precio_Diesel" if st.session_state.tipo_orden == "Diésel" else "Precio_G95"
+    
+    # Movido aquí para que el cambio fuerce el re-renderizado de los resultados inmediatamente
+    tipo_combustible = st.radio(
+        "Resultados ordenados por precio de:", 
+        ["Diésel", "G95"], 
+        horizontal=True,
+        index=0
+    )
+    col_orden = "Precio_Diesel" if tipo_combustible == "Diésel" else "Precio_G95"
 
     # --- RESULTADOS ---
     if lat_ref and lon_ref:
@@ -133,7 +134,6 @@ if datos:
         ].sort_values(col_orden, na_position='last')
 
         st.divider()
-        st.caption(f"Resultados ordenados por precio de: {st.session_state.tipo_orden}")
         
         if not res.empty:
             for _, g in res.head(20).iterrows():
@@ -150,14 +150,5 @@ if datos:
                         st.link_button("📍 Navegar", url_map, use_container_width=True)
         else:
             st.warning("No hay resultados en este radio.")
-
-    # --- BLOQUE FINAL ---
-    st.write("---")
-    st.caption("Configuración de ordenación:")
-    st.session_state.tipo_orden = st.radio(
-        "Filtrar y ordenar por:", ["Diésel", "G95"], horizontal=True, label_visibility="collapsed",
-        index=0 if st.session_state.tipo_orden == "Diésel" else 1
-    )
-
 else:
     st.error("Sin conexión a los datos oficiales.")
