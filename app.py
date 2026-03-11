@@ -21,17 +21,21 @@ class SSLAdapter(HTTPAdapter):
 # 1. Configuración de la página
 st.set_page_config(page_title="Buscador Gasolineras", page_icon="⛽", layout="centered")
 
-# AJUSTES DE ESPACIADO
+# AJUSTES DE ESPACIADO PRECISOS
 st.markdown("""
     <style>
         .block-container {padding-top: 2.8rem;}
         div[data-testid="stVerticalBlock"] > div:has(div[data-testid="stSlider"]) {
             margin-top: 1.2rem;
         }
+        /* Reduce margen del slider */
         div[data-testid="stSlider"] {margin-bottom: -1rem;}
+        
+        /* AJUSTE SOLICITADO: Reduce espacio entre radio y la línea de debajo */
+        div[data-testid="stRadio"] {margin-bottom: -1.5rem;}
+        hr {margin-top: 0rem; margin-bottom: 1rem;}
+        
         h1 {margin-top: -0.8rem; margin-bottom: 0.8rem;}
-        /* Estilo para el radio selector de combustible */
-        div[data-testid="stRadio"] > div {margin-top: -1rem; margin-bottom: 1rem;}
     </style>
 """, unsafe_allow_html=True)
 
@@ -113,15 +117,13 @@ if datos:
             lat_ref, lon_ref = None, None
             st.info("⌛ Esperando ubicación...")
 
-    # --- BLOQUE CONFIGURACIÓN (RADIO Y COMBUSTIBLE ANTES DE RESULTADOS) ---
+    # --- BLOQUE CONFIGURACIÓN ---
     radio_km = st.slider("Radio de búsqueda (Km):", 1, 50, 10)
     
-    # Movido aquí para que el cambio fuerce el re-renderizado de los resultados inmediatamente
     tipo_combustible = st.radio(
         "Resultados ordenados por precio de:", 
         ["Diésel", "G95"], 
-        horizontal=True,
-        index=0
+        horizontal=True
     )
     col_orden = "Precio_Diesel" if tipo_combustible == "Diésel" else "Precio_G95"
 
