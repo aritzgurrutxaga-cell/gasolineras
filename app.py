@@ -9,7 +9,7 @@ from streamlit_js_eval import get_geolocation
 from requests.adapters import HTTPAdapter
 from urllib3.util.ssl_ import create_urllib3_context
 
-# --- ADAPTADOR SSL ---
+# --- ADAPTADOR SSL PARA EL MINISTERIO ---
 class SSLAdapter(HTTPAdapter):
     def init_poolmanager(self, *args, **kwargs):
         context = create_urllib3_context()
@@ -19,66 +19,55 @@ class SSLAdapter(HTTPAdapter):
         return super(SSLAdapter, self).init_poolmanager(*args, **kwargs)
 
 # 1. Configuración de la página
-st.set_page_config(page_title="Buscador Gasolineras | Profesionall", page_icon="⛽", layout="centered")
+st.set_page_config(page_title="Buscador Gasolineras", page_icon="⛽", layout="centered")
 
-# --- AJUSTES DE ESTILO CSS PROFESIONAL ---
+# --- AJUSTES DE ESTILO REFINADOS (CSS) ---
 st.markdown("""
     <style>
-        /* Reducción general de márgenes superiores de la App */
         .block-container {padding-top: 1.5rem; padding-bottom: 0rem;}
         
-        /* Contenedor del Título Profesional */
         .header-container {
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.2rem;
             margin-top: -1rem;
         }
 
-        /* Icono SVG Minimalista */
-        .header-icon {
-            width: 45px;
-            height: 45px;
-            margin-bottom: 0px;
-        }
+        .header-icon { width: 40px; height: 40px; margin-bottom: 4px; }
 
-        /* Título Principal Adaptable */
+        /* Título con escala reducida para asegurar ajuste en móviles */
         .header-title {
-            color: #1E3A8A; /* Azul Marino Profesional */
+            color: #1E3A8A;
             font-family: 'Inter', sans-serif;
             font-weight: 800;
-            font-size: clamp(24px, 7vw, 36px);
+            font-size: clamp(20px, 6.5vw, 32px);
             margin: 0px;
             line-height: 1.1;
             text-align: center;
             white-space: nowrap;
         }
 
-        /* Subtítulo Profesional */
         .header-subtitle {
-            color: #10B981; /* Verde Esmeralda (Ahorro) */
+            color: #10B981;
             font-family: 'Inter', sans-serif;
             font-weight: 400;
-            font-size: clamp(14px, 4vw, 16px);
-            margin-top: 0px;
-            margin-bottom: 1rem;
+            font-size: clamp(12px, 3.5vw, 15px);
+            margin-top: 2px;
+            margin-bottom: 0.5rem;
             text-align: center;
         }
 
-        /* Ajustes de espaciado para widgets */
-        div[data-testid="stVerticalBlock"] > div:has(div[data-testid="stSlider"]) {
-            margin-top: 1rem;
-        }
+        /* Ajustes de espaciado específicos para compactar la UI */
+        div[data-testid="stVerticalBlock"] > div:has(div[data-testid="stSlider"]) { margin-top: 0.8rem; }
         div[data-testid="stSlider"] {margin-bottom: -1rem;}
         div[data-testid="stRadio"] {margin-bottom: -1.5rem;}
         hr {margin-top: 0.5rem; margin-bottom: 1rem;}
-
     </style>
 """, unsafe_allow_html=True)
 
-# --- CABECERA PROFESIONAL HTML (SVG + TÍTULO) ---
+# --- CABECERA PROFESIONAL ---
 st.markdown(
     """
     <div class='header-container'>
@@ -127,14 +116,16 @@ def calcular_distancia(lat1, lon1, lat2, lon2):
     a = np.sin(dlat / 2)**2 + np.cos(np.radians(lat1)) * np.cos(np.radians(lat2)) * np.sin(dlon / 2)**2
     return R * 2 * np.arctan2(np.sqrt(a), np.sqrt(1 - a))
 
+# --- FLUJO DE LA APP ---
 datos, fecha_act = cargar_datos()
 
-# Fecha de actualización con estilo gris minimalista y centrado
+# Log de actualización (Compacto y centrado)
 if fecha_act:
-    st.markdown(f"<div style='text-align: center; color: #9CA3AF; font-size: 0.8rem; margin-top: -10px; margin-bottom: 20px;'>Datos actualizados: {fecha_act.strftime('%d/%m/%Y %H:%M:%S')} (Madrid)</div>", unsafe_allow_html=True)
+    st.markdown(f"<div style='text-align: center; color: #9CA3AF; font-size: 0.75rem; margin-top: -8px; margin-bottom: 12px;'>Datos actualizados: {fecha_act.strftime('%d/%m/%Y %H:%M:%S')} (Madrid)</div>", unsafe_allow_html=True)
 
 if datos:
     df = pd.DataFrame(datos)
+    # Limpieza numérica
     df["lat_num"] = pd.to_numeric(df["Latitud"].str.replace(",", "."), errors='coerce')
     df["lon_num"] = pd.to_numeric(df["Longitud (WGS84)"].str.replace(",", "."), errors='coerce')
     df["Precio_Diesel"] = pd.to_numeric(df["Precio Gasoleo A"].str.replace(",", "."), errors='coerce')
@@ -142,6 +133,7 @@ if datos:
     
     municipios_unicos = sorted(list(set([str(g["Municipio"]) for g in datos])))
 
+    # Localización GPS
     loc = get_geolocation()
     lat_gps, lon_gps, muni_gps = None, None, None
 
@@ -168,17 +160,14 @@ if datos:
 
     # --- BLOQUE CONFIGURACIÓN ---
     radio_km = st.slider("Radio de búsqueda (Km):", 1, 50, 10)
-    
-    tipo_combustible = st.radio(
-        "Resultados ordenados por precio de:", 
-        ["Diésel", "G95"], 
-        horizontal=True
-    )
+    tipo_combustible = st.radio("Resultados ordenados por precio de:", ["Diésel", "G95"], horizontal=True)
     col_orden = "Precio_Diesel" if tipo_combustible == "Diésel" else "Precio_G95"
 
     # --- RESULTADOS ---
     if lat_ref and lon_ref:
         df["Distancia"] = calcular_distancia(lat_ref, lon_ref, df["lat_num"], df["lon_num"])
+        
+        # Filtro: radio + que tenga al menos un precio
         res = df[
             (df["Distancia"] <= radio_km) & 
             ((df["Precio_Diesel"].notna()) | (df["Precio_G95"].notna()))
@@ -197,6 +186,7 @@ if datos:
                         st.write(f"⛽ **D:** {p_diesel} | **G95:** {p_g95}")
                         st.caption(f"📍 {g['Distancia']:.2f} km | {g['Dirección']}")
                     with col_btn:
+                        # Enlace directo a Google Maps
                         url_map = f"https://www.google.com/maps/dir/?api=1&destination={g['lat_num']},{g['lon_num']}"
                         st.link_button("📍 Navegar", url_map, use_container_width=True)
         else:
