@@ -4,6 +4,7 @@ import pandas as pd
 import numpy as np
 import os
 import datetime
+import pytz  # Librería para manejar zonas horarias
 from streamlit_js_eval import get_geolocation
 from requests.adapters import HTTPAdapter
 from urllib3.util.ssl_ import create_urllib3_context
@@ -28,7 +29,7 @@ st.markdown("""
             margin-top: 1.2rem;
         }
         div[data-testid="stSlider"] {margin-bottom: -2.2rem;}
-        h1 {margin-top: -0.8rem; margin-bottom: 1.2rem;}
+        h1 {margin-top: -0.8rem; margin-bottom: 0.8rem;}
     </style>
 """, unsafe_allow_html=True)
 
@@ -51,17 +52,23 @@ def cargar_datos():
     session.mount("https://", SSLAdapter())
     archivo_backup = "gasolineras_backup.csv"
     
+    # Definimos la zona horaria de Madrid
+    tz_madrid = pytz.timezone('Europe/Madrid')
+    
     try:
         r = session.get(url, headers=headers, timeout=25)
         r.raise_for_status()
         lista = r.json()["ListaEESSPrecio"]
         pd.DataFrame(lista).to_csv(archivo_backup, index=False)
-        return lista, datetime.datetime.now()
+        # Retorna lista y hora actual en Madrid
+        return lista, datetime.datetime.now(tz_madrid)
     except Exception:
         if os.path.exists(archivo_backup):
             df_rec = pd.read_csv(archivo_backup)
-            fecha = datetime.datetime.fromtimestamp(os.path.getmtime(archivo_backup))
-            return df_rec.to_dict('records'), fecha
+            # Para el backup, convertimos la hora del archivo a Madrid
+            mtime = os.path.getmtime(archivo_backup)
+            fecha_utc = datetime.datetime.fromtimestamp(mtime, pytz.utc)
+            return df_rec.to_dict('records'), fecha_utc.astimezone(tz_madrid)
         return None, None
 
 def calcular_distancia(lat1, lon1, lat2, lon2):
@@ -73,9 +80,9 @@ def calcular_distancia(lat1, lon1, lat2, lon2):
 # --- LÓGICA DE DATOS ---
 datos, fecha_act = cargar_datos()
 
-# Mover la fecha aquí (entre el título y el recuadro)
+# Ubicación de la fecha (entre título y recuadro) con hora de Madrid
 if fecha_act:
-    st.markdown(f"<div style='text-align: center; color: gray; font-size: 0.8rem; margin-bottom: 10px;'>Actualizado: {fecha_act.strftime('%d/%m/%Y %H:%M:%S')}</div>", unsafe_allow_html=True)
+    st.markdown(f"<div style='text-align: center; color: gray; font-size: 0.8rem; margin-bottom: 15px;'>Actualizado: {fecha_act.strftime('%d/%m/%Y %H:%M:%S')}</div>", unsafe_allow_html=True)
 
 if datos:
     df = pd.DataFrame(datos)
