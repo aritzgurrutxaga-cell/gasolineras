@@ -21,8 +21,33 @@ class SSLAdapter(HTTPAdapter):
 # 1. Configuración de la página
 st.set_page_config(page_title="Buscador Gasolineras", page_icon="⛽", layout="centered")
 
-# --- TÍTULO NATIVO Y LIMPIO ---
-st.title("⛽ Buscador Gasolineras")
+# AJUSTES DE ESPACIADO PRECISOS
+st.markdown("""
+    <style>
+        .block-container {padding-top: 2.8rem;}
+        div[data-testid="stVerticalBlock"] > div:has(div[data-testid="stSlider"]) {
+            margin-top: 1.2rem;
+        }
+        /* Reduce margen del slider */
+        div[data-testid="stSlider"] {margin-bottom: -1rem;}
+        
+        /* AJUSTE SOLICITADO: Reduce espacio entre radio y la línea de debajo */
+        div[data-testid="stRadio"] {margin-bottom: -1.5rem;}
+        hr {margin-top: 0rem; margin-bottom: 1rem;}
+        
+        h1 {margin-top: -0.8rem; margin-bottom: 0.8rem;}
+    </style>
+""", unsafe_allow_html=True)
+
+# Título
+st.markdown(
+    """
+    <h1 style='text-align: center; font-size: clamp(22px, 7vw, 38px); white-space: nowrap; overflow: hidden;'>
+        ⛽ Buscador Gasolineras
+    </h1>
+    """, 
+    unsafe_allow_html=True
+)
 
 # 2. Carga de Datos
 @st.cache_data(ttl=3600, show_spinner="Actualizando Base de Datos, un momento por favor")
@@ -56,9 +81,8 @@ def calcular_distancia(lat1, lon1, lat2, lon2):
 
 datos, fecha_act = cargar_datos()
 
-# Fecha de actualización con la función nativa caption
 if fecha_act:
-    st.caption(f"Actualizado: {fecha_act.strftime('%d/%m/%Y %H:%M:%S')} (Madrid)")
+    st.markdown(f"<div style='text-align: center; color: gray; font-size: 0.8rem; margin-bottom: 15px;'>Actualizado: {fecha_act.strftime('%d/%m/%Y %H:%M:%S')}</div>", unsafe_allow_html=True)
 
 if datos:
     df = pd.DataFrame(datos)
@@ -78,6 +102,7 @@ if datos:
         df["dist_temp"] = calcular_distancia(lat_gps, lon_gps, df["lat_num"], df["lon_num"])
         muni_gps = df.sort_values("dist_temp").iloc[0]["Municipio"]
 
+    # --- BLOQUE UBICACIÓN ---
     with st.container(border=True):
         idx = municipios_unicos.index(muni_gps) if muni_gps in municipios_unicos else None
         municipio_manual = st.selectbox("📍 Ubicación:", options=municipios_unicos, index=idx)
@@ -92,6 +117,7 @@ if datos:
             lat_ref, lon_ref = None, None
             st.info("⌛ Esperando ubicación...")
 
+    # --- BLOQUE CONFIGURACIÓN ---
     radio_km = st.slider("Radio de búsqueda (Km):", 1, 50, 10)
     
     tipo_combustible = st.radio(
@@ -101,15 +127,20 @@ if datos:
     )
     col_orden = "Precio_Diesel" if tipo_combustible == "Diésel" else "Precio_G95"
 
+    # --- RESULTADOS ---
     if lat_ref and lon_ref:
         df["Distancia"] = calcular_distancia(lat_ref, lon_ref, df["lat_num"], df["lon_num"])
-        res = df[(df["Distancia"] <= radio_km) & ((df["Precio_Diesel"].notna()) | (df["Precio_G95"].notna()))].sort_values(col_orden, na_position='last')
+        res = df[
+            (df["Distancia"] <= radio_km) & 
+            ((df["Precio_Diesel"].notna()) | (df["Precio_G95"].notna()))
+        ].sort_values(col_orden, na_position='last')
 
         st.divider()
+        
         if not res.empty:
             for _, g in res.head(20).iterrows():
                 with st.container(border=True):
-                    col_info, col_btn = st.columns([2.5, 1.5])
+                    col_info, col_btn = st.columns([2.4, 1.6])
                     with col_info:
                         st.write(f"### {g['Rótulo']} - {g['Municipio']}")
                         p_diesel = f"{g['Precio Gasoleo A']} €" if pd.notnull(g['Precio_Diesel']) else "N/A"
