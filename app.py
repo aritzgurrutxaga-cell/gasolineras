@@ -139,4 +139,23 @@ if datos:
 
     if lat_ref and lon_ref:
         df["Distancia"] = calcular_distancia(lat_ref, lon_ref, df["lat_num"], df["lon_num"])
-        res = df[(df["Distancia"] <= radio_km) & ((df["Precio_Diesel"].notna()) | (df["Precio_G95"].notna()))].sort_values(col_orden, na_
+        res = df[(df["Distancia"] <= radio_km) & ((df["Precio_Diesel"].notna()) | (df["Precio_G95"].notna()))].sort_values(col_orden, na_position='last')
+
+        st.divider()
+        if not res.empty:
+            for _, g in res.head(20).iterrows():
+                with st.container(border=True):
+                    col_info, col_btn = st.columns([2.4, 1.6])
+                    with col_info:
+                        st.write(f"### {g['Rótulo']} - {g['Municipio']}")
+                        p_diesel = f"{g['Precio Gasoleo A']} €" if pd.notnull(g['Precio_Diesel']) else "N/A"
+                        p_g95 = f"{g['Precio Gasolina 95 E5']} €" if pd.notnull(g['Precio_G95']) else "N/A"
+                        st.write(f"⛽ **D:** {p_diesel} | **G95:** {p_g95}")
+                        st.caption(f"📍 {g['Distancia']:.2f} km | {g['Dirección']}")
+                    with col_btn:
+                        url_map = f"https://www.google.com/maps/dir/?api=1&destination={g['lat_num']},{g['lon_num']}"
+                        st.link_button("📍 Navegar", url_map, use_container_width=True)
+        else:
+            st.warning("No hay resultados en este radio.")
+else:
+    st.error("Sin conexión a los datos oficiales.")
