@@ -20,7 +20,7 @@ class SSLAdapter(HTTPAdapter):
 # 1. Configuración de la página
 st.set_page_config(page_title="Buscador Gasolineras", page_icon="⛽", layout="centered")
 
-# AJUSTES DE ESPACIADO PRECISOS
+# AJUSTES DE ESPACIADO
 st.markdown("""
     <style>
         .block-container {padding-top: 2.8rem;}
@@ -42,7 +42,7 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# 2. Carga de Datos con Mensaje Personalizado
+# 2. Carga de Datos
 @st.cache_data(ttl=3600, show_spinner="Actualizando Base de Datos, un momento por favor")
 def cargar_datos():
     url = "https://sedeaplicaciones.minetur.gob.es/ServiciosRESTCarburantes/PreciosCarburantes/EstacionesTerrestres/"
@@ -70,8 +70,12 @@ def calcular_distancia(lat1, lon1, lat2, lon2):
     a = np.sin(dlat / 2)**2 + np.cos(np.radians(lat1)) * np.cos(np.radians(lat2)) * np.sin(dlon / 2)**2
     return R * 2 * np.arctan2(np.sqrt(a), np.sqrt(1 - a))
 
-# --- LÓGICA PRINCIPAL ---
+# --- LÓGICA DE DATOS ---
 datos, fecha_act = cargar_datos()
+
+# Mover la fecha aquí (entre el título y el recuadro)
+if fecha_act:
+    st.markdown(f"<div style='text-align: center; color: gray; font-size: 0.8rem; margin-bottom: 10px;'>Actualizado: {fecha_act.strftime('%d/%m/%Y %H:%M:%S')}</div>", unsafe_allow_html=True)
 
 if datos:
     df = pd.DataFrame(datos)
@@ -91,6 +95,7 @@ if datos:
         df["dist_temp"] = calcular_distancia(lat_gps, lon_gps, df["lat_num"], df["lon_num"])
         muni_gps = df.sort_values("dist_temp").iloc[0]["Municipio"]
 
+    # --- BLOQUE UBICACIÓN ---
     with st.container(border=True):
         idx = municipios_unicos.index(muni_gps) if muni_gps in municipios_unicos else None
         municipio_manual = st.selectbox("📍 Ubicación:", options=municipios_unicos, index=idx)
@@ -105,12 +110,14 @@ if datos:
             lat_ref, lon_ref = None, None
             st.info("⌛ Esperando ubicación...")
 
+    # --- BLOQUE RADIO ---
     radio_km = st.slider("Radio de búsqueda (Km):", 1, 50, 10)
 
     if 'tipo_orden' not in st.session_state:
         st.session_state.tipo_orden = "Diésel"
     col_orden = "Precio_Diesel" if st.session_state.tipo_orden == "Diésel" else "Precio_G95"
 
+    # --- RESULTADOS ---
     if lat_ref and lon_ref:
         df["Distancia"] = calcular_distancia(lat_ref, lon_ref, df["lat_num"], df["lon_num"])
         res = df[
@@ -137,6 +144,7 @@ if datos:
         else:
             st.warning("No hay resultados en este radio.")
 
+    # --- BLOQUE FINAL ---
     st.write("---")
     st.caption("Configuración de ordenación:")
     st.session_state.tipo_orden = st.radio(
@@ -144,7 +152,5 @@ if datos:
         index=0 if st.session_state.tipo_orden == "Diésel" else 1
     )
 
-    if fecha_act:
-        st.caption(f"Actualizado: {fecha_act.strftime('%d/%m/%Y %H:%M:%S')}")
 else:
     st.error("Sin conexión a los datos oficiales.")
