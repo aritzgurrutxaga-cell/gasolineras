@@ -21,31 +21,36 @@ class SSLAdapter(HTTPAdapter):
 # 1. Configuración de la página
 st.set_page_config(page_title="Buscador Gasolineras", page_icon="⛽", layout="centered")
 
-# --- CSS: DISEÑO CHULO Y AJUSTE MILIMÉTRICO ---
+# --- CSS: REDUCCIÓN DE MÁRGENES Y ESCALA FLUIDA PURA ---
 st.markdown("""
     <style>
-        /* 1. Bajar el contenido para que no se pegue al marco superior del móvil */
-        .block-container {padding-top: 3rem; padding-bottom: 0rem;}
+        /* Reducimos los márgenes laterales de Streamlit para darle más espacio al título */
+        .block-container {
+            padding-top: 3rem; 
+            padding-bottom: 0rem;
+            padding-left: 1rem !important;
+            padding-right: 1rem !important;
+            max-width: 100% !important;
+        }
         
-        /* 2. Diseño del Título: Degradado profesional y forzado a una línea */
+        /* Título Ultra-Adaptable */
         .cool-title {
             text-align: center;
             font-family: 'Inter', system-ui, sans-serif;
             font-weight: 900;
-            /* Fórmula restrictiva: mínimo 16px, ideal 5.5% del ancho, máximo 32px */
-            font-size: clamp(16px, 5.5vw, 32px); 
+            /* Eliminado el tamaño mínimo fijo. Usa el 6% de la pantalla o 30px como máximo */
+            font-size: min(6vw, 30px); 
             white-space: nowrap; 
-            overflow: hidden; 
             margin-top: 0;
             margin-bottom: 0.2rem;
-            letter-spacing: -0.5px;
-            /* Efecto Degradado de Azul Marino a Verde Esmeralda */
+            letter-spacing: -1px; /* Comprime ligeramente el espacio entre letras */
             background: linear-gradient(90deg, #1E3A8A, #059669);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+            width: 100%;
         }
 
-        /* 3. Ajustes de compresión para el resto de elementos */
+        /* Ajustes de compresión para el resto de elementos */
         div[data-testid="stVerticalBlock"] > div:has(div[data-testid="stSlider"]) { margin-top: 1rem; }
         div[data-testid="stSlider"] {margin-bottom: -1rem;}
         div[data-testid="stRadio"] {margin-bottom: -1rem;}
@@ -134,23 +139,4 @@ if datos:
 
     if lat_ref and lon_ref:
         df["Distancia"] = calcular_distancia(lat_ref, lon_ref, df["lat_num"], df["lon_num"])
-        res = df[(df["Distancia"] <= radio_km) & ((df["Precio_Diesel"].notna()) | (df["Precio_G95"].notna()))].sort_values(col_orden, na_position='last')
-
-        st.divider()
-        if not res.empty:
-            for _, g in res.head(20).iterrows():
-                with st.container(border=True):
-                    col_info, col_btn = st.columns([2.4, 1.6])
-                    with col_info:
-                        st.write(f"### {g['Rótulo']} - {g['Municipio']}")
-                        p_diesel = f"{g['Precio Gasoleo A']} €" if pd.notnull(g['Precio_Diesel']) else "N/A"
-                        p_g95 = f"{g['Precio Gasolina 95 E5']} €" if pd.notnull(g['Precio_G95']) else "N/A"
-                        st.write(f"⛽ **D:** {p_diesel} | **G95:** {p_g95}")
-                        st.caption(f"📍 {g['Distancia']:.2f} km | {g['Dirección']}")
-                    with col_btn:
-                        url_map = f"https://www.google.com/maps/dir/?api=1&destination={g['lat_num']},{g['lon_num']}"
-                        st.link_button("📍 Navegar", url_map, use_container_width=True)
-        else:
-            st.warning("No hay resultados en este radio.")
-else:
-    st.error("Sin conexión a los datos oficiales.")
+        res = df[(df["Distancia"] <= radio_km) & ((df["Precio_Diesel"].notna()) | (df["Precio_G95"].notna()))].sort_values(col_orden, na_
