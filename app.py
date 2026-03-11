@@ -20,32 +20,30 @@ class SSLAdapter(HTTPAdapter):
 # 1. Configuración de la página
 st.set_page_config(page_title="Buscador Gasolineras", page_icon="⛽", layout="centered")
 
-# AJUSTES DE ESPACIADO SUTILES
+# AJUSTES DE ESPACIADO PRECISOS
 st.markdown("""
     <style>
-        /* Reduce el espacio entre el borde de la ventana y el título */
-        .block-container {padding-top: 2.5rem;}
-        
-        /* Ajusta el espacio del slider para que no deje tanto hueco abajo */
-        div[data-testid="stSlider"] {margin-bottom: -1rem;}
-        
-        /* Reducción del margen del título */
-        h1 {margin-top: -1rem; margin-bottom: 0.5rem;}
+        .block-container {padding-top: 2.8rem;}
+        div[data-testid="stVerticalBlock"] > div:has(div[data-testid="stSlider"]) {
+            margin-top: 1.2rem;
+        }
+        div[data-testid="stSlider"] {margin-bottom: -2.2rem;}
+        h1 {margin-top: -0.8rem; margin-bottom: 1.2rem;}
     </style>
 """, unsafe_allow_html=True)
 
-# Título adaptable en una sola línea
+# Título adaptable
 st.markdown(
     """
-    <h1 style='text-align: center; font-size: clamp(24px, 7vw, 38px); white-space: nowrap; overflow: hidden;'>
+    <h1 style='text-align: center; font-size: clamp(22px, 7vw, 38px); white-space: nowrap; overflow: hidden;'>
         ⛽ Buscador Gasolineras
     </h1>
     """, 
     unsafe_allow_html=True
 )
 
-# 2. Carga de Datos
-@st.cache_data(ttl=3600)
+# 2. Carga de Datos con Mensaje Personalizado
+@st.cache_data(ttl=3600, show_spinner="Actualizando Base de Datos, un momento por favor")
 def cargar_datos():
     url = "https://sedeaplicaciones.minetur.gob.es/ServiciosRESTCarburantes/PreciosCarburantes/EstacionesTerrestres/"
     headers = {'User-Agent': 'Mozilla/5.0'}
@@ -93,55 +91,52 @@ if datos:
         df["dist_temp"] = calcular_distancia(lat_gps, lon_gps, df["lat_num"], df["lon_num"])
         muni_gps = df.sort_values("dist_temp").iloc[0]["Municipio"]
 
-    # --- BLOQUE UBICACIÓN ---
     with st.container(border=True):
         idx = municipios_unicos.index(muni_gps) if muni_gps in municipios_unicos else None
         municipio_manual = st.selectbox("📍 Ubicación:", options=municipios_unicos, index=idx)
         
         if lat_gps and (municipio_manual == muni_gps or municipio_manual is None):
             lat_ref, lon_ref = lat_gps, lon_gps
-            origen_label = "tu ubicación exacta"
             st.success("✅ GPS Activo")
         elif municipio_manual:
             ref = df[df["Municipio"] == municipio_manual].iloc[0]
             lat_ref, lon_ref = ref["lat_num"], ref["lon_num"]
-            origen_label = municipio_manual
         else:
             lat_ref, lon_ref = None, None
             st.info("⌛ Esperando ubicación...")
 
-    # --- BLOQUE RADIO ---
     radio_km = st.slider("Radio de búsqueda (Km):", 1, 50, 10)
 
     if 'tipo_orden' not in st.session_state:
         st.session_state.tipo_orden = "Diésel"
     col_orden = "Precio_Diesel" if st.session_state.tipo_orden == "Diésel" else "Precio_G95"
 
-    # --- RESULTADOS ---
     if lat_ref and lon_ref:
         df["Distancia"] = calcular_distancia(lat_ref, lon_ref, df["lat_num"], df["lon_num"])
-        res = df[(df["Distancia"] <= radio_km) & (df[col_orden].notna())].sort_values(col_orden)
+        res = df[
+            (df["Distancia"] <= radio_km) & 
+            ((df["Precio_Diesel"].notna()) | (df["Precio_G95"].notna()))
+        ].sort_values(col_orden, na_position='last')
 
         st.divider()
         st.caption(f"Resultados ordenados por precio de: {st.session_state.tipo_orden}")
         
         if not res.empty:
-            for _, g in res.head(15).iterrows():
+            for _, g in res.head(20).iterrows():
                 with st.container(border=True):
-                    col_info, col_btn = st.columns([3, 1])
+                    col_info, col_btn = st.columns([2.4, 1.6])
                     with col_info:
                         st.write(f"### {g['Rótulo']} - {g['Municipio']}")
                         p_diesel = f"{g['Precio Gasoleo A']} €" if pd.notnull(g['Precio_Diesel']) else "N/A"
                         p_g95 = f"{g['Precio Gasolina 95 E5']} €" if pd.notnull(g['Precio_G95']) else "N/A"
-                        st.write(f"⛽ **Diésel:** {p_diesel} | **G95:** {p_g95}")
-                        st.write(f"📍 {g['Distancia']:.2f} km | {g['Dirección']}")
+                        st.write(f"⛽ **D:** {p_diesel} | **G95:** {p_g95}")
+                        st.caption(f"📍 {g['Distancia']:.2f} km | {g['Dirección']}")
                     with col_btn:
-                        url_map = f"https://www.google.com/maps?q={g['lat_num']},{g['lon_num']}"
-                        st.link_button("Ir", url_map, use_container_width=True)
+                        url_map = f"https://www.google.com/maps/dir/?api=1&destination={g['lat_num']},{g['lon_num']}"
+                        st.link_button("📍 Navegar", url_map, use_container_width=True)
         else:
             st.warning("No hay resultados en este radio.")
 
-    # --- BLOQUE FINAL ---
     st.write("---")
     st.caption("Configuración de ordenación:")
     st.session_state.tipo_orden = st.radio(
