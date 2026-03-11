@@ -9,7 +9,7 @@ from streamlit_js_eval import get_geolocation
 from requests.adapters import HTTPAdapter
 from urllib3.util.ssl_ import create_urllib3_context
 
-# --- ADAPTADOR SSL PARA EL MINISTERIO ---
+# --- ADAPTADOR SSL ---
 class SSLAdapter(HTTPAdapter):
     def init_poolmanager(self, *args, **kwargs):
         context = create_urllib3_context()
@@ -21,7 +21,7 @@ class SSLAdapter(HTTPAdapter):
 # 1. Configuración de la página
 st.set_page_config(page_title="Buscador Gasolineras", page_icon="⛽", layout="centered")
 
-# --- AJUSTES DE ESTILO REFINADOS (CSS) ---
+# --- AJUSTES DE ESTILO REFINADOS PARA AJUSTE TOTAL ---
 st.markdown("""
     <style>
         .block-container {padding-top: 1.5rem; padding-bottom: 0rem;}
@@ -33,33 +33,36 @@ st.markdown("""
             justify-content: center;
             margin-bottom: 0.2rem;
             margin-top: -1rem;
+            width: 100%;
         }
 
-        .header-icon { width: 40px; height: 40px; margin-bottom: 4px; }
+        .header-icon { width: 38px; height: 38px; margin-bottom: 4px; }
 
-        /* Título con escala reducida para asegurar ajuste en móviles */
+        /* Título con escala ULTRA-ajustable para móviles */
         .header-title {
             color: #1E3A8A;
             font-family: 'Inter', sans-serif;
             font-weight: 800;
-            font-size: clamp(20px, 6.5vw, 32px);
+            /* Reducimos el tamaño base y el multiplicador VW para seguridad total */
+            font-size: clamp(18px, 6vw, 30px); 
             margin: 0px;
             line-height: 1.1;
             text-align: center;
             white-space: nowrap;
+            width: 100%;
+            display: block;
         }
 
         .header-subtitle {
             color: #10B981;
             font-family: 'Inter', sans-serif;
             font-weight: 400;
-            font-size: clamp(12px, 3.5vw, 15px);
+            font-size: clamp(11px, 3vw, 14px);
             margin-top: 2px;
             margin-bottom: 0.5rem;
             text-align: center;
         }
 
-        /* Ajustes de espaciado específicos para compactar la UI */
         div[data-testid="stVerticalBlock"] > div:has(div[data-testid="stSlider"]) { margin-top: 0.8rem; }
         div[data-testid="stSlider"] {margin-bottom: -1rem;}
         div[data-testid="stRadio"] {margin-bottom: -1.5rem;}
@@ -67,7 +70,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# --- CABECERA PROFESIONAL ---
+# --- CABECERA ---
 st.markdown(
     """
     <div class='header-container'>
@@ -116,16 +119,13 @@ def calcular_distancia(lat1, lon1, lat2, lon2):
     a = np.sin(dlat / 2)**2 + np.cos(np.radians(lat1)) * np.cos(np.radians(lat2)) * np.sin(dlon / 2)**2
     return R * 2 * np.arctan2(np.sqrt(a), np.sqrt(1 - a))
 
-# --- FLUJO DE LA APP ---
 datos, fecha_act = cargar_datos()
 
-# Log de actualización (Compacto y centrado)
 if fecha_act:
     st.markdown(f"<div style='text-align: center; color: #9CA3AF; font-size: 0.75rem; margin-top: -8px; margin-bottom: 12px;'>Datos actualizados: {fecha_act.strftime('%d/%m/%Y %H:%M:%S')} (Madrid)</div>", unsafe_allow_html=True)
 
 if datos:
     df = pd.DataFrame(datos)
-    # Limpieza numérica
     df["lat_num"] = pd.to_numeric(df["Latitud"].str.replace(",", "."), errors='coerce')
     df["lon_num"] = pd.to_numeric(df["Longitud (WGS84)"].str.replace(",", "."), errors='coerce')
     df["Precio_Diesel"] = pd.to_numeric(df["Precio Gasoleo A"].str.replace(",", "."), errors='coerce')
@@ -133,7 +133,6 @@ if datos:
     
     municipios_unicos = sorted(list(set([str(g["Municipio"]) for g in datos])))
 
-    # Localización GPS
     loc = get_geolocation()
     lat_gps, lon_gps, muni_gps = None, None, None
 
@@ -143,7 +142,6 @@ if datos:
         df["dist_temp"] = calcular_distancia(lat_gps, lon_gps, df["lat_num"], df["lon_num"])
         muni_gps = df.sort_values("dist_temp").iloc[0]["Municipio"]
 
-    # --- BLOQUE UBICACIÓN ---
     with st.container(border=True):
         idx = municipios_unicos.index(muni_gps) if muni_gps in municipios_unicos else None
         municipio_manual = st.selectbox("📍 Ubicación:", options=municipios_unicos, index=idx)
@@ -158,23 +156,15 @@ if datos:
             lat_ref, lon_ref = None, None
             st.info("⌛ Esperando ubicación...")
 
-    # --- BLOQUE CONFIGURACIÓN ---
     radio_km = st.slider("Radio de búsqueda (Km):", 1, 50, 10)
     tipo_combustible = st.radio("Resultados ordenados por precio de:", ["Diésel", "G95"], horizontal=True)
     col_orden = "Precio_Diesel" if tipo_combustible == "Diésel" else "Precio_G95"
 
-    # --- RESULTADOS ---
     if lat_ref and lon_ref:
         df["Distancia"] = calcular_distancia(lat_ref, lon_ref, df["lat_num"], df["lon_num"])
-        
-        # Filtro: radio + que tenga al menos un precio
-        res = df[
-            (df["Distancia"] <= radio_km) & 
-            ((df["Precio_Diesel"].notna()) | (df["Precio_G95"].notna()))
-        ].sort_values(col_orden, na_position='last')
+        res = df[(df["Distancia"] <= radio_km) & ((df["Precio_Diesel"].notna()) | (df["Precio_G95"].notna()))].sort_values(col_orden, na_position='last')
 
         st.divider()
-        
         if not res.empty:
             for _, g in res.head(20).iterrows():
                 with st.container(border=True):
@@ -186,7 +176,6 @@ if datos:
                         st.write(f"⛽ **D:** {p_diesel} | **G95:** {p_g95}")
                         st.caption(f"📍 {g['Distancia']:.2f} km | {g['Dirección']}")
                     with col_btn:
-                        # Enlace directo a Google Maps
                         url_map = f"https://www.google.com/maps/dir/?api=1&destination={g['lat_num']},{g['lon_num']}"
                         st.link_button("📍 Navegar", url_map, use_container_width=True)
         else:
