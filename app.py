@@ -21,73 +21,21 @@ class SSLAdapter(HTTPAdapter):
 # 1. Configuración de la página
 st.set_page_config(page_title="Buscador Gasolineras", page_icon="⛽", layout="centered")
 
-# --- AJUSTES DE ESTILO REFINADOS PARA AJUSTE TOTAL ---
+# --- AJUSTES DE ESPACIADO SIMPLES ---
 st.markdown("""
     <style>
-        .block-container {padding-top: 1.5rem; padding-bottom: 0rem;}
-        
-        .header-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 0.2rem;
-            margin-top: -1rem;
-            width: 100%;
-        }
-
-        .header-icon { width: 38px; height: 38px; margin-bottom: 4px; }
-
-        /* Título con escala ULTRA-ajustable para móviles */
-        .header-title {
-            color: #1E3A8A;
-            font-family: 'Inter', sans-serif;
-            font-weight: 800;
-            /* Reducimos el tamaño base y el multiplicador VW para seguridad total */
-            font-size: clamp(18px, 6vw, 30px); 
-            margin: 0px;
-            line-height: 1.1;
-            text-align: center;
-            white-space: nowrap;
-            width: 100%;
-            display: block;
-        }
-
-        .header-subtitle {
-            color: #10B981;
-            font-family: 'Inter', sans-serif;
-            font-weight: 400;
-            font-size: clamp(11px, 3vw, 14px);
-            margin-top: 2px;
-            margin-bottom: 0.5rem;
-            text-align: center;
-        }
-
-        div[data-testid="stVerticalBlock"] > div:has(div[data-testid="stSlider"]) { margin-top: 0.8rem; }
+        /* Reducir el espacio superior de la página */
+        .block-container {padding-top: 1rem;}
+        /* Quitar el margen superior excesivo del título nativo */
+        h1 {margin-top: -1.5rem; text-align: center; font-size: 1.8rem !important;}
+        /* Ajustar espacios entre componentes */
         div[data-testid="stSlider"] {margin-bottom: -1rem;}
-        div[data-testid="stRadio"] {margin-bottom: -1.5rem;}
-        hr {margin-top: 0.5rem; margin-bottom: 1rem;}
+        div[data-testid="stRadio"] {margin-bottom: -1rem;}
     </style>
 """, unsafe_allow_html=True)
 
-# --- CABECERA ---
-st.markdown(
-    """
-    <div class='header-container'>
-        <svg class='header-icon' viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M19 19V8H20V6H19V4H5V6H4V8H5V19H4V21H20V19H19Z" fill="#1E3A8A"/>
-            <path d="M8 8H11V11H8V8Z" fill="#10B981"/>
-            <path d="M13 8H16V11H13V8Z" fill="white"/>
-            <path d="M8 13H11V16H8V13Z" fill="white"/>
-            <path d="M13 13H16V16H13V13Z" fill="white"/>
-            <path d="M7 6H17V17H7V6Z" stroke="#1E3A8A" stroke-width="2"/>
-        </svg>
-        <h1 class='header-title'>Buscador Gasolineras</h1>
-        <p class='header-subtitle'>Ahorro Inteligente en Combustible</p>
-    </div>
-    """, 
-    unsafe_allow_html=True
-)
+# --- CABECERA NATIVA (Sin HTML complejo para evitar errores de ancho) ---
+st.title("⛽ Buscador Gasolineras")
 
 # 2. Carga de Datos
 @st.cache_data(ttl=3600, show_spinner="Actualizando Base de Datos, un momento por favor")
@@ -121,8 +69,11 @@ def calcular_distancia(lat1, lon1, lat2, lon2):
 
 datos, fecha_act = cargar_datos()
 
+# Fecha de actualización (Madrid) - Ahora más pegada al título
 if fecha_act:
-    st.markdown(f"<div style='text-align: center; color: #9CA3AF; font-size: 0.75rem; margin-top: -8px; margin-bottom: 12px;'>Datos actualizados: {fecha_act.strftime('%d/%m/%Y %H:%M:%S')} (Madrid)</div>", unsafe_allow_html=True)
+    st.markdown(f"<p style='text-align: center; color: gray; font-size: 0.8rem; margin-top: -1rem;'>Actualizado: {fecha_act.strftime('%d/%m/%Y %H:%M:%S')}</p>", unsafe_allow_html=True)
+
+st.write("") # Pequeño respiro antes del bloque de ubicación
 
 if datos:
     df = pd.DataFrame(datos)
@@ -157,7 +108,12 @@ if datos:
             st.info("⌛ Esperando ubicación...")
 
     radio_km = st.slider("Radio de búsqueda (Km):", 1, 50, 10)
-    tipo_combustible = st.radio("Resultados ordenados por precio de:", ["Diésel", "G95"], horizontal=True)
+    
+    tipo_combustible = st.radio(
+        "Resultados ordenados por precio de:", 
+        ["Diésel", "G95"], 
+        horizontal=True
+    )
     col_orden = "Precio_Diesel" if tipo_combustible == "Diésel" else "Precio_G95"
 
     if lat_ref and lon_ref:
