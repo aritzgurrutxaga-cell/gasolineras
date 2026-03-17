@@ -2,12 +2,14 @@ import streamlit as st
 import requests
 import pandas as pd
 import numpy as np
+import os
 import datetime
+import pytz
 from streamlit_js_eval import get_geolocation, streamlit_js_eval
 from requests.adapters import HTTPAdapter
 from urllib3.util.ssl_ import create_urllib3_context
 
-# --- FUNCIONES DE APOYO ---
+# --- FUNCIONES ---
 def calcular_distancia(lat1, lon1, lat2, lon2):
     R = 6371.0
     dlat, dlon = np.radians(lat2 - lat1), np.radians(lon2 - lon1)
@@ -22,64 +24,99 @@ class SSLAdapter(HTTPAdapter):
         kwargs['ssl_context'] = context
         return super(SSLAdapter, self).init_poolmanager(*args, **kwargs)
 
-# 1. Configuración de la página
+# 1. Configuración
 st.set_page_config(page_title="gasolina.eus", page_icon="⛽", layout="centered")
 
-# --- CSS MEJORADO PARA MÓVIL ---
+# 2. CSS REDISEÑO TOTAL
 st.markdown("""
     <style>
-        .block-container { padding-top: 1rem !important; padding-bottom: 10vh !important; }
+        .block-container { padding-top: 1rem !important; }
         header {visibility: hidden !important;}
+        
+        /* Título gasolina.eus */
         .titulo-app {
-            text-align: center; font-size: clamp(30px, 9vw, 45px); 
-            font-weight: 800; margin-bottom: 1.5rem; color: #d32f2f;
-            letter-spacing: -1px;
+            text-align: center; 
+            font-size: clamp(28px, 9vw, 42px); 
+            font-weight: 800;
+            color: #ff4b4b;
+            margin-bottom: 1rem;
         }
+
+        /* DISEÑO CAJA MUNICIPIO (60px alto) */
+        div[data-baseweb="select"] > div {
+            min-height: 60px !important;
+            border-radius: 12px !important;
+            font-size: 1.1rem !important;
+            display: flex; align-items: center;
+        }
+
+        /* ESTILO PESTAÑAS (TABS) */
+        button[data-baseweb="tab"] {
+            font-size: 1.1rem !important;
+            font-weight: bold !important;
+            height: 50px !important;
+        }
+
+        /* --- EL BOTÓN GIGANTE INICIAL (INMUNE) --- */
+        /* Buscamos el primer botón de la página cuando no hay nada más */
+        .stButton > button {
+            transition: all 0.2s;
+        }
+        
+        /* Definimos un ID único por CSS para el primer botón que encuentre */
+        section[data-testid="stSidebar"] + section .element-container:first-of-type button {
+            min-height: 120px !important;
+            background-color: #d32f2f !important;
+            border-radius: 20px !important;
+            border: none !important;
+            box-shadow: 0 6px 15px rgba(0,0,0,0.2) !important;
+        }
+        
+        /* Subtexto para el botón inicial */
+        .inicio-msg {
+            text-align: center;
+            font-size: 0.9rem;
+            opacity: 0.8;
+            margin-top: -10px;
+            margin-bottom: 20px;
+        }
+
         .resumen-filtros {
-            text-align: center; font-size: 0.9rem; margin-bottom: 1rem; 
-            padding: 8px; border-radius: 8px; border: 1px solid #444;
-            background-color: rgba(255,255,255,0.05);
+            text-align: center; 
+            font-size: 0.9rem; 
+            padding: 8px;
+            background-color: #f0f2f6;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            color: #31333F;
         }
-        /* Botón Gigante Inicial */
-        div[data-testid="stButton"] button[kind="primary"] {
-            min-height: 120px !important; border-radius: 16px !important;
-            background-color: #d32f2f !important; color: white !important;
-            width: 100% !important; border: none !important;
-        }
-        div[data-testid="stButton"] button[kind="primary"] p {
-            font-size: 1.6rem !important; font-weight: 800 !important;
-        }
-        /* Tarjetas de gasolineras */
-        .stMetric { background: rgba(255,255,255,0.05); padding: 10px; border-radius: 10px; }
     </style>
 """, unsafe_allow_html=True)
 
-# --- ESTADO DE LA SESIÓN ---
+# 3. Memoria
 if 'solicitar_gps' not in st.session_state: st.session_state.solicitar_gps = False
 if 'municipio_guardado' not in st.session_state: st.session_state.municipio_guardado = None
 if 'radio_km' not in st.session_state: st.session_state.radio_km = 5
 if 'tipo_combustible' not in st.session_state: st.session_state.tipo_combustible = "Diésel"
 
-# Recuperar del LocalStorage (JS)
+# LocalStorage
 muni_cache = streamlit_js_eval(js_expressions="parent.window.localStorage.getItem('muni_gasolineras')", key="get_muni_cache")
 if muni_cache and muni_cache != "null" and not st.session_state.municipio_guardado:
     st.session_state.municipio_guardado = muni_cache
 
-# --- CARGA DE DATOS (MINISTERIO) ---
+# 4. Datos
 @st.cache_data(ttl=3600)
 def cargar_datos():
     url = "https://sedeaplicaciones.minetur.gob.es/ServiciosRESTCarburantes/PreciosCarburantes/EstacionesTerrestres/"
     session = requests.Session()
     session.mount("https://", SSLAdapter())
     try:
-        r = session.get(url, timeout=20)
+        r = session.get(url, timeout=25)
         return r.json()["ListaEESSPrecio"]
     except: return None
 
 datos = cargar_datos()
-if not datos:
-    st.error("Error de conexión con el servidor de precios. Reintenta en unos segundos.")
-    st.stop()
+if not datos: st.error("Sin conexión."); st.stop()
 
 df = pd.DataFrame(datos)
 df["lat_num"] = pd.to_numeric(df["Latitud"].str.replace(",", "."), errors='coerce')
@@ -88,91 +125,80 @@ df["Precio_Diesel"] = pd.to_numeric(df["Precio Gasoleo A"].str.replace(",", ".")
 df["Precio_G95"] = pd.to_numeric(df["Precio Gasolina 95 E5"].str.replace(",", "."), errors='coerce')
 municipios_unicos = sorted(list(set([str(g["Municipio"]) for g in datos])))
 
-# --- LÓGICA DE GEOLOCALIZACIÓN (PROTEGIDA) ---
-lat_gps, lon_gps = None, None
-if st.session_state.solicitar_gps and not st.session_state.municipio_guardado:
-    loc = get_geolocation()
-    if loc and 'coords' in loc:
-        lat_gps = loc['coords'].get('latitude')
-        lon_gps = loc['coords'].get('longitude')
-    elif loc and 'error' in loc:
-        st.error("Permiso de ubicación denegado.")
-        st.session_state.solicitar_gps = False
-    else:
-        st.markdown("<div class='titulo-app'>gasolina.eus</div>", unsafe_allow_html=True)
-        st.info("🌐 Esperando respuesta del GPS... Acepta el permiso en tu navegador.")
-        st.stop()
+# ==========================================
+# FLUJO DE PANTALLAS
+# ==========================================
 
-# --- PANTALLA A: BIENVENIDA ---
-if not (lat_gps or st.session_state.municipio_guardado) and not st.session_state.solicitar_gps:
+# A. PANTALLA INICIAL (Botón Rojo Gigante)
+if not st.session_state.municipio_guardado and not st.session_state.solicitar_gps:
     st.markdown("<div class='titulo-app'>gasolina.eus</div>", unsafe_allow_html=True)
-    if st.button("📍 Mostrar gasolineras", type="primary"):
+    if st.button("📍 MOSTRAR GASOLINERAS", use_container_width=True):
         st.session_state.solicitar_gps = True
         st.rerun()
+    st.markdown("<div class='inicio-msg'>Es necesaria la ubicación para buscar</div>", unsafe_allow_html=True)
     st.stop()
 
-# --- PANTALLA B: SELECCIÓN MANUAL (SI FALLA GPS) ---
-if not lat_gps and not st.session_state.municipio_guardado:
-    st.markdown("<div class='titulo-app'>gasolina.eus</div>", unsafe_allow_html=True)
-    st.subheader("Selecciona tu ubicación")
-    muni_sel = st.selectbox("Municipio:", options=municipios_unicos, index=None, placeholder="Escribe para buscar...")
-    if st.button("✅ Confirmar municipio", use_container_width=True):
-        if muni_sel:
-            st.session_state.municipio_guardado = muni_sel
-            streamlit_js_eval(js_expressions=f"parent.window.localStorage.setItem('muni_gasolineras', '{muni_sel}')")
-            st.rerun()
-    st.stop()
+# B. GPS / SELECCIÓN MANUAL (Solo si no hay municipio)
+if st.session_state.solicitar_gps and not st.session_state.municipio_guardado:
+    loc = get_geolocation()
+    if loc:
+        lat, lon = loc['coords']['latitude'], loc['coords']['longitude']
+        df["dist_t"] = calcular_distancia(lat, lon, df["lat_num"], df["lon_num"])
+        st.session_state.municipio_guardado = df.sort_values("dist_t").iloc[0]["Municipio"]
+        st.rerun()
+    else:
+        st.markdown("<div class='titulo-app'>gasolina.eus</div>", unsafe_allow_html=True)
+        st.markdown("<p style='text-align: center;'>📍 Elige tu municipio:</p>", unsafe_allow_html=True)
+        m_sel = st.selectbox("Municipio", options=municipios_unicos, index=None, placeholder="Escribe aquí...", label_visibility="collapsed")
+        if st.button("Confirmar selección", use_container_width=True):
+            if m_sel:
+                st.session_state.municipio_guardado = m_sel
+                st.rerun()
+        st.stop()
 
-# --- PANTALLA C: RESULTADOS ---
+# C. PANTALLA PRINCIPAL (REDISÉÑO CON TABS)
 st.markdown("<div class='titulo-app'>gasolina.eus</div>", unsafe_allow_html=True)
 
-# Punto de referencia
-if lat_gps:
-    lat_ref, lon_ref = lat_gps, lon_gps
-    df["dist_temp"] = calcular_distancia(lat_ref, lon_ref, df["lat_num"], df["lon_num"])
-    muni_ref = df.sort_values("dist_temp").iloc[0]["Municipio"]
-else:
-    muni_ref = st.session_state.municipio_guardado
-    fila = df[df["Municipio"] == muni_ref].iloc[0]
-    lat_ref, lon_ref = fila["lat_num"], fila["lon_num"]
+tab_lista, tab_ajustes = st.tabs(["📍 Gasolineras", "⚙️ Filtros"])
 
-# Menú de Ajustes
-with st.expander("⚙️ Ajustar filtros"):
-    n_muni = st.selectbox("Municipio:", options=municipios_unicos, index=municipios_unicos.index(muni_ref))
-    n_radio = st.select_slider("Radio de búsqueda (km):", options=[2, 5, 10, 20, 50], value=st.session_state.radio_km)
-    n_tipo = st.radio("Combustible:", ["Diésel", "G95"], index=0 if st.session_state.tipo_combustible == "Diésel" else 1, horizontal=True)
+# --- TAB DE AJUSTES (FIJO, NO SE CIERRA) ---
+with tab_ajustes:
+    st.write("Configura tu búsqueda:")
+    muni_ref = st.session_state.municipio_guardado
+    idx_m = municipios_unicos.index(muni_ref) if muni_ref in municipios_unicos else 0
     
-    if st.button("🔍 Actualizar resultados", use_container_width=True):
-        st.session_state.municipio_guardado = n_muni
-        st.session_state.radio_km = n_radio
-        st.session_state.tipo_combustible = n_tipo
-        # Al cambiar manualmente, desactivamos GPS para que mande el municipio elegido
-        st.session_state.solicitar_gps = False 
+    nuevo_muni = st.selectbox("Cambiar municipio:", options=municipios_unicos, index=idx_m)
+    nuevo_radio = st.select_slider("Radio de búsqueda:", options=[5, 10, 20, 50], value=st.session_state.radio_km, format_func=lambda x: f"{x} km")
+    nuevo_tipo = st.radio("Ordenar por:", ["Diésel", "G95"], index=0 if st.session_state.tipo_combustible == "Diésel" else 1, horizontal=True)
+    
+    if st.button("🔍 Aplicar cambios", use_container_width=True):
+        st.session_state.municipio_guardado = nuevo_muni
+        st.session_state.radio_km = nuevo_radio
+        st.session_state.tipo_combustible = nuevo_tipo
         st.rerun()
 
-# Procesamiento de datos
-col_orden = "Precio_Diesel" if st.session_state.tipo_combustible == "Diésel" else "Precio_G95"
-df["Distancia"] = calcular_distancia(lat_ref, lon_ref, df["lat_num"], df["lon_num"])
-res = df[(df["Distancia"] <= st.session_state.radio_km) & (df[col_orden].notna())].sort_values(col_orden)
+# --- TAB DE LISTA ---
+with tab_lista:
+    muni_ref = st.session_state.municipio_guardado
+    fila_m = df[df["Municipio"] == muni_ref].iloc[0]
+    lat_r, lon_r = fila_m["lat_num"], fila_m["lon_num"]
+    
+    col_o = "Precio_Diesel" if st.session_state.tipo_combustible == "Diésel" else "Precio_G95"
+    df["Distancia"] = calcular_distancia(lat_r, lon_r, df["lat_num"], df["lon_num"])
+    
+    res = df[
+        (df["Distancia"] <= st.session_state.radio_km) & 
+        ((df["Precio_Diesel"].notna()) | (df["Precio_G95"].notna()))
+    ].sort_values(col_o, na_position='last')
 
-# Cabecera de resultados
-st.markdown(f"<div class='resumen-filtros'>📍 {muni_ref} | 🚗 {st.session_state.radio_km}km | ⛽ {st.session_state.tipo_combustible}</div>", unsafe_allow_html=True)
+    st.markdown(f"<div class='resumen-filtros'>📍 {muni_ref} | 🚗 {st.session_state.radio_km} km | ⛽ {st.session_state.tipo_combustible}</div>", unsafe_allow_html=True)
 
-if res.empty:
-    st.warning("No hay gasolineras cercanas. Intenta ampliar el radio en los ajustes.")
-else:
     for _, g in res.head(15).iterrows():
         with st.container(border=True):
-            col_txt, col_btn = st.columns([0.7, 0.3], vertical_alignment="center")
-            with col_txt:
-                st.markdown(f"**{g['Rótulo']}**")
-                precio = g[col_orden]
-                st.markdown(f"### {precio:.3f} €/L")
-                st.caption(f"{g['Dirección'].title()} ({g['Distancia']:.1f} km)")
-            with col_btn:
-                # URL Universal compatible con iOS/Android
-                maps_url = f"https://www.google.com/maps/search/?api=1&query={g['lat_num']},{g['lon_num']}"
-                st.link_button("🗺️ Ver", maps_url, use_container_width=True)
-
-st.divider()
-st.caption("Datos actualizados: " + datetime.datetime.now().strftime("%H:%M"))
+            c1, c2 = st.columns([2.5, 1.5], vertical_alignment="center")
+            with c1:
+                st.write(f"### {g['Rótulo']}")
+                st.write(f"⛽ **D:** {g['Precio Gasoleo A']}€ | **G95:** {g['Precio Gasolina 95 E5']}€")
+                st.caption(f"📍 {g['Distancia']:.2f} km")
+            with c2:
+                st.link_button("🗺️ Ir allí", f"https://www.google.com/maps/dir/?api=1&destination={g['lat_num']},{g['lon_num']}", use_container_width=True)
