@@ -48,32 +48,33 @@ st.markdown("""
         /* --- ARREGLO DEFINITIVO DE LA LUPA PARA MÓVIL --- */
         /* ========================================================= */
         
-        /* Seleccionamos SOLO la fila que contiene un texto de "Ej:" para no romper el resto de la web */
+        /* Seleccionamos la fila de búsqueda sin romper el resto */
         div[data-testid="stHorizontalBlock"]:has(input[placeholder*="Ej:"]) {
             display: flex !important;
             flex-direction: row !important;
             flex-wrap: nowrap !important;
             align-items: flex-end !important;
-            gap: 0.5rem !important;
+            gap: 5px !important; /* Pequeño margen entre input y lupa */
+            width: 100% !important; /* Bloquea el desbordamiento */
         }
         
-        /* La caja de texto se lleva todo el ancho posible */
+        /* 1. La caja de texto: Se encoge inteligentemente para no salirse */
         div[data-testid="stHorizontalBlock"]:has(input[placeholder*="Ej:"]) > div[data-testid="column"]:nth-child(1) {
-            width: calc(100% - 55px) !important;
-            flex: 1 1 auto !important;
-            min-width: 0 !important;
+            flex: 1 1 0% !important; 
+            width: auto !important;
+            min-width: 0 !important; /* Clave para que el flexbox no desborde */
         }
         
-        /* La lupa ocupa EXACTAMENTE 50 píxeles, imposible que se corte */
+        /* 2. La lupa: Pequeñita y con tamaño exacto inamovible (45px) */
         div[data-testid="stHorizontalBlock"]:has(input[placeholder*="Ej:"]) > div[data-testid="column"]:nth-child(2) {
-            width: 50px !important;
-            flex: 0 0 50px !important;
-            min-width: 50px !important;
+            flex: 0 0 45px !important; 
+            width: 45px !important;
+            min-width: 45px !important;
         }
         
         /* Estética del botón de la lupa */
         div[data-testid="stHorizontalBlock"]:has(input[placeholder*="Ej:"]) button {
-            height: 2.75rem !important; /* Altura perfecta alineada con la caja */
+            height: 2.75rem !important; 
             padding: 0 !important;
             width: 100% !important;
             display: flex;
@@ -244,7 +245,7 @@ df["Precio_G95"] = pd.to_numeric(df["Precio Gasolina 95 E5"].str.replace(",", ".
 municipios_unicos = sorted(list(set([str(g["Municipio"]) for g in datos])))
 
 # ==========================================
-# ESTADO 2: PANTALLA DE SELECCIÓN MANUAL ÚNICA (Buscador con Lupa Blindado)
+# ESTADO 2: PANTALLA DE SELECCIÓN MANUAL ÚNICA (Buscador con Lupa)
 # ==========================================
 if not lat_gps and not lon_gps and not st.session_state.municipio_guardado:
     st.markdown("""
