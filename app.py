@@ -9,7 +9,7 @@ from streamlit_js_eval import get_geolocation, streamlit_js_eval
 from requests.adapters import HTTPAdapter
 from urllib3.util.ssl_ import create_urllib3_context
 
-# --- FUNCIONES DE APOYO (Definidas al principio para evitar NameError) ---
+# --- FUNCIONES DE APOYO (Al principio para evitar NameError) ---
 def calcular_distancia(lat1, lon1, lat2, lon2):
     R = 6371.0
     dlat, dlon = np.radians(lat2 - lat1), np.radians(lon2 - lon1)
@@ -52,9 +52,6 @@ st.markdown("""
             align-items: center !important;
         }
         
-        /* Opciones de la lista */
-        li[role="option"] { padding: 15px !important; font-size: 1.1rem !important; }
-        
         /* Título en una sola línea */
         .titulo-app {
             text-align: center; 
@@ -74,6 +71,37 @@ st.markdown("""
             border: 1px solid #444;
             background-color: #f0f2f6;
             color: #111;
+        }
+
+        /* --- REDISEÑO DEL BOTÓN ROJO DE INICIO --- */
+        div[data-testid="stButton"] button[kind="primary"] {
+            min-height: 100px !important; /* Más ancho en vertical */
+            border-radius: 15px !important;
+            font-weight: bold !important;
+            width: 100% !important;
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: center !important;
+            justify-content: center !important;
+            line-height: 1.2 !important;
+            padding: 20px !important;
+            box-shadow: 0 4px 12px rgba(255, 75, 75, 0.3) !important;
+        }
+        
+        /* Texto principal del botón */
+        div[data-testid="stButton"] button[kind="primary"] p {
+            font-size: 1.4rem !important;
+            margin: 0 !important;
+        }
+        
+        /* Subtexto del botón (Ubicación necesaria) */
+        div[data-testid="stButton"] button[kind="primary"]::after {
+            content: "Es necesaria la ubicación para buscar";
+            font-size: 0.85rem !important;
+            font-weight: normal !important;
+            opacity: 0.9;
+            margin-top: 8px;
+            display: block;
         }
     </style>
 """, unsafe_allow_html=True)
@@ -107,6 +135,7 @@ gps_denegado = (estado_permiso == "denied") or st.session_state.gps_fallido
 # ESTADO 1: INICIO
 if not (estado_permiso == "granted" or st.session_state.municipio_guardado) and not st.session_state.solicitar_gps:
     st.markdown("<div class='titulo-app'>⛽ Buscador Gasolineras</div>", unsafe_allow_html=True)
+    # El CSS se encarga de dar el estilo y añadir el subtexto
     if st.button("📍 Mostrar gasolineras", use_container_width=True, type="primary"):
         st.session_state.solicitar_gps = True
         st.rerun()
