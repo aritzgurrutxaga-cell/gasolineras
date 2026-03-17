@@ -24,9 +24,10 @@ st.set_page_config(page_title="Buscador Gasolineras", page_icon="⛽", layout="c
 # AJUSTES DE ESPACIADO PRECISOS Y DISEÑO CSS
 st.markdown("""
     <style>
+        /* Eliminación agresiva del espacio superior y colchón inferior para el teclado virtual */
         .block-container {
             padding-top: 1rem !important; 
-            padding-bottom: 2rem !important;
+            padding-bottom: 25vh !important; /* Fuerza a que el menú desplegable tenga sitio para caer hacia abajo */
             margin-top: 0rem !important;
         }
         header {visibility: hidden !important;}
@@ -43,6 +44,42 @@ st.markdown("""
             margin: 0 !important;
             padding: 0 !important;
         }
+
+        /* ========================================================= */
+        /* --- MEJORAS PREMIUM DEL DESPLEGABLE PARA MÓVIL --- */
+        /* ========================================================= */
+        
+        /* 1. Aspecto de botón redondeado y limpio para el input */
+        div[data-baseweb="select"] > div {
+            padding: 0.5rem !important;
+            border-radius: 12px !important;
+            border: 2px solid #e0e0e0 !important;
+            background-color: #ffffff !important;
+            font-size: 1.15rem !important;
+        }
+        
+        /* 2. Ampliar la lista hacia abajo y darle estilo flotante */
+        ul[role="listbox"] {
+            max-height: 45vh !important; 
+            border-radius: 12px !important;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15) !important;
+            background-color: #ffffff !important;
+        }
+        
+        /* 3. Opciones enormes para que sea facilísimo tocar con el dedo */
+        li[role="option"] {
+            padding-top: 16px !important;
+            padding-bottom: 16px !important;
+            font-size: 1.1rem !important;
+            border-bottom: 1px solid #f0f2f6 !important;
+        }
+        
+        /* 4. Efecto de pulsación en el móvil */
+        li[role="option"]:active {
+            background-color: #f0f2f6 !important;
+        }
+        
+        /* ========================================================= */
         
         div[data-testid="stRadio"] > label {font-weight: bold; margin-bottom: -0.5rem;}
         div[data-testid="stRadio"] {margin-bottom: 0.5rem;}
@@ -115,7 +152,6 @@ gps_denegado = (estado_permiso == "denied") or st.session_state.gps_fallido
 # ==========================================
 # ESTADO 1: PANTALLA INICIAL PURA (Botón rojo)
 # ==========================================
-# Solo la mostramos si no hay GPS concedido, no hay caché, y no ha pulsado el botón aún.
 mostrar_pantalla_inicial = True
 if estado_permiso == "granted" or st.session_state.municipio_guardado:
     mostrar_pantalla_inicial = False
@@ -133,10 +169,8 @@ if mostrar_pantalla_inicial and not st.session_state.solicitar_gps:
 loc = None
 lat_gps, lon_gps = None, None
 
-# Intentamos GPS si ya está concedido, o si pulsaron el botón (y no está denegado)
 intentar_gps = (estado_permiso == "granted") or (st.session_state.solicitar_gps and not gps_denegado)
 
-# Si el usuario cambió de pueblo a mano EN ESTA SESIÓN, no le forzamos el GPS de nuevo hasta que reinicie
 if intentar_gps and not st.session_state.override_manual:
     loc = get_geolocation()
     if loc is None:
@@ -197,7 +231,6 @@ municipios_unicos = sorted(list(set([str(g["Municipio"]) for g in datos])))
 
 # ==========================================
 # ESTADO 2: PANTALLA DE SELECCIÓN MANUAL ÚNICA
-# Solo salta si no hay GPS, no hay caché y no se ha activado el override
 # ==========================================
 if not lat_gps and not lon_gps and not st.session_state.municipio_guardado:
     st.markdown("""
@@ -208,115 +241,4 @@ if not lat_gps and not lon_gps and not st.session_state.municipio_guardado:
     """, unsafe_allow_html=True)
     
     municipio_seleccionado_inicio = st.selectbox(
-        "Municipio:", 
-        options=municipios_unicos,
-        index=None,
-        placeholder="Escribe o selecciona tu municipio...",
-        label_visibility="collapsed"
-    )
-
-    if st.button("✅ Confirmar y buscar", type="primary", use_container_width=True):
-        if municipio_seleccionado_inicio:
-            st.session_state.municipio_guardado = municipio_seleccionado_inicio
-            st.session_state.guardar_js = municipio_seleccionado_inicio
-            st.session_state.override_manual = True
-            st.rerun() 
-        else:
-            st.error("Por favor, selecciona un municipio válido de la lista antes de continuar.")
-    
-    st.stop() 
-
-# ==========================================
-# ESTADO 3: PANTALLA DE RESULTADOS Y AJUSTES
-# ==========================================
-lat_ref, lon_ref, muni_ref = None, None, None
-
-# LA REGLA DE ORO: Si hay GPS (y no lo acaban de cambiar a mano en los ajustes), PREVALECE SIEMPRE
-if lat_gps and lon_gps and not st.session_state.override_manual:
-    df["dist_temp"] = calcular_distancia(lat_gps, lon_gps, df["lat_num"], df["lon_num"])
-    muni_ref = df.sort_values("dist_temp").iloc[0]["Municipio"]
-    lat_ref, lon_ref = lat_gps, lon_gps
-elif st.session_state.municipio_guardado:
-    # Si no hay GPS (o si acaban de forzar el manual temporalmente), tira de caché
-    muni_ref = st.session_state.municipio_guardado
-    fila_muni = df[df["Municipio"] == muni_ref].iloc[0]
-    lat_ref, lon_ref = fila_muni["lat_num"], fila_muni["lon_num"]
-
-# Panel de ajustes
-with st.expander("⚙️ Ajustes de búsqueda", expanded=False):
-    st.write("Cambia tu ubicación manual o ajusta los filtros:")
-    
-    idx_actual = municipios_unicos.index(muni_ref) if muni_ref in municipios_unicos else None
-    
-    municipio_cambio = st.selectbox(
-        "Cambiar municipio:", 
-        options=municipios_unicos,
-        index=idx_actual,
-        placeholder="Busca un nuevo municipio..."
-    )
-            
-    if st.button("Actualizar municipio"):
-        if municipio_cambio and municipio_cambio != muni_ref:
-            st.session_state.municipio_guardado = municipio_cambio
-            st.session_state.guardar_js = municipio_cambio
-            st.session_state.override_manual = True # Forzamos que se salte el GPS temporalmente
-            st.rerun()
-
-    st.write("") 
-    
-    if st.button("🗑️ Borrar ubicación y reiniciar", type="secondary", use_container_width=True):
-        st.session_state.municipio_guardado = None
-        st.session_state.solicitar_gps = False
-        st.session_state.gps_fallido = False
-        st.session_state.override_manual = False
-        streamlit_js_eval(js_expressions="parent.window.localStorage.removeItem('muni_gasolineras')", key="borrar_cache")
-        st.rerun()
-
-    st.divider()
-
-    col_km, col_gas = st.columns(2)
-    with col_km:
-        radio_km = st.radio(
-            "Radio de búsqueda:",
-            options=[5, 10, 20, 50],
-            format_func=lambda x: f"{x} km",
-            index=0, 
-            horizontal=True
-        )
-    with col_gas:
-        tipo_combustible = st.radio(
-            "Ordenar por precio de:", 
-            ["Diésel", "G95"], 
-            horizontal=True
-        )
-
-col_orden = "Precio_Diesel" if tipo_combustible == "Diésel" else "Precio_G95"
-
-df["Distancia"] = calcular_distancia(lat_ref, lon_ref, df["lat_num"], df["lon_num"])
-res = df[
-    (df["Distancia"] <= radio_km) & 
-    ((df["Precio_Diesel"].notna()) | (df["Precio_G95"].notna()))
-].sort_values(col_orden, na_position='last')
-
-if muni_ref:
-    st.markdown(f"<div class='resumen-filtros'>📍 <b>{muni_ref}</b>  |  🚗 <b>{radio_km} km</b>  |  ⛽ <b>{tipo_combustible}</b></div>", unsafe_allow_html=True)
-
-if not res.empty:
-    for _, g in res.head(20).iterrows():
-        with st.container(border=True):
-            col_info, col_btn = st.columns([2.4, 1.6], vertical_alignment="center")
-            with col_info:
-                # AQUÍ ESTÁ EL CAMBIO: Rótulo + Municipio
-                st.write(f"### {g['Rótulo']} - {g['Municipio']}")
-                p_diesel = f"{g['Precio Gasoleo A']} €" if pd.notnull(g['Precio_Diesel']) else "N/A"
-                p_g95 = f"{g['Precio Gasolina 95 E5']} €" if pd.notnull(g['Precio_G95']) else "N/A"
-                st.write(f"⛽ **D:** {p_diesel} | **G95:** {p_g95}")
-                st.caption(f"📍 A {g['Distancia']:.2f} km | {g['Dirección']}")
-            with col_btn:
-                url_map = f"https://www.google.com/maps/dir/?api=1&destination={g['lat_num']},{g['lon_num']}"
-                st.link_button("🗺️ Ir allí", url_map, use_container_width=True)
-else:
-    st.warning(f"No hay resultados a {radio_km} km. Puedes cambiar el radio o el municipio en los Ajustes.")
-
-if fecha_act:
-    st.markdown(f"<div style='text-align: center; color: #a3a8b8; font-size: 0.75rem; margin-top: 25px;'>Última actualización MINETUR: {fecha_act.strftime('%d/%m/%Y %H:%M:%S')}</div>", unsafe_allow_html=True)
+        "Municipio:",
