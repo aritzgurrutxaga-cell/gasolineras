@@ -1,3 +1,4 @@
+
 import streamlit as st
 import requests
 import pandas as pd
@@ -53,10 +54,10 @@ st.markdown("""
             letter-spacing: -1px;
         }
         
-        /* DISEÑO DE LA CAJA DE TEXTO */
+        /* DISEÑO DE LA CAJA DE TEXTO (Ahora con más altura para que quepa bien el texto) */
         div[data-baseweb="select"] > div {
             padding: 10px 12px !important; 
-            min-height: 52px !important;   
+            min-height: 56px !important;   
             border-radius: 12px !important;
             font-size: 1.15rem !important;
             display: flex !important;
@@ -82,9 +83,9 @@ st.markdown("""
             color: #111;
         }
 
-        /* --- BOTÓN ROJO INICIAL (EL ANCHO Y GIGANTE) --- */
-        #btn_inicial_id {
-            min-height: 120px !important; 
+        /* --- BOTÓN ROJO INICIAL (ENCAPSULADO PARA QUE SEA GIGANTE SÓLO AQUÍ) --- */
+        .contenedor-inicio div[data-testid="stButton"] button[kind="primary"] {
+            min-height: 140px !important; 
             border-radius: 20px !important;
             font-weight: bold !important;
             width: 100% !important;
@@ -96,18 +97,18 @@ st.markdown("""
             background-color: #ff4b4b !important;
         }
         
-        .btn-text-main { font-size: 1.5rem !important; margin: 0 !important; }
-        .btn-text-sub { font-size: 0.85rem !important; font-weight: normal !important; opacity: 0.9; margin-top: 10px; }
-
-        /* --- BOTÓN BUSCAR EN AJUSTES (ESTRECHO) --- */
-        button.btn-buscar-ajustes {
-            min-height: 48px !important; 
-            height: 48px !important;
-            border-radius: 10px !important;
-            font-size: 1.1rem !important;
-            padding: 0px !important;
-            margin-top: 15px !important;
-            background-color: #ff4b4b !important;
+        .contenedor-inicio div[data-testid="stButton"] button[kind="primary"] p {
+            font-size: 1.6rem !important;
+            margin: 0 !important;
+        }
+        
+        .contenedor-inicio div[data-testid="stButton"] button[kind="primary"]::after {
+            content: "Es recomendable la ubicación para buscar";
+            font-size: 0.95rem !important;
+            font-weight: normal !important;
+            opacity: 0.9;
+            margin-top: 12px;
+            display: block;
         }
     </style>
 """, unsafe_allow_html=True)
@@ -119,7 +120,7 @@ if 'gps_fallido' not in st.session_state: st.session_state.gps_fallido = False
 if 'override_manual' not in st.session_state: st.session_state.override_manual = False
 if 'radio_km' not in st.session_state: st.session_state.radio_km = 5
 if 'tipo_combustible' not in st.session_state: st.session_state.tipo_combustible = "Diésel"
-if 'expander_state' not in st.session_state: st.session_state.expander_state = False
+if 'ajustes_abiertos' not in st.session_state: st.session_state.ajustes_abiertos = False # Control maestro del menú
 
 # LocalStorage
 muni_cache = streamlit_js_eval(js_expressions="parent.window.localStorage.getItem('muni_gasolineras')", key="get_muni_cache")
@@ -164,17 +165,12 @@ municipios_unicos = sorted(list(set([str(g["Municipio"]) for g in datos])))
 if not (estado_permiso == "granted" or st.session_state.municipio_guardado) and not st.session_state.solicitar_gps:
     st.markdown("<div class='titulo-app'>gasolina.eus</div>", unsafe_allow_html=True)
     
-    if st.button("📍 Mostrar gasolineras", use_container_width=True, type="primary", key="btn_init"):
+    # Encapsulamos el botón inicial para que las reglas de "Botón Gigante" solo se apliquen aquí
+    st.markdown('<div class="contenedor-inicio">', unsafe_allow_html=True)
+    if st.button("📍 Mostrar gasolineras", use_container_width=True, type="primary"):
         st.session_state.solicitar_gps = True
         st.rerun()
-    
-    st.markdown("""
-        <script>
-            var btn = window.parent.document.querySelectorAll('button[kind="primary"]')[0];
-            btn.id = "btn_inicial_id";
-            btn.innerHTML = '<div class="btn-text-main">📍 Mostrar gasolineras</div><div class="btn-text-sub">Es recomendable la ubicación para buscar</div>';
-        </script>
-    """, unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
     st.stop()
 
 # GPS
@@ -200,10 +196,6 @@ if not lat_gps and not st.session_state.municipio_guardado:
     
     municipio_sel = st.selectbox("Municipio:", options=municipios_unicos, index=None, placeholder="Buscar...", label_visibility="collapsed")
     
-    # TRUCO PARA BAJAR EL TECLADO AL SELECCIONAR
-    if municipio_sel:
-        st.markdown("<script>window.parent.document.activeElement.blur();</script>", unsafe_allow_html=True)
-
     if st.button("✅ Confirmar selección", type="primary", use_container_width=True):
         if municipio_sel:
             st.session_state.municipio_guardado = municipio_sel
@@ -227,34 +219,37 @@ else:
     fila = df[df["Municipio"] == muni_ref].iloc[0]
     lat_ref, lon_ref = fila["lat_num"], fila["lon_num"]
 
-# AJUSTES
-with st.expander("⚙️ Ajustes de búsqueda", expanded=st.session_state.expander_state):
-    nuevo_muni = st.selectbox("Cambiar municipio:", options=municipios_unicos, 
-                              index=municipios_unicos.index(muni_ref) if muni_ref in municipios_unicos else None)
-    
-    # Bajar teclado también en ajustes
-    if nuevo_muni != muni_ref:
-        st.markdown("<script>window.parent.document.activeElement.blur();</script>", unsafe_allow_html=True)
-    
-    nuevo_radio = st.radio("Radio de búsqueda:", [5, 10, 20, 50], 
-                           index=[5, 10, 20, 50].index(st.session_state.radio_km),
-                           format_func=lambda x: f"{x} km", horizontal=True)
-    
-    nuevo_tipo = st.radio("Ordenar por precio de:", ["Diésel", "G95"], 
-                          index=0 if st.session_state.tipo_combustible == "Diésel" else 1,
-                          horizontal=True)
-    
-    st.write("")
-    if st.button("🔍 Buscar", use_container_width=True, type="primary", key="btn_apply_ajustes"):
-        st.session_state.municipio_guardado = nuevo_muni
-        st.session_state.guardar_js = nuevo_muni
-        st.session_state.radio_km = nuevo_radio
-        st.session_state.tipo_combustible = nuevo_tipo
-        st.session_state.override_manual = True
-        st.session_state.expander_state = False 
-        st.rerun()
-    
-    st.markdown("<script>var b=window.parent.document.querySelectorAll('button[key=\"btn_apply_ajustes\"]')[0]; if(b) b.classList.add('btn-buscar-ajustes');</script>", unsafe_allow_html=True)
+# --- EL NUEVO MENÚ DE AJUSTES BLINDADO ---
+texto_boton_ajustes = "🔼 Cerrar Ajustes" if st.session_state.ajustes_abiertos else "⚙️ Ajustes de búsqueda"
+if st.button(texto_boton_ajustes, use_container_width=True):
+    st.session_state.ajustes_abiertos = not st.session_state.ajustes_abiertos
+    st.rerun()
+
+if st.session_state.ajustes_abiertos:
+    with st.container(border=True):
+        # El st.form bloquea que las cosas se apliquen o se recargue la página al tocar
+        with st.form("form_ajustes"):
+            nuevo_muni = st.selectbox("Cambiar municipio:", options=municipios_unicos, 
+                                      index=municipios_unicos.index(muni_ref) if muni_ref in municipios_unicos else None)
+            
+            nuevo_radio = st.radio("Radio de búsqueda:", [5, 10, 20, 50], 
+                                   index=[5, 10, 20, 50].index(st.session_state.radio_km),
+                                   format_func=lambda x: f"{x} km", horizontal=True)
+            
+            nuevo_tipo = st.radio("Ordenar por precio de:", ["Diésel", "G95"], 
+                                  index=0 if st.session_state.tipo_combustible == "Diésel" else 1,
+                                  horizontal=True)
+            
+            st.write("")
+            # Este es el ÚNICO botón que recarga la página y aplica los filtros
+            if st.form_submit_button("🔍 Buscar", use_container_width=True, type="primary"):
+                st.session_state.municipio_guardado = nuevo_muni
+                st.session_state.guardar_js = nuevo_muni
+                st.session_state.radio_km = nuevo_radio
+                st.session_state.tipo_combustible = nuevo_tipo
+                st.session_state.override_manual = True
+                st.session_state.ajustes_abiertos = False # Ordenamos cerrar el menú
+                st.rerun()
 
 # Lógica final
 col_orden = "Precio_Diesel" if st.session_state.tipo_combustible == "Diésel" else "Precio_G95"
