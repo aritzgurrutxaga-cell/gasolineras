@@ -15,7 +15,7 @@ def calcular_distancia(lat1, lon1, lat2, lon2):
     a = np.sin(dlat / 2)**2 + np.cos(np.radians(lat1)) * np.cos(np.radians(lat2)) * np.sin(dlon / 2)**2
     return R * 2 * np.arctan2(np.sqrt(a), np.sqrt(1 - a))
 
-# FUNCIÓN PARA CERRAR EL TECLADO (FORZADO)
+# FUNCIÓN PARA CERRAR EL TECLADO (FORZADO PARA MÓVILES)
 def cerrar_teclado_movil():
     components.html(
         """
@@ -40,7 +40,7 @@ class SSLAdapter(HTTPAdapter):
 # 1. Configuración de la página
 st.set_page_config(page_title="gasolina.eus", page_icon="⛽", layout="centered")
 
-# --- AJUSTES DE DISEÑO CSS ---
+# --- AJUSTES DE DISEÑO CSS (VERSIÓN ESTABLE) ---
 st.markdown("""
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@500;800&display=swap');
@@ -107,7 +107,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# --- INICIALIZACIÓN ---
+# --- INICIALIZACIÓN DE MEMORIA ---
 if 'solicitar_gps' not in st.session_state: st.session_state.solicitar_gps = False
 if 'municipio_guardado' not in st.session_state: st.session_state.municipio_guardado = None
 if 'gps_fallido' not in st.session_state: st.session_state.gps_fallido = False
@@ -116,7 +116,7 @@ if 'radio_km' not in st.session_state: st.session_state.radio_km = 5
 if 'tipo_combustible' not in st.session_state: st.session_state.tipo_combustible = "Diésel"
 if 'ajustes_abiertos' not in st.session_state: st.session_state.ajustes_abiertos = False
 
-# Caché persistente
+# Recuperar caché persistente
 muni_cache = streamlit_js_eval(js_expressions="parent.window.localStorage.getItem('muni_gasolineras')", key="get_muni_cache")
 if muni_cache and muni_cache != "null" and not st.session_state.municipio_guardado:
     st.session_state.municipio_guardado = muni_cache
@@ -165,12 +165,11 @@ if (estado_permiso == "granted" or st.session_state.solicitar_gps) and not (st.s
     else:
         st.session_state.gps_fallido = True; st.rerun()
 
-# --- PANTALLA 2: MANUAL ---
+# --- PANTALLA 2: SELECCIÓN MANUAL ---
 if not lat_gps and not st.session_state.municipio_guardado:
     st.markdown("<div class='titulo-app'>gasolina<span>.eus</span></div>", unsafe_allow_html=True)
     st.markdown("<p style='text-align: center; color: #64748b;'>📍 Escribe tu municipio:</p>", unsafe_allow_html=True)
     
-    # Al cambiar el municipio, se dispara el cierre del teclado
     muni_sel = st.selectbox("Municipio:", options=municipios_unicos, index=None, placeholder="Buscar...", label_visibility="collapsed")
     
     if muni_sel:
@@ -219,24 +218,28 @@ with st.expander("⚙️ Ajustes de búsqueda", expanded=st.session_state.ajuste
         st.session_state.override_manual = True
         st.session_state.ajustes_abiertos = False; st.rerun()
 
-# --- FILTRADO FLEXIBLE ---
+# --- FILTRADO FLEXIBLE Y ORDENACIÓN ---
 col_orden = "Precio_Diesel" if st.session_state.tipo_combustible == "Diésel" else "Precio_G95"
 df["Distancia"] = calcular_distancia(lat_ref, lon_ref, df["lat_num"], df["lon_num"])
 
-# Muestra TODO en el radio, ordenando por precio (las sin precio van al final)
+# Ranking por distancia, ordenando por precio (las sin precio van al final)
 res = df[df["Distancia"] <= st.session_state.radio_km].sort_values(col_orden, na_position='last')
 
+# Barra de resumen
 st.markdown(f"<div class='resumen-filtros'>📍 <b>{muni_ref}</b> | 🚗 <b>{st.session_state.radio_km} km</b> | ⛽ <b>{st.session_state.tipo_combustible}</b></div>", unsafe_allow_html=True)
 
+# Listado de tarjetas
 for _, g in res.head(20).iterrows():
     with st.container(border=True):
         c1, c2 = st.columns([2.5, 1.5], vertical_alignment="center")
         with c1:
-            st.write(f"#### {g['Rótulo']}")
-            st.write(f"<span style='color: #64748b; font-size: 0.9rem;'>{g['Municipio']}</span>", unsafe_allow_html=True)
+            # FORMATO ACTUALIZADO: Nombre - Municipio
+            st.write(f"#### {g['Rótulo']} - {g['Municipio']}")
+            
             p_diesel = f"{g['Precio Gasoleo A']}€" if pd.notnull(g['Precio_Diesel']) else "N/A"
             p_g95 = f"{g['Precio Gasolina 95 E5']}€" if pd.notnull(g['Precio_G95']) else "N/A"
             st.write(f"⛽ **D:** {p_diesel} | **G95:** {p_g95}")
             st.caption(f"📍 A {g['Distancia']:.2f} km")
         with c2:
+            # Enlace de navegación directa
             st.link_button("🗺️ Ir allí", f"https://www.google.com/maps/dir/?api=1&destination={g['lat_num']},{g['lon_num']}", use_container_width=True)
