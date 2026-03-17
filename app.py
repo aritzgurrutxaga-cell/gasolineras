@@ -26,7 +26,7 @@ class SSLAdapter(HTTPAdapter):
         return super(SSLAdapter, self).init_poolmanager(*args, **kwargs)
 
 # 1. Configuración de la página
-st.set_page_config(page_title="Buscador Gasolineras", page_icon="⛽", layout="centered")
+st.set_page_config(page_title="gasolina.eus", page_icon="⛽", layout="centered")
 
 # ==========================================
 # CSS MINIMALISTA Y LIMPIO
@@ -42,6 +42,18 @@ st.markdown("""
         /* Eliminar huecos de Javascript */
         iframe { display: none !important; height: 0px !important; }
         .element-container:has(iframe) { display: none !important; height: 0px !important; margin: 0 !important; }
+        
+        /* Título gasolina.eus */
+        .titulo-app {
+            text-align: center; 
+            font-size: clamp(28px, 9vw, 42px); 
+            white-space: nowrap; 
+            font-weight: 800;
+            margin-top: -1rem;
+            margin-bottom: 1.5rem;
+            color: #ff4b4b;
+            letter-spacing: -1px;
+        }
         
         /* DISEÑO DE LA CAJA DE TEXTO (Altura de 56px para que el municipio respire) */
         div[data-baseweb="select"] > div {
@@ -112,7 +124,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# --- INICIALIZACIÓN DE MEMORIA ---
+# --- INICIALIZACIÓN DE MEMORIA PRINCIPAL ---
 if 'solicitar_gps' not in st.session_state: st.session_state.solicitar_gps = False
 if 'municipio_guardado' not in st.session_state: st.session_state.municipio_guardado = None
 if 'gps_fallido' not in st.session_state: st.session_state.gps_fallido = False
@@ -161,9 +173,9 @@ municipios_unicos = sorted(list(set([str(g["Municipio"]) for g in datos])))
 # PANTALLA 1: INICIO 
 # ==========================================
 if not (estado_permiso == "granted" or st.session_state.municipio_guardado) and not st.session_state.solicitar_gps:
-    st.markdown("<h1 style='text-align: center; font-size: clamp(22px, 7vw, 38px); white-space: nowrap;'>⛽ Buscador Gasolineras</h1>", unsafe_allow_html=True)
+    st.markdown("<h1 style='text-align: center; font-size: clamp(22px, 7vw, 38px); white-space: nowrap; color: #ff4b4b; letter-spacing: -1px; margin-top: -1rem; margin-bottom: 1.5rem;'>gasolina.eus</h1>", unsafe_allow_html=True)
     
-    # Este es el único botón PRIMARY de toda la aplicación. Siempre será gigante.
+    # Este es el único botón PRIMARY. Siempre será gigante por el CSS.
     if st.button("📍 Mostrar gasolineras", use_container_width=True, type="primary"):
         st.session_state.solicitar_gps = True
         st.rerun()
@@ -175,7 +187,7 @@ lat_gps, lon_gps = None, None
 if (estado_permiso == "granted" or st.session_state.solicitar_gps) and not (gps_denegado or st.session_state.municipio_guardado or st.session_state.override_manual):
     loc = get_geolocation()
     if loc is None:
-        st.markdown("<h1 style='text-align: center; font-size: clamp(22px, 7vw, 38px); white-space: nowrap;'>⛽ Buscador Gasolineras</h1>", unsafe_allow_html=True)
+        st.markdown("<div class='titulo-app'>gasolina.eus</div>", unsafe_allow_html=True)
         st.info("⏳ Localizando tu posición...")
         st.stop()
     elif 'coords' not in loc:
@@ -187,12 +199,8 @@ if (estado_permiso == "granted" or st.session_state.solicitar_gps) and not (gps_
 
 # SELECCIÓN MANUAL (PRIMERA VEZ)
 if not lat_gps and not st.session_state.municipio_guardado:
-    st.markdown("""
-        <div style='text-align: center; margin-top: -1.5rem; margin-bottom: 0.5rem;'>
-            <h2 style='color: inherit; margin-bottom: 0; font-size: 1.6rem; white-space: nowrap;'>⛽ Buscador Gasolineras</h2>
-            <p style='color: inherit; opacity: 0.8; font-size: 0.95rem; margin-top: 5px;'>📍 Escribe tu municipio:</p>
-        </div>
-    """, unsafe_allow_html=True)
+    st.markdown("<div class='titulo-app'>gasolina.eus</div>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: center; opacity: 0.8;'>📍 Escribe tu municipio:</p>", unsafe_allow_html=True)
     
     municipio_sel = st.selectbox("Municipio:", options=municipios_unicos, index=None, placeholder="Buscar...", label_visibility="collapsed")
     
@@ -203,6 +211,10 @@ if not lat_gps and not st.session_state.municipio_guardado:
         if municipio_sel:
             st.session_state.municipio_guardado = municipio_sel
             st.session_state.guardar_js = municipio_sel
+            # Sincronizamos las variables de borrador para que el cajón empiece con buen pie
+            st.session_state.draft_muni = municipio_sel
+            st.session_state.draft_radio = st.session_state.radio_km
+            st.session_state.draft_tipo = st.session_state.tipo_combustible
             st.session_state.override_manual = True
             st.rerun()
     st.stop()
@@ -210,7 +222,7 @@ if not lat_gps and not st.session_state.municipio_guardado:
 # ==========================================
 # PANTALLA 3: RESULTADOS Y AJUSTES
 # ==========================================
-st.markdown("<h1 style='text-align: center; font-size: clamp(22px, 7vw, 38px); white-space: nowrap;'>⛽ Buscador Gasolineras</h1>", unsafe_allow_html=True)
+st.markdown("<div class='titulo-app'>gasolina.eus</div>", unsafe_allow_html=True)
 
 lat_ref, lon_ref, muni_ref = None, None, None
 if lat_gps and not st.session_state.override_manual:
@@ -222,31 +234,41 @@ else:
     fila = df[df["Municipio"] == muni_ref].iloc[0]
     lat_ref, lon_ref = fila["lat_num"], fila["lon_num"]
 
-# --- EL EXPANDER NATIVO (Sin variables forzadas que lo cierren) ---
+# --- INICIALIZACIÓN DE BORRADORES (DRAFT) ---
+# Si llegamos aquí por GPS o por primera vez, aseguramos que los borradores del menú coincidan con la realidad
+if 'draft_muni' not in st.session_state or st.session_state.draft_muni not in municipios_unicos:
+    st.session_state.draft_muni = muni_ref
+if 'draft_radio' not in st.session_state:
+    st.session_state.draft_radio = st.session_state.radio_km
+if 'draft_tipo' not in st.session_state:
+    st.session_state.draft_tipo = st.session_state.tipo_combustible
+
+# --- EL EXPANDER NATIVO Y BLINDADO ---
 with st.expander("⚙️ Ajustes de búsqueda"):
-    idx_muni = municipios_unicos.index(muni_ref) if muni_ref in municipios_unicos else 0
-    nuevo_muni = st.selectbox("Cambiar municipio:", options=municipios_unicos, index=idx_muni)
+    # Al usar 'key', Streamlit gestiona el estado automáticamente sin colapsar el menú
+    st.selectbox("Cambiar municipio:", options=municipios_unicos, key="draft_muni")
     
-    if nuevo_muni != muni_ref:
-        st.markdown("<script>window.parent.document.activeElement.blur();</script>", unsafe_allow_html=True)
-        
-    nuevo_radio = st.radio("Radio de búsqueda:", [5, 10, 20, 50], 
-                           index=[5, 10, 20, 50].index(st.session_state.radio_km),
-                           format_func=lambda x: f"{x} km", horizontal=True)
+    st.radio("Radio de búsqueda:", [5, 10, 20, 50], 
+             format_func=lambda x: f"{x} km", horizontal=True, key="draft_radio")
     
-    nuevo_tipo = st.radio("Ordenar por precio de:", ["Diésel", "G95"], 
-                          index=0 if st.session_state.tipo_combustible == "Diésel" else 1,
-                          horizontal=True)
+    st.radio("Ordenar por precio de:", ["Diésel", "G95"], 
+             horizontal=True, key="draft_tipo")
     
     st.write("")
-    # ESTE BOTÓN AHORA ES SECONDARY. Será gris, estrecho, y jamás heredará lo de "Obligatorio"
+    # Este botón vuelca los borradores a las variables principales y recarga la lista
     if st.button("🔍 Buscar", use_container_width=True, type="secondary"):
-        st.session_state.municipio_guardado = nuevo_muni
-        st.session_state.guardar_js = nuevo_muni
-        st.session_state.radio_km = nuevo_radio
-        st.session_state.tipo_combustible = nuevo_tipo
+        st.session_state.municipio_guardado = st.session_state.draft_muni
+        st.session_state.guardar_js = st.session_state.draft_muni
+        st.session_state.radio_km = st.session_state.draft_radio
+        st.session_state.tipo_combustible = st.session_state.draft_tipo
         st.session_state.override_manual = True
         st.rerun()
+
+# --- SCRIPT DE TECLADO MOVIDO FUERA DEL CAJÓN ---
+# Si el usuario ha cambiado el municipio en el borrador, bajamos el teclado. 
+# Al estar fuera del 'with st.expander', no muta su estructura y no lo cierra.
+if st.session_state.draft_muni != muni_ref:
+    st.markdown("<script>window.parent.document.activeElement.blur();</script>", unsafe_allow_html=True)
 
 # Lógica de filtrado
 col_orden = "Precio_Diesel" if st.session_state.tipo_combustible == "Diésel" else "Precio_G95"
