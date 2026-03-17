@@ -28,7 +28,9 @@ class SSLAdapter(HTTPAdapter):
 # 1. Configuración de la página
 st.set_page_config(page_title="gasolina.eus", page_icon="⛽", layout="centered")
 
-# AJUSTES DE DISEÑO CSS
+# ==========================================
+# CSS GLOBAL (Para toda la app)
+# ==========================================
 st.markdown("""
     <style>
         .block-container {
@@ -53,10 +55,10 @@ st.markdown("""
             letter-spacing: -1px;
         }
         
-        /* DISEÑO DE LA CAJA DE TEXTO (Altura de 56px para que el texto respire) */
+        /* DISEÑO CAJA DE TEXTO (60px de alto garantizados para que el texto respire) */
         div[data-baseweb="select"] > div {
-            padding: 10px 12px !important; 
-            min-height: 56px !important;   
+            padding: 12px 14px !important; 
+            min-height: 60px !important;   
             border-radius: 12px !important;
             font-size: 1.15rem !important;
             display: flex !important;
@@ -82,45 +84,18 @@ st.markdown("""
             color: #111;
         }
 
-        /* --- BOTÓN ROJO INICIAL GIGANTE (Con estilo de App Nativa 3D) --- */
-        .btn-gigante-container div[data-testid="stButton"] button {
-            min-height: 120px !important; 
-            border-radius: 20px !important;
-            width: 100% !important;
-            display: flex !important;
-            flex-direction: column !important;
-            align-items: center !important;
-            justify-content: center !important;
-            padding: 20px !important;
-            background: linear-gradient(135deg, #ff4b4b 0%, #e62e2e 100%) !important;
+        /* --- ESTILO POR DEFECTO PARA BOTONES ROJOS (Estrechos para Ajustes) --- */
+        div[data-testid="stButton"] button[kind="primary"] {
+            min-height: 48px !important; 
+            height: auto !important;
+            border-radius: 10px !important;
+            font-size: 1.1rem !important;
+            padding: 10px !important;
+            background-color: #ff4b4b !important;
             color: white !important;
-            border: 2px solid #ff7b7b !important;
-            box-shadow: 0 6px 14px rgba(255, 75, 75, 0.3) !important;
-            transition: all 0.1s ease-in-out !important;
+            border: none !important;
+            font-weight: bold !important;
         }
-        
-        /* Efecto al pulsar el botón gigante */
-        .btn-gigante-container div[data-testid="stButton"] button:active {
-            transform: scale(0.96) !important;
-            box-shadow: 0 2px 6px rgba(255, 75, 75, 0.3) !important;
-        }
-        
-        /* Textos del botón gigante */
-        .btn-gigante-container div[data-testid="stButton"] button p {
-            font-size: 1.5rem !important;
-            margin: 0 !important;
-            font-weight: 800 !important;
-        }
-        
-        .btn-gigante-container div[data-testid="stButton"] button::after {
-            content: "👆 Es recomendable la ubicación para buscar";
-            font-size: 0.95rem !important;
-            font-weight: normal !important;
-            opacity: 0.95;
-            margin-top: 10px;
-            display: block;
-        }
-
     </style>
 """, unsafe_allow_html=True)
 
@@ -129,8 +104,6 @@ if 'solicitar_gps' not in st.session_state: st.session_state.solicitar_gps = Fal
 if 'municipio_guardado' not in st.session_state: st.session_state.municipio_guardado = None
 if 'gps_fallido' not in st.session_state: st.session_state.gps_fallido = False
 if 'override_manual' not in st.session_state: st.session_state.override_manual = False
-
-# Variables de los ajustes guardadas en memoria para que no se reinicien solas
 if 'radio_km' not in st.session_state: st.session_state.radio_km = 5
 if 'tipo_combustible' not in st.session_state: st.session_state.tipo_combustible = "Diésel"
 
@@ -172,17 +145,52 @@ df["Precio_G95"] = pd.to_numeric(df["Precio Gasolina 95 E5"].str.replace(",", ".
 municipios_unicos = sorted(list(set([str(g["Municipio"]) for g in datos])))
 
 # ==========================================
-# PANTALLA 1: INICIO (Con el Botón Gigante Aislado)
+# PANTALLA 1: INICIO (Con el Botón Indestructible)
 # ==========================================
 if not (estado_permiso == "granted" or st.session_state.municipio_guardado) and not st.session_state.solicitar_gps:
+    
+    # ESTE CSS SOLO EXISTE AQUÍ. TRANSFORMA EL BOTÓN EN GIGANTE.
+    st.markdown("""
+        <style>
+            div.block-container div[data-testid="stButton"] button[kind="primary"] {
+                min-height: 140px !important; 
+                border-radius: 20px !important;
+                background: linear-gradient(135deg, #ff4b4b 0%, #e62e2e 100%) !important;
+                box-shadow: 0 8px 16px rgba(255, 75, 75, 0.4) !important;
+                border: 3px solid #ff7b7b !important;
+                display: flex !important;
+                flex-direction: column !important;
+                align-items: center !important;
+                justify-content: center !important;
+                transition: all 0.1s ease-in-out !important;
+            }
+            div.block-container div[data-testid="stButton"] button[kind="primary"]:active {
+                transform: scale(0.96) !important;
+                box-shadow: 0 2px 6px rgba(255, 75, 75, 0.4) !important;
+            }
+            div.block-container div[data-testid="stButton"] button[kind="primary"] p {
+                font-size: 1.6rem !important;
+                font-weight: 900 !important;
+                margin: 0 !important;
+                text-transform: uppercase;
+            }
+            div.block-container div[data-testid="stButton"] button[kind="primary"]::after {
+                content: "👆 Es recomendable la ubicación para buscar";
+                font-size: 0.95rem !important;
+                font-weight: normal !important;
+                opacity: 0.95;
+                margin-top: 10px;
+                display: block;
+            }
+        </style>
+    """, unsafe_allow_html=True)
+
     st.markdown("<div class='titulo-app'>gasolina.eus</div>", unsafe_allow_html=True)
     
-    # Encapsulamos el botón en el contenedor CSS para que sea enorme y parezca un botón real
-    st.markdown('<div class="btn-gigante-container">', unsafe_allow_html=True)
+    # Creamos el botón normal. El CSS de arriba lo obligará a ser gigante y le pondrá el subtítulo.
     if st.button("📍 Mostrar gasolineras", use_container_width=True, type="primary"):
         st.session_state.solicitar_gps = True
         st.rerun()
-    st.markdown('</div>', unsafe_allow_html=True)
     st.stop()
 
 # ==========================================
@@ -238,9 +246,7 @@ else:
     fila = df[df["Municipio"] == muni_ref].iloc[0]
     lat_ref, lon_ref = fila["lat_num"], fila["lon_num"]
 
-# --- EL EXPANDER CLÁSICO SIN FORZAR CIERRES ---
-# Ya no le pasamos el parámetro 'expanded'. Así Streamlit lo gestiona de forma nativa 
-# y no se cerrará al tocar las opciones de dentro.
+# --- EL EXPANDER CLÁSICO (Sin forzar variables que lo rompan) ---
 with st.expander("⚙️ Ajustes de búsqueda"):
     idx_muni = municipios_unicos.index(muni_ref) if muni_ref in municipios_unicos else 0
     nuevo_muni = st.selectbox("Cambiar municipio:", options=municipios_unicos, index=idx_muni)
@@ -265,7 +271,7 @@ with st.expander("⚙️ Ajustes de búsqueda"):
         st.session_state.override_manual = True
         st.rerun()
 
-# Lógica de filtrado (Muestra si tiene AL MENOS el precio del combustible elegido)
+# Lógica de filtrado
 col_orden = "Precio_Diesel" if st.session_state.tipo_combustible == "Diésel" else "Precio_G95"
 df["Distancia"] = calcular_distancia(lat_ref, lon_ref, df["lat_num"], df["lon_num"])
 res = df[
