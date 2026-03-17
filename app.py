@@ -69,11 +69,6 @@ st.markdown("""
             justify-content: space-between !important;
             gap: 2px !important;
         }
-        div[data-testid="stHorizontalBlock"] div[data-testid="stRadio"] label {
-            padding: 5px 8px !important;
-            font-size: 0.85rem !important;
-            white-space: nowrap !important;
-        }
 
         .resumen-filtros {
             text-align: center; 
@@ -86,8 +81,8 @@ st.markdown("""
             color: #111;
         }
 
-        /* BOTÓN ROJO DE INICIO */
-        div[data-testid="stButton"] button[kind="primary"] {
+        /* --- BOTÓN ROJO DE INICIO (Con texto "Recomendable") --- */
+        div[data-testid="stButton"] button[kind="primary"].inicio-btn {
             min-height: 100px !important; 
             border-radius: 15px !important;
             font-weight: bold !important;
@@ -96,22 +91,31 @@ st.markdown("""
             flex-direction: column !important;
             align-items: center !important;
             justify-content: center !important;
-            line-height: 1.2 !important;
             padding: 20px !important;
         }
         
-        div[data-testid="stButton"] button[kind="primary"] p {
+        div[data-testid="stButton"] button[kind="primary"].inicio-btn p {
             font-size: 1.4rem !important;
             margin: 0 !important;
         }
         
-        div[data-testid="stButton"] button[kind="primary"]::after {
-            content: "Es necesaria la ubicación para buscar";
+        div[data-testid="stButton"] button[kind="primary"].inicio-btn::after {
+            content: "Es recomendable la ubicación para buscar";
             font-size: 0.85rem !important;
             font-weight: normal !important;
             opacity: 0.9;
             margin-top: 8px;
             display: block;
+        }
+
+        /* --- BOTÓN BUSCAR AJUSTES (Más estrecho y sin subtexto) --- */
+        div[data-testid="stButton"] button[kind="primary"].buscar-ajustes {
+            min-height: 45px !important; 
+            height: 45px !important;
+            border-radius: 10px !important;
+            font-size: 1rem !important;
+            padding: 0px !important;
+            margin-top: 10px !important;
         }
     </style>
 """, unsafe_allow_html=True)
@@ -121,9 +125,10 @@ if 'solicitar_gps' not in st.session_state: st.session_state.solicitar_gps = Fal
 if 'municipio_guardado' not in st.session_state: st.session_state.municipio_guardado = None
 if 'gps_fallido' not in st.session_state: st.session_state.gps_fallido = False
 if 'override_manual' not in st.session_state: st.session_state.override_manual = False
-if 'ajustes_abiertos' not in st.session_state: st.session_state.ajustes_abiertos = False
 if 'radio_km' not in st.session_state: st.session_state.radio_km = 5
 if 'tipo_combustible' not in st.session_state: st.session_state.tipo_combustible = "Diésel"
+# Variable para controlar la apertura del expander
+if 'expander_state' not in st.session_state: st.session_state.expander_state = False
 
 # Recuperar caché persistente
 muni_cache = streamlit_js_eval(js_expressions="parent.window.localStorage.getItem('muni_gasolineras')", key="get_muni_cache")
@@ -140,34 +145,6 @@ if 'guardar_js' in st.session_state and st.session_state.guardar_js:
 js_permiso = "navigator.permissions ? navigator.permissions.query({name: 'geolocation'}).then(res => res.state) : 'prompt'"
 estado_permiso = streamlit_js_eval(js_expressions=js_permiso, key="permiso_gps")
 gps_denegado = (estado_permiso == "denied") or st.session_state.gps_fallido
-
-# ==========================================
-# PANTALLAS
-# ==========================================
-
-# ESTADO 1: INICIO
-if not (estado_permiso == "granted" or st.session_state.municipio_guardado) and not st.session_state.solicitar_gps:
-    st.markdown("<div class='titulo-app'>⛽ Buscador Gasolineras</div>", unsafe_allow_html=True)
-    if st.button("📍 Mostrar gasolineras", use_container_width=True, type="primary"):
-        st.session_state.solicitar_gps = True
-        st.rerun()
-    st.stop()
-
-# PROCESO GPS
-loc = None
-lat_gps, lon_gps = None, None
-if (estado_permiso == "granted" or st.session_state.solicitar_gps) and not (gps_denegado or st.session_state.municipio_guardado or st.session_state.override_manual):
-    loc = get_geolocation()
-    if loc is None:
-        st.markdown("<div class='titulo-app'>⛽ Buscador Gasolineras</div>", unsafe_allow_html=True)
-        st.info("⏳ Localizando...")
-        st.stop()
-    elif 'coords' not in loc:
-        st.session_state.gps_fallido = True
-        gps_denegado = True
-        st.rerun()
-    else:
-        lat_gps, lon_gps = loc['coords']['latitude'], loc['coords']['longitude']
 
 # CARGA DE DATOS
 @st.cache_data(ttl=3600)
@@ -192,6 +169,38 @@ df["Precio_Diesel"] = pd.to_numeric(df["Precio Gasoleo A"].str.replace(",", ".")
 df["Precio_G95"] = pd.to_numeric(df["Precio Gasolina 95 E5"].str.replace(",", "."), errors='coerce')
 municipios_unicos = sorted(list(set([str(g["Municipio"]) for g in datos])))
 
+# ==========================================
+# ESTADO 1: INICIO
+# ==========================================
+if not (estado_permiso == "granted" or st.session_state.municipio_guardado) and not st.session_state.solicitar_gps:
+    st.markdown("<div class='titulo-app'>⛽ Buscador Gasolineras</div>", unsafe_allow_html=True)
+    
+    # Botón con clase CSS específica para el inicio
+    st.markdown('<div class="inicio-wrapper">', unsafe_allow_html=True)
+    if st.button("📍 Mostrar gasolineras", use_container_width=True, type="primary", key="btn_inicio"):
+        st.session_state.solicitar_gps = True
+        st.rerun()
+    st.markdown('</div>', unsafe_allow_html=True)
+    # Hack para aplicar la clase CSS al botón de inicio solamente
+    st.markdown("<script>document.querySelectorAll('button[kind=\"primary\"]')[0].classList.add('inicio-btn')</script>", unsafe_allow_html=True)
+    st.stop()
+
+# PROCESO GPS
+loc = None
+lat_gps, lon_gps = None, None
+if (estado_permiso == "granted" or st.session_state.solicitar_gps) and not (gps_denegado or st.session_state.municipio_guardado or st.session_state.override_manual):
+    loc = get_geolocation()
+    if loc is None:
+        st.markdown("<div class='titulo-app'>⛽ Buscador Gasolineras</div>", unsafe_allow_html=True)
+        st.info("⏳ Localizando...")
+        st.stop()
+    elif 'coords' not in loc:
+        st.session_state.gps_fallido = True
+        gps_denegado = True
+        st.rerun()
+    else:
+        lat_gps, lon_gps = loc['coords']['latitude'], loc['coords']['longitude']
+
 # ESTADO 2: SELECCIÓN MANUAL (PRIMERA VEZ)
 if not lat_gps and not st.session_state.municipio_guardado:
     st.markdown("<div class='titulo-app'>⛽ Buscador Gasolineras</div>", unsafe_allow_html=True)
@@ -208,7 +217,6 @@ if not lat_gps and not st.session_state.municipio_guardado:
 # ESTADO 3: RESULTADOS
 st.markdown("<div class='titulo-app'>⛽ Buscador Gasolineras</div>", unsafe_allow_html=True)
 
-# Lógica de referencia
 lat_ref, lon_ref, muni_ref = None, None, None
 if lat_gps and not st.session_state.override_manual:
     lat_ref, lon_ref = lat_gps, lon_gps
@@ -219,35 +227,34 @@ else:
     fila = df[df["Municipio"] == muni_ref].iloc[0]
     lat_ref, lon_ref = fila["lat_num"], fila["lon_num"]
 
-# CAJÓN DE AJUSTES REFORMADO
-with st.expander("⚙️ Ajustes de búsqueda", expanded=st.session_state.ajustes_abiertos):
-    # 1. Municipio
+# AJUSTES DE BÚSQUEDA
+with st.expander("⚙️ Ajustes de búsqueda", expanded=st.session_state.expander_state):
     nuevo_muni = st.selectbox("Cambiar municipio:", options=municipios_unicos, 
                               index=municipios_unicos.index(muni_ref) if muni_ref in municipios_unicos else None)
     
-    # 2. Radio (Forzado en una fila por CSS)
     nuevo_radio = st.radio("Radio de búsqueda:", [5, 10, 20, 50], 
                            index=[5, 10, 20, 50].index(st.session_state.radio_km),
                            format_func=lambda x: f"{x} km", horizontal=True)
     
-    # 3. Combustible
     nuevo_tipo = st.radio("Ordenar por precio de:", ["Diésel", "G95"], 
                           index=0 if st.session_state.tipo_combustible == "Diésel" else 1,
                           horizontal=True)
     
     st.write("")
-    # BOTÓN BUSCAR FINAL
-    if st.button("🔍 Buscar", use_container_width=True, type="primary"):
+    if st.button("🔍 Buscar", use_container_width=True, type="primary", key="btn_buscar_ajustes"):
+        # Solo aquí actualizamos el estado y cerramos el cajón
         st.session_state.municipio_guardado = nuevo_muni
         st.session_state.guardar_js = nuevo_muni
         st.session_state.radio_km = nuevo_radio
         st.session_state.tipo_combustible = nuevo_tipo
         st.session_state.override_manual = True
-        # Truco para cerrar el expander: forzamos el estado a falso
-        st.session_state.ajustes_abiertos = False
+        st.session_state.expander_state = False # Cerramos el cajón
         st.rerun()
+    
+    # Inyectamos clase para el botón de buscar ajustes
+    st.markdown("<script>document.querySelectorAll('button[kind=\"primary\"]').forEach(b => { if(b.innerText.includes('Buscar')) b.classList.add('buscar-ajustes') })</script>", unsafe_allow_html=True)
 
-# Filtrado y ordenación
+# Filtrado final
 col_orden = "Precio_Diesel" if st.session_state.tipo_combustible == "Diésel" else "Precio_G95"
 df["Distancia"] = calcular_distancia(lat_ref, lon_ref, df["lat_num"], df["lon_num"])
 res = df[
@@ -255,10 +262,8 @@ res = df[
     ((df["Precio_Diesel"].notna()) | (df["Precio_G95"].notna()))
 ].sort_values(col_orden, na_position='last')
 
-# Barra de resumen
 st.markdown(f"<div class='resumen-filtros'>📍 <b>{muni_ref}</b> | 🚗 <b>{st.session_state.radio_km} km</b> | ⛽ <b>{st.session_state.tipo_combustible}</b></div>", unsafe_allow_html=True)
 
-# Listado de tarjetas
 for _, g in res.head(20).iterrows():
     with st.container(border=True):
         c1, c2 = st.columns([2.5, 1.5], vertical_alignment="center")
