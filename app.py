@@ -26,7 +26,7 @@ class SSLAdapter(HTTPAdapter):
         return super(SSLAdapter, self).init_poolmanager(*args, **kwargs)
 
 # 1. Configuración de la página
-st.set_page_config(page_title="Buscador Gasolineras", page_icon="⛽", layout="centered")
+st.set_page_config(page_title="gasolina.eus", page_icon="⛽", layout="centered")
 
 # AJUSTES DE DISEÑO CSS
 st.markdown("""
@@ -106,7 +106,7 @@ st.markdown("""
         }
         
         div[data-testid="stButton"] button[kind="primary"]::after {
-            content: "Es necesaria la ubicación para buscar";
+            content: "Es recomendable la ubicación para buscar";
             font-size: 0.85rem !important;
             font-weight: normal !important;
             opacity: 0.9;
@@ -147,7 +147,7 @@ gps_denegado = (estado_permiso == "denied") or st.session_state.gps_fallido
 
 # ESTADO 1: INICIO
 if not (estado_permiso == "granted" or st.session_state.municipio_guardado) and not st.session_state.solicitar_gps:
-    st.markdown("<div class='titulo-app'>⛽ Buscador Gasolineras</div>", unsafe_allow_html=True)
+    st.markdown("<div class='titulo-app'>⛽ gasolina.eus</div>", unsafe_allow_html=True)
     if st.button("📍 Mostrar gasolineras", use_container_width=True, type="primary"):
         st.session_state.solicitar_gps = True
         st.rerun()
@@ -159,7 +159,7 @@ lat_gps, lon_gps = None, None
 if (estado_permiso == "granted" or st.session_state.solicitar_gps) and not (gps_denegado or st.session_state.municipio_guardado or st.session_state.override_manual):
     loc = get_geolocation()
     if loc is None:
-        st.markdown("<div class='titulo-app'>⛽ Buscador Gasolineras</div>", unsafe_allow_html=True)
+        st.markdown("<div class='titulo-app'>⛽ gasolina.eus</div>", unsafe_allow_html=True)
         st.info("⏳ Localizando...")
         st.stop()
     elif 'coords' not in loc:
@@ -194,7 +194,7 @@ municipios_unicos = sorted(list(set([str(g["Municipio"]) for g in datos])))
 
 # ESTADO 2: SELECCIÓN MANUAL (PRIMERA VEZ)
 if not lat_gps and not st.session_state.municipio_guardado:
-    st.markdown("<div class='titulo-app'>⛽ Buscador Gasolineras</div>", unsafe_allow_html=True)
+    st.markdown("<div class='titulo-app'>⛽ gasolina.eus</div>", unsafe_allow_html=True)
     st.markdown("<p style='text-align: center;'>📍 Escribe tu municipio:</p>", unsafe_allow_html=True)
     municipio_sel = st.selectbox("Municipio:", options=municipios_unicos, index=None, placeholder="Buscar...", label_visibility="collapsed")
     if st.button("✅ Confirmar selección", type="primary", use_container_width=True):
@@ -206,7 +206,7 @@ if not lat_gps and not st.session_state.municipio_guardado:
     st.stop()
 
 # ESTADO 3: RESULTADOS
-st.markdown("<div class='titulo-app'>⛽ Buscador Gasolineras</div>", unsafe_allow_html=True)
+st.markdown("<div class='titulo-app'>⛽ gasolina.eus</div>", unsafe_allow_html=True)
 
 # Lógica de referencia
 lat_ref, lon_ref, muni_ref = None, None, None
