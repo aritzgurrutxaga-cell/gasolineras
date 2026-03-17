@@ -70,7 +70,7 @@ st.markdown("""
             font-family: 'Poppins', sans-serif; font-weight: 500;
         }
         
-        /* BOTÓN DE NAVEGACIÓN REFINADO (ADAPTATIVO Y PEQUEÑO) */
+        /* BOTÓN DE NAVEGACIÓN REFINADO Y POSICIONADO (DEFINITIVO) */
         .btn-navegar {
             display: inline-flex;
             align-items: center;
@@ -84,8 +84,12 @@ st.markdown("""
             font-size: 0.85rem;
             padding: 0.5rem 0.7rem;
             text-decoration: none !important;
-            width: 95%; /* Un poco menos del total para no tocar bordes */
-            margin: 0 auto;
+            
+            /* Ajuste de Posicionamiento Final */
+            width: auto; /* Ancho intrínseco para centrado horizontal */
+            max-width: 140px; /* Limita ancho para no congestionar */
+            margin: 1.2rem auto 0.5rem auto !important; /* Centrado horizontal + margen top/bottom para separar */
+            
             transition: all 0.2s;
         }
         .btn-navegar:hover { background-color: #f1f5f9 !important; border-color: #cbd5e1; }
@@ -99,11 +103,12 @@ st.markdown("""
             font-family: 'Poppins', sans-serif; font-weight: 500;
         }
 
-        /* TARJETAS */
+        /* TARJETAS CON SEGURIDAD INFERIOR */
         div[data-testid="stVerticalBlockBorderWrapper"] > div {
             background-color: #ffffff !important; border: 1px solid #f1f5f9 !important;
             border-radius: 16px !important; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04) !important;
-            padding: 0.8rem !important; margin-bottom: 0.5rem !important;
+            padding: 0.8rem 0.8rem 1.1rem 0.8rem !important; /* Aumentado padding inferior para seguridad */
+            margin-bottom: 0.5rem !important;
         }
 
         /* BOTÓN PRINCIPAL */
@@ -242,15 +247,21 @@ for _, g in res.head(20).iterrows():
         c1, c2 = st.columns([2.5, 1.5], vertical_alignment="center")
         with c1:
             st.write(f"#### {g['Rótulo']} - {g['Municipio']}")
+            
+            # Ajuste de Márgenes en Precios
             p_diesel = f"{g['Precio Gasoleo A']}€" if pd.notnull(g['Precio_Diesel']) else "N/A"
             p_g95 = f"{g['Precio Gasolina 95 E5']}€" if pd.notnull(g['Precio_G95']) else "N/A"
-            st.write(f"⛽ **D:** {p_diesel} | **G95:** {p_g95}")
+            st.markdown(f"<p style='margin: 0.5rem 0;'>⛽ **D:** {p_diesel} | **G95:** {p_g95}</p>", unsafe_allow_html=True)
+            
             st.caption(f"📍 A {g['Distancia']:.2f} km")
         with c2:
             maps_url = f"https://www.google.com/maps/dir/?api=1&destination={g['lat_num']},{g['lon_num']}"
+            # TRUCO: Un div con text-align center para forzar el centrado horizontal del link en la columna
             st.markdown(f"""
-                <a href="{maps_url}" target="_blank" class="btn-navegar">
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/a/aa/Google_Maps_icon_%282020%29.svg">
-                    Navegar
-                </a>
+                <div style="text-align: center;">
+                    <a href="{maps_url}" target="_blank" class="btn-navegar">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/a/aa/Google_Maps_icon_%282020%29.svg">
+                        Navegar
+                    </a>
+                </div>
             """, unsafe_allow_html=True)
