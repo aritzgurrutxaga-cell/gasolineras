@@ -5,7 +5,7 @@ import numpy as np
 import os
 import datetime
 import pytz
-from streamlit_js_eval import get_geolocation
+from streamlit_js_eval import get_geolocation, streamlit_js_eval
 from requests.adapters import HTTPAdapter
 from urllib3.util.ssl_ import create_urllib3_context
 
@@ -24,13 +24,33 @@ st.set_page_config(page_title="Buscador Gasolineras", page_icon="⛽", layout="c
 # AJUSTES DE ESPACIADO PRECISOS Y DISEÑO CSS
 st.markdown("""
     <style>
-        .block-container {padding-top: 2rem; padding-bottom: 2rem;}
+        /* Eliminación agresiva del espacio superior de Streamlit */
+        .block-container {
+            padding-top: 1rem !important; 
+            padding-bottom: 2rem !important;
+            margin-top: 0rem !important;
+        }
+        header {visibility: hidden !important;}
+        #MainMenu {visibility: hidden !important;}
+        
+        /* --- ELIMINAR HUECOS FANTASMAS DE JAVASCRIPT --- */
+        /* Streamlit crea cajas invisibles para ejecutar JS, esto las aplasta a 0px */
+        iframe {
+            display: none !important;
+            height: 0px !important;
+        }
+        .element-container:has(iframe) {
+            display: none !important;
+            height: 0px !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+        
         div[data-testid="stRadio"] > label {font-weight: bold; margin-bottom: -0.5rem;}
         div[data-testid="stRadio"] {margin-bottom: 0.5rem;}
         hr {margin-top: 0.5rem; margin-bottom: 1rem;}
         h1 {margin-top: -1rem; margin-bottom: 0.5rem;}
         
-        /* Estilo para la nueva barra de resumen visual */
         .resumen-filtros {
             text-align: center; 
             color: #444; 
@@ -41,10 +61,24 @@ st.markdown("""
             border-radius: 8px;
             border: 1px solid #e0e0e0;
         }
+
+        /* --- CSS PARA EL BOTÓN GIGANTE --- */
+        div[data-testid="stButton"] button[kind="primary"] {
+            font-size: 1.4rem !important;
+            font-weight: bold !important;
+            padding: 1.5rem !important;
+            border-radius: 12px !important;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15) !important;
+            transition: all 0.2s ease-in-out !important;
+        }
+        div[data-testid="stButton"] button[kind="primary"]:hover {
+            transform: scale(1.02);
+            box-shadow: 0 6px 14px rgba(0,0,0,0.2) !important;
+        }
     </style>
 """, unsafe_allow_html=True)
 
-# Título
+# Título SIEMPRE VISIBLE
 st.markdown(
     """
     <h1 style='text-align: center; font-size: clamp(22px, 7vw, 38px);'>
@@ -54,8 +88,64 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# 2. Carga de Datos
-@st.cache_data(ttl=3600, show_spinner="Actualizando precios...")
+# --- INICIALIZACIÓN DE MEMORIA Y LOCAL STORAGE ---
+if 'solicitar_gps' not in st.session_state:
+    st.session_state.solicitar_gps = False
+if 'municipio_guardado' not in st.session_state:
+    st.session_state.municipio_guardado = None
+if 'gps_fallido' not in st.session_state:
+    st.session_state.gps_fallido = False
+
+# Recuperamos la caché persistente del navegador (Esto creaba un hueco fantasma)
+muni_cache = streamlit_js_eval(js_expressions="parent.window.localStorage.getItem('muni_gasolineras')", key="get_muni_cache")
+if muni_cache and muni_cache != "null" and not st.session_state.municipio_guardado:
+    st.session_state.municipio_guardado = muni_cache
+
+# Lógica oculta para guardar en la caché permanente (Esto creaba otro hueco)
+if 'guardar_js' in st.session_state and st.session_state.guardar_js:
+    js_code = f"parent.window.localStorage.setItem('muni_gasolineras', '{st.session_state.guardar_js}')"
+    streamlit_js_eval(js_expressions=js_code, key=f"set_{st.session_state.guardar_js}")
+    st.session_state.guardar_js = None
+
+# Consultar estado de los permisos de ubicación (Y otro hueco más)
+js_permiso = "navigator.permissions ? navigator.permissions.query({name: 'geolocation'}).then(res => res.state) : 'prompt'"
+estado_permiso = streamlit_js_eval(js_expressions=js_permiso, key="permiso_gps")
+
+gps_denegado = (estado_permiso == "denied") or st.session_state.gps_fallido
+
+# ==========================================
+# ESTADO 1: PANTALLA INICIAL PURA
+# ==========================================
+if not st.session_state.solicitar_gps and not st.session_state.municipio_guardado:
+    st.markdown("<h3 style='text-align: center; color: #555; font-size: 1.1rem; margin-top: 1.5rem; margin-bottom: 1rem;'>Descubre al instante dónde repostar más barato</h3>", unsafe_allow_html=True)
+    if st.button("📍 Mostrar gasolineras", use_container_width=True, type="primary"):
+        st.session_state.solicitar_gps = True
+        st.rerun()
+    st.stop() 
+
+# ==========================================
+# PROCESAMIENTO DE UBICACIÓN
+# ==========================================
+loc = None
+lat_gps, lon_gps = None, None
+
+if not gps_denegado and not st.session_state.municipio_guardado:
+    loc = get_geolocation()
+    if loc is None:
+        st.info("⏳ Localizando tu posición...")
+        st.stop() 
+    elif 'coords' not in loc:
+        st.session_state.gps_fallido = True
+        gps_denegado = True
+        st.rerun() 
+    else:
+        lat_gps = loc['coords']['latitude']
+        lon_gps = loc['coords']['longitude']
+
+# ==========================================
+# CARGA DE DATOS 
+# ==========================================
+@st.cache_data(ttl=3600, show_spinner="Descargando precios oficiales...")
 def cargar_datos():
     url = "https://sedeaplicaciones.minetur.gob.es/ServiciosRESTCarburantes/PreciosCarburantes/EstacionesTerrestres/"
     headers = {'User-Agent': 'Mozilla/5.0'}
@@ -86,94 +176,132 @@ def calcular_distancia(lat1, lon1, lat2, lon2):
 
 datos, fecha_act = cargar_datos()
 
-if datos:
-    df = pd.DataFrame(datos)
-    df["lat_num"] = pd.to_numeric(df["Latitud"].str.replace(",", "."), errors='coerce')
-    df["lon_num"] = pd.to_numeric(df["Longitud (WGS84)"].str.replace(",", "."), errors='coerce')
-    df["Precio_Diesel"] = pd.to_numeric(df["Precio Gasoleo A"].str.replace(",", "."), errors='coerce')
-    df["Precio_G95"] = pd.to_numeric(df["Precio Gasolina 95 E5"].str.replace(",", "."), errors='coerce')
-    
-    municipios_unicos = sorted(list(set([str(g["Municipio"]) for g in datos])))
-
-    loc = get_geolocation()
-    lat_gps, lon_gps, muni_gps = None, None, None
-
-    if loc and 'coords' in loc:
-        lat_gps = loc['coords']['latitude']
-        lon_gps = loc['coords']['longitude']
-        df["dist_temp"] = calcular_distancia(lat_gps, lon_gps, df["lat_num"], df["lon_num"])
-        muni_gps = df.sort_values("dist_temp").iloc[0]["Municipio"]
-
-    # --- BLOQUE CONFIGURACIÓN EN ACORDEÓN ---
-    # CAMBIO: expanded=False fuerza a que SIEMPRE aparezca minimizado al entrar
-    with st.expander("⚙️ Ajustes de Búsqueda (Ubicación, Distancia, Combustible)", expanded=False):
-        st.write("Configura tus preferencias para encontrar los mejores precios:")
-        
-        # Ubicación
-        idx = municipios_unicos.index(muni_gps) if muni_gps in municipios_unicos else None
-        municipio_manual = st.selectbox("📍 Ubicación:", options=municipios_unicos, index=idx)
-        
-        if lat_gps and (municipio_manual == muni_gps or municipio_manual is None):
-            lat_ref, lon_ref = lat_gps, lon_gps
-            st.success("✅ GPS Activo")
-        elif municipio_manual:
-            ref = df[df["Municipio"] == municipio_manual].iloc[0]
-            lat_ref, lon_ref = ref["lat_num"], ref["lon_num"]
-        else:
-            lat_ref, lon_ref = None, None
-
-        # Filtros divididos en dos columnas
-        col_km, col_gas = st.columns(2)
-        
-        with col_km:
-            radio_km = st.radio(
-                "Radio de búsqueda:",
-                options=[5, 10, 20, 50],
-                format_func=lambda x: f"{x} km",
-                index=0, 
-                horizontal=True
-            )
-            
-        with col_gas:
-            tipo_combustible = st.radio(
-                "Ordenar por precio de:", 
-                ["Diésel", "G95"], 
-                horizontal=True
-            )
-
-    col_orden = "Precio_Diesel" if tipo_combustible == "Diésel" else "Precio_G95"
-
-    # --- RESULTADOS ---
-    if lat_ref and lon_ref:
-        df["Distancia"] = calcular_distancia(lat_ref, lon_ref, df["lat_num"], df["lon_num"])
-        res = df[
-            (df["Distancia"] <= radio_km) & 
-            ((df["Precio_Diesel"].notna()) | (df["Precio_G95"].notna()))
-        ].sort_values(col_orden, na_position='last')
-
-        # BARRA DE RESUMEN VISUAL
-        muni_mostrar = municipio_manual if municipio_manual else muni_gps
-        if muni_mostrar: # Solo mostramos el resumen si ya sabemos qué municipio buscar
-            st.markdown(f"<div class='resumen-filtros'>📍 <b>{muni_mostrar}</b>  |  🚗 <b>{radio_km} km</b>  |  ⛽ <b>{tipo_combustible}</b></div>", unsafe_allow_html=True)
-        
-        if not res.empty:
-            for _, g in res.head(20).iterrows():
-                with st.container(border=True):
-                    col_info, col_btn = st.columns([2.4, 1.6], vertical_alignment="center")
-                    with col_info:
-                        st.write(f"### {g['Rótulo']} - {g['Municipio']}")
-                        p_diesel = f"{g['Precio Gasoleo A']} €" if pd.notnull(g['Precio_Diesel']) else "N/A"
-                        p_g95 = f"{g['Precio Gasolina 95 E5']} €" if pd.notnull(g['Precio_G95']) else "N/A"
-                        st.write(f"⛽ **D:** {p_diesel} | **G95:** {p_g95}")
-                        st.caption(f"📍 A {g['Distancia']:.2f} km | {g['Dirección']}")
-                    with col_btn:
-                        url_map = f"https://www.google.com/maps/dir/?api=1&destination={g['lat_num']},{g['lon_num']}"
-                        st.link_button("🗺️ Ir allí", url_map, use_container_width=True)
-        else:
-            st.warning(f"No hay resultados en un radio de {radio_km} km. Prueba a ampliar el radio de búsqueda en los Ajustes.")
-else:
+if not datos:
     st.error("Sin conexión a los datos oficiales.")
+    st.stop()
 
-# Pie de página
+df = pd.DataFrame(datos)
+df["lat_num"] = pd.to_numeric(df["Latitud"].str.replace(",", "."), errors='coerce')
+df["lon_num"] = pd.to_numeric(df["Longitud (WGS84)"].str.replace(",", "."), errors='coerce')
+df["Precio_Diesel"] = pd.to_numeric(df["Precio Gasoleo A"].str.replace(",", "."), errors='coerce')
+df["Precio_G95"] = pd.to_numeric(df["Precio Gasolina 95 E5"].str.replace(",", "."), errors='coerce')
+municipios_unicos = sorted(list(set([str(g["Municipio"]) for g in datos])))
+
+# ==========================================
+# ESTADO 2: PANTALLA DE SELECCIÓN MANUAL ÚNICA
+# ==========================================
+if gps_denegado and not st.session_state.municipio_guardado:
+    st.markdown("""
+        <div style='text-align: center; margin-top: 1rem; margin-bottom: 2rem;'>
+            <h3 style='color: #333;'>📍 Elige tu ubicación</h3>
+            <p style='color: #666; font-size: 0.95rem;'>No hemos podido acceder al GPS. Busca tu municipio para empezar:</p>
+        </div>
+    """, unsafe_allow_html=True)
+    
+    municipio_seleccionado_inicio = st.selectbox(
+        "Municipio:", 
+        options=municipios_unicos,
+        index=None,
+        placeholder="Escribe o selecciona tu municipio...",
+        label_visibility="collapsed"
+    )
+
+    if st.button("✅ Aceptar", type="primary", use_container_width=True):
+        if municipio_seleccionado_inicio:
+            st.session_state.municipio_guardado = municipio_seleccionado_inicio
+            st.session_state.guardar_js = municipio_seleccionado_inicio
+            st.rerun() 
+        else:
+            st.error("Por favor, selecciona un municipio válido de la lista antes de continuar.")
+    
+    st.stop() 
+
+# ==========================================
+# ESTADO 3: PANTALLA DE RESULTADOS Y AJUSTES
+# ==========================================
+lat_ref, lon_ref, muni_ref = None, None, None
+
+if st.session_state.municipio_guardado:
+    muni_ref = st.session_state.municipio_guardado
+    fila_muni = df[df["Municipio"] == muni_ref].iloc[0]
+    lat_ref, lon_ref = fila_muni["lat_num"], fila_muni["lon_num"]
+elif lat_gps and lon_gps:
+    df["dist_temp"] = calcular_distancia(lat_gps, lon_gps, df["lat_num"], df["lon_num"])
+    muni_ref = df.sort_values("dist_temp").iloc[0]["Municipio"]
+    lat_ref, lon_ref = lat_gps, lon_gps
+
+# Panel renombrado
+with st.expander("⚙️ Ajustes de búsqueda", expanded=False):
+    st.write("Cambia tu ubicación manual o ajusta los filtros:")
+    
+    idx_actual = municipios_unicos.index(muni_ref) if muni_ref in municipios_unicos else None
+    
+    municipio_cambio = st.selectbox(
+        "Cambiar municipio:", 
+        options=municipios_unicos,
+        index=idx_actual,
+        placeholder="Busca un nuevo municipio..."
+    )
+            
+    if st.button("Actualizar municipio"):
+        if municipio_cambio and municipio_cambio != muni_ref:
+            st.session_state.municipio_guardado = municipio_cambio
+            st.session_state.guardar_js = municipio_cambio
+            st.rerun()
+
+    st.write("") 
+    
+    if st.button("🗑️ Borrar ubicación y reiniciar", type="secondary", use_container_width=True):
+        st.session_state.municipio_guardado = None
+        st.session_state.solicitar_gps = False
+        st.session_state.gps_fallido = False
+        streamlit_js_eval(js_expressions="parent.window.localStorage.removeItem('muni_gasolineras')", key="borrar_cache")
+        st.rerun()
+
+    st.divider()
+
+    col_km, col_gas = st.columns(2)
+    with col_km:
+        radio_km = st.radio(
+            "Radio de búsqueda:",
+            options=[5, 10, 20, 50],
+            format_func=lambda x: f"{x} km",
+            index=0, 
+            horizontal=True
+        )
+    with col_gas:
+        tipo_combustible = st.radio(
+            "Ordenar por precio de:", 
+            ["Diésel", "G95"], 
+            horizontal=True
+        )
+
+col_orden = "Precio_Diesel" if tipo_combustible == "Diésel" else "Precio_G95"
+
+df["Distancia"] = calcular_distancia(lat_ref, lon_ref, df["lat_num"], df["lon_num"])
+res = df[
+    (df["Distancia"] <= radio_km) & 
+    ((df["Precio_Diesel"].notna()) | (df["Precio_G95"].notna()))
+].sort_values(col_orden, na_position='last')
+
+if muni_ref:
+    st.markdown(f"<div class='resumen-filtros'>📍 <b>{muni_ref}</b>  |  🚗 <b>{radio_km} km</b>  |  ⛽ <b>{tipo_combustible}</b></div>", unsafe_allow_html=True)
+
+if not res.empty:
+    for _, g in res.head(20).iterrows():
+        with st.container(border=True):
+            col_info, col_btn = st.columns([2.4, 1.6], vertical_alignment="center")
+            with col_info:
+                st.write(f"### {g['Rótulo']}")
+                p_diesel = f"{g['Precio Gasoleo A']} €" if pd.notnull(g['Precio_Diesel']) else "N/A"
+                p_g95 = f"{g['Precio Gasolina 95 E5']} €" if pd.notnull(g['Precio_G95']) else "N/A"
+                st.write(f"⛽ **D:** {p_diesel} | **G95:** {p_g95}")
+                st.caption(f"📍 A {g['Distancia']:.2f} km | {g['Dirección']}")
+            with col_btn:
+                url_map = f"https://www.google.com/maps/dir/?api=1&destination={g['lat_num']},{g['lon_num']}"
+                st.link_button("🗺️ Ir allí", url_map, use_container_width=True)
+else:
+    st.warning(f"No hay resultados a {radio_km} km. Puedes cambiar el radio o el municipio en los Ajustes.")
+
 if fecha_act:
     st.markdown(f"<div style='text-align: center; color: #a3a8b8; font-size: 0.75rem; margin-top: 25px;'>Última actualización MINETUR: {fecha_act.strftime('%d/%m/%Y %H:%M:%S')}</div>", unsafe_allow_html=True)
