@@ -24,7 +24,6 @@ st.set_page_config(page_title="Buscador Gasolineras", page_icon="⛽", layout="c
 # AJUSTES DE ESPACIADO PRECISOS Y DISEÑO CSS
 st.markdown("""
     <style>
-        /* Eliminación agresiva del espacio superior de Streamlit */
         .block-container {
             padding-top: 1rem !important; 
             padding-bottom: 2rem !important;
@@ -33,8 +32,7 @@ st.markdown("""
         header {visibility: hidden !important;}
         #MainMenu {visibility: hidden !important;}
         
-        /* --- ELIMINAR HUECOS FANTASMAS DE JAVASCRIPT --- */
-        /* Streamlit crea cajas invisibles para ejecutar JS, esto las aplasta a 0px */
+        /* Eliminar huecos fantasmas de Javascript */
         iframe {
             display: none !important;
             height: 0px !important;
@@ -95,28 +93,34 @@ if 'municipio_guardado' not in st.session_state:
     st.session_state.municipio_guardado = None
 if 'gps_fallido' not in st.session_state:
     st.session_state.gps_fallido = False
+if 'override_manual' not in st.session_state:
+    st.session_state.override_manual = False
 
-# Recuperamos la caché persistente del navegador (Esto creaba un hueco fantasma)
+# Recuperamos la caché persistente del navegador
 muni_cache = streamlit_js_eval(js_expressions="parent.window.localStorage.getItem('muni_gasolineras')", key="get_muni_cache")
 if muni_cache and muni_cache != "null" and not st.session_state.municipio_guardado:
     st.session_state.municipio_guardado = muni_cache
 
-# Lógica oculta para guardar en la caché permanente (Esto creaba otro hueco)
+# Guardar en caché permanente en segundo plano
 if 'guardar_js' in st.session_state and st.session_state.guardar_js:
     js_code = f"parent.window.localStorage.setItem('muni_gasolineras', '{st.session_state.guardar_js}')"
     streamlit_js_eval(js_expressions=js_code, key=f"set_{st.session_state.guardar_js}")
     st.session_state.guardar_js = None
 
-# Consultar estado de los permisos de ubicación (Y otro hueco más)
+# Consultar permisos de ubicación
 js_permiso = "navigator.permissions ? navigator.permissions.query({name: 'geolocation'}).then(res => res.state) : 'prompt'"
 estado_permiso = streamlit_js_eval(js_expressions=js_permiso, key="permiso_gps")
-
 gps_denegado = (estado_permiso == "denied") or st.session_state.gps_fallido
 
 # ==========================================
-# ESTADO 1: PANTALLA INICIAL PURA
+# ESTADO 1: PANTALLA INICIAL PURA (Botón rojo)
 # ==========================================
-if not st.session_state.solicitar_gps and not st.session_state.municipio_guardado:
+# Solo la mostramos si no hay GPS concedido, no hay caché, y no ha pulsado el botón aún.
+mostrar_pantalla_inicial = True
+if estado_permiso == "granted" or st.session_state.municipio_guardado:
+    mostrar_pantalla_inicial = False
+
+if mostrar_pantalla_inicial and not st.session_state.solicitar_gps:
     st.markdown("<h3 style='text-align: center; color: #555; font-size: 1.1rem; margin-top: 1.5rem; margin-bottom: 1rem;'>Descubre al instante dónde repostar más barato</h3>", unsafe_allow_html=True)
     if st.button("📍 Mostrar gasolineras", use_container_width=True, type="primary"):
         st.session_state.solicitar_gps = True
@@ -129,7 +133,11 @@ if not st.session_state.solicitar_gps and not st.session_state.municipio_guardad
 loc = None
 lat_gps, lon_gps = None, None
 
-if not gps_denegado and not st.session_state.municipio_guardado:
+# Intentamos GPS si ya está concedido, o si pulsaron el botón (y no está denegado)
+intentar_gps = (estado_permiso == "granted") or (st.session_state.solicitar_gps and not gps_denegado)
+
+# Si el usuario cambió de pueblo a mano EN ESTA SESIÓN, no le forzamos el GPS de nuevo hasta que reinicie
+if intentar_gps and not st.session_state.override_manual:
     loc = get_geolocation()
     if loc is None:
         st.info("⏳ Localizando tu posición...")
@@ -189,12 +197,13 @@ municipios_unicos = sorted(list(set([str(g["Municipio"]) for g in datos])))
 
 # ==========================================
 # ESTADO 2: PANTALLA DE SELECCIÓN MANUAL ÚNICA
+# Solo salta si no hay GPS, no hay caché y no se ha activado el override
 # ==========================================
-if gps_denegado and not st.session_state.municipio_guardado:
+if not lat_gps and not lon_gps and not st.session_state.municipio_guardado:
     st.markdown("""
         <div style='text-align: center; margin-top: 1rem; margin-bottom: 2rem;'>
             <h3 style='color: #333;'>📍 Elige tu ubicación</h3>
-            <p style='color: #666; font-size: 0.95rem;'>No hemos podido acceder al GPS. Busca tu municipio para empezar:</p>
+            <p style='color: #666; font-size: 0.95rem;'>Busca y selecciona tu municipio para empezar:</p>
         </div>
     """, unsafe_allow_html=True)
     
@@ -206,10 +215,11 @@ if gps_denegado and not st.session_state.municipio_guardado:
         label_visibility="collapsed"
     )
 
-    if st.button("✅ Aceptar", type="primary", use_container_width=True):
+    if st.button("✅ Confirmar y buscar", type="primary", use_container_width=True):
         if municipio_seleccionado_inicio:
             st.session_state.municipio_guardado = municipio_seleccionado_inicio
             st.session_state.guardar_js = municipio_seleccionado_inicio
+            st.session_state.override_manual = True
             st.rerun() 
         else:
             st.error("Por favor, selecciona un municipio válido de la lista antes de continuar.")
@@ -221,16 +231,18 @@ if gps_denegado and not st.session_state.municipio_guardado:
 # ==========================================
 lat_ref, lon_ref, muni_ref = None, None, None
 
-if st.session_state.municipio_guardado:
-    muni_ref = st.session_state.municipio_guardado
-    fila_muni = df[df["Municipio"] == muni_ref].iloc[0]
-    lat_ref, lon_ref = fila_muni["lat_num"], fila_muni["lon_num"]
-elif lat_gps and lon_gps:
+# LA REGLA DE ORO: Si hay GPS (y no lo acaban de cambiar a mano en los ajustes), PREVALECE SIEMPRE
+if lat_gps and lon_gps and not st.session_state.override_manual:
     df["dist_temp"] = calcular_distancia(lat_gps, lon_gps, df["lat_num"], df["lon_num"])
     muni_ref = df.sort_values("dist_temp").iloc[0]["Municipio"]
     lat_ref, lon_ref = lat_gps, lon_gps
+elif st.session_state.municipio_guardado:
+    # Si no hay GPS (o si acaban de forzar el manual temporalmente), tira de caché
+    muni_ref = st.session_state.municipio_guardado
+    fila_muni = df[df["Municipio"] == muni_ref].iloc[0]
+    lat_ref, lon_ref = fila_muni["lat_num"], fila_muni["lon_num"]
 
-# Panel renombrado
+# Panel de ajustes
 with st.expander("⚙️ Ajustes de búsqueda", expanded=False):
     st.write("Cambia tu ubicación manual o ajusta los filtros:")
     
@@ -247,6 +259,7 @@ with st.expander("⚙️ Ajustes de búsqueda", expanded=False):
         if municipio_cambio and municipio_cambio != muni_ref:
             st.session_state.municipio_guardado = municipio_cambio
             st.session_state.guardar_js = municipio_cambio
+            st.session_state.override_manual = True # Forzamos que se salte el GPS temporalmente
             st.rerun()
 
     st.write("") 
@@ -255,6 +268,7 @@ with st.expander("⚙️ Ajustes de búsqueda", expanded=False):
         st.session_state.municipio_guardado = None
         st.session_state.solicitar_gps = False
         st.session_state.gps_fallido = False
+        st.session_state.override_manual = False
         streamlit_js_eval(js_expressions="parent.window.localStorage.removeItem('muni_gasolineras')", key="borrar_cache")
         st.rerun()
 
@@ -292,7 +306,8 @@ if not res.empty:
         with st.container(border=True):
             col_info, col_btn = st.columns([2.4, 1.6], vertical_alignment="center")
             with col_info:
-                st.write(f"### {g['Rótulo']}")
+                # AQUÍ ESTÁ EL CAMBIO: Rótulo + Municipio
+                st.write(f"### {g['Rótulo']} - {g['Municipio']}")
                 p_diesel = f"{g['Precio Gasoleo A']} €" if pd.notnull(g['Precio_Diesel']) else "N/A"
                 p_g95 = f"{g['Precio Gasolina 95 E5']} €" if pd.notnull(g['Precio_G95']) else "N/A"
                 st.write(f"⛽ **D:** {p_diesel} | **G95:** {p_g95}")
