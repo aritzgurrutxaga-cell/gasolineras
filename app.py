@@ -158,6 +158,10 @@ gps_denegado = (estado_permiso == "denied") or st.session_state.gps_fallido
 # ESTADO 1: INICIO
 if not (estado_permiso == "granted" or st.session_state.municipio_guardado) and not st.session_state.solicitar_gps:
     st.markdown("<div class='titulo-app'>⛽ gasolina.eus</div>", unsafe_allow_html=True)
+    
+    # NUEVA LÍNEA: Subtítulo minimalista / Propuesta de valor
+    st.markdown("<p style='text-align: center; color: #888; font-size: 1.05rem; margin-bottom: 2rem; margin-top: -0.5rem;'>Compara precios en tiempo real y ahorra en cada repostaje.</p>", unsafe_allow_html=True)
+    
     if st.button("📍 Mostrar gasolineras", use_container_width=True, type="primary"):
         st.session_state.solicitar_gps = True
         st.rerun()
