@@ -40,7 +40,7 @@ class SSLAdapter(HTTPAdapter):
 # 1. Configuración de la página
 st.set_page_config(page_title="gasolina.eus", page_icon="⛽", layout="centered")
 
-# --- AJUSTES DE DISEÑO CSS (VERSION REFINADA CON TARJETAS ALTAS) ---
+# --- AJUSTES DE DISEÑO CSS (ESTABLE 1 - POSICIÓN DE BOTÓN FINAL) ---
 st.markdown("""
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@500;800&display=swap');
@@ -70,12 +70,12 @@ st.markdown("""
             font-family: 'Poppins', sans-serif; font-weight: 500;
         }
 
-        /* BOTÓN NAVEGAR CON ICONO GOOGLE MAPS */
+        /* BOTÓN NAVEGAR: UN PELÍN MÁS ALTO */
         .btn-navegar {
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            background-color: #f1f5f9; /* Color sutil */
+            background-color: #f1f5f9;
             border: 1px solid #e2e8f0;
             border-radius: 10px;
             color: #475569 !important;
@@ -85,20 +85,22 @@ st.markdown("""
             padding: 0.6rem 0.9rem;
             text-decoration: none !important;
             transition: all 0.2s;
-            margin-top: 5px;
+            
+            /* AJUSTE SOLICITADO: Elevamos el botón un poco sin mover la tarjeta */
+            margin-top: -12px !important; 
         }
         .btn-navegar:hover { background-color: #e2e8f0; }
         .btn-navegar img { width: 18px; margin-right: 8px; }
 
-        /* TARJETAS MÁS ALTAS Y ESPACIADAS */
+        /* TARJETAS ESTABLES */
         div[data-testid="stVerticalBlockBorderWrapper"] > div {
             background-color: #ffffff !important; 
             border: 1px solid #f1f5f9 !important;
             border-radius: 16px !important; 
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04) !important;
-            padding: 1.2rem !important; /* Más padding interno */
+            padding: 1.2rem !important;
             margin-bottom: 0.8rem !important;
-            min-height: 170px !important; /* Altura mínima garantizada */
+            min-height: 170px !important;
             display: flex;
             flex-direction: column;
             justify-content: center;
