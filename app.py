@@ -104,11 +104,9 @@ if datos:
         df["dist_temp"] = calcular_distancia(lat_gps, lon_gps, df["lat_num"], df["lon_num"])
         muni_gps = df.sort_values("dist_temp").iloc[0]["Municipio"]
 
-    # --- LÓGICA DE UX: El panel se abre solo si NO hay GPS ---
-    panel_abierto = lat_gps is None
-
     # --- BLOQUE CONFIGURACIÓN EN ACORDEÓN ---
-    with st.expander("⚙️ Ajustes de Búsqueda (Ubicación, Distancia, Combustible)", expanded=panel_abierto):
+    # CAMBIO: expanded=False fuerza a que SIEMPRE aparezca minimizado al entrar
+    with st.expander("⚙️ Ajustes de Búsqueda (Ubicación, Distancia, Combustible)", expanded=False):
         st.write("Configura tus preferencias para encontrar los mejores precios:")
         
         # Ubicación
@@ -124,7 +122,7 @@ if datos:
         else:
             lat_ref, lon_ref = None, None
 
-        # Filtros divididos en dos columnas para que ocupen la mitad de espacio
+        # Filtros divididos en dos columnas
         col_km, col_gas = st.columns(2)
         
         with col_km:
@@ -132,7 +130,7 @@ if datos:
                 "Radio de búsqueda:",
                 options=[5, 10, 20, 50],
                 format_func=lambda x: f"{x} km",
-                index=0, # CAMBIO APLICADO: Ahora el índice 0 selecciona los 5 km por defecto
+                index=0, 
                 horizontal=True
             )
             
@@ -155,7 +153,8 @@ if datos:
 
         # BARRA DE RESUMEN VISUAL
         muni_mostrar = municipio_manual if municipio_manual else muni_gps
-        st.markdown(f"<div class='resumen-filtros'>📍 <b>{muni_mostrar}</b>  |  🚗 <b>{radio_km} km</b>  |  ⛽ <b>{tipo_combustible}</b></div>", unsafe_allow_html=True)
+        if muni_mostrar: # Solo mostramos el resumen si ya sabemos qué municipio buscar
+            st.markdown(f"<div class='resumen-filtros'>📍 <b>{muni_mostrar}</b>  |  🚗 <b>{radio_km} km</b>  |  ⛽ <b>{tipo_combustible}</b></div>", unsafe_allow_html=True)
         
         if not res.empty:
             for _, g in res.head(20).iterrows():
@@ -171,7 +170,7 @@ if datos:
                         url_map = f"https://www.google.com/maps/dir/?api=1&destination={g['lat_num']},{g['lon_num']}"
                         st.link_button("🗺️ Ir allí", url_map, use_container_width=True)
         else:
-            st.warning(f"No hay resultados en un radio de {radio_km} km.")
+            st.warning(f"No hay resultados en un radio de {radio_km} km. Prueba a ampliar el radio de búsqueda en los Ajustes.")
 else:
     st.error("Sin conexión a los datos oficiales.")
 
