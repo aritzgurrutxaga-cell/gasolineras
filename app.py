@@ -9,7 +9,7 @@ from streamlit_js_eval import get_geolocation, streamlit_js_eval
 from requests.adapters import HTTPAdapter
 from urllib3.util.ssl_ import create_urllib3_context
 
-# --- FUNCIONES DE APOYO (Al principio para evitar NameError) ---
+# --- FUNCIONES DE APOYO ---
 def calcular_distancia(lat1, lon1, lat2, lon2):
     R = 6371.0
     dlat, dlon = np.radians(lat2 - lat1), np.radians(lon2 - lon1)
@@ -73,9 +73,9 @@ st.markdown("""
             color: #111;
         }
 
-        /* --- REDISEÑO DEL BOTÓN ROJO DE INICIO --- */
+        /* --- BOTÓN ROJO DE INICIO --- */
         div[data-testid="stButton"] button[kind="primary"] {
-            min-height: 100px !important; /* Más ancho en vertical */
+            min-height: 100px !important; 
             border-radius: 15px !important;
             font-weight: bold !important;
             width: 100% !important;
@@ -85,16 +85,13 @@ st.markdown("""
             justify-content: center !important;
             line-height: 1.2 !important;
             padding: 20px !important;
-            box-shadow: 0 4px 12px rgba(255, 75, 75, 0.3) !important;
         }
         
-        /* Texto principal del botón */
         div[data-testid="stButton"] button[kind="primary"] p {
             font-size: 1.4rem !important;
             margin: 0 !important;
         }
         
-        /* Subtexto del botón (Ubicación necesaria) */
         div[data-testid="stButton"] button[kind="primary"]::after {
             content: "Es necesaria la ubicación para buscar";
             font-size: 0.85rem !important;
@@ -129,13 +126,10 @@ estado_permiso = streamlit_js_eval(js_expressions=js_permiso, key="permiso_gps")
 gps_denegado = (estado_permiso == "denied") or st.session_state.gps_fallido
 
 # ==========================================
-# PANTALLAS
+# PANTALLA INICIAL
 # ==========================================
-
-# ESTADO 1: INICIO
 if not (estado_permiso == "granted" or st.session_state.municipio_guardado) and not st.session_state.solicitar_gps:
     st.markdown("<div class='titulo-app'>⛽ Buscador Gasolineras</div>", unsafe_allow_html=True)
-    # El CSS se encarga de dar el estilo y añadir el subtexto
     if st.button("📍 Mostrar gasolineras", use_container_width=True, type="primary"):
         st.session_state.solicitar_gps = True
         st.rerun()
@@ -180,7 +174,7 @@ df["Precio_Diesel"] = pd.to_numeric(df["Precio Gasoleo A"].str.replace(",", ".")
 df["Precio_G95"] = pd.to_numeric(df["Precio Gasolina 95 E5"].str.replace(",", "."), errors='coerce')
 municipios_unicos = sorted(list(set([str(g["Municipio"]) for g in datos])))
 
-# ESTADO 2: SELECCIÓN MANUAL
+# ESTADO SELECCIÓN MANUAL
 if not lat_gps and not st.session_state.municipio_guardado:
     st.markdown("<div class='titulo-app'>⛽ Buscador Gasolineras</div>", unsafe_allow_html=True)
     st.markdown("<p style='text-align: center;'>📍 Escribe tu municipio:</p>", unsafe_allow_html=True)
@@ -193,7 +187,7 @@ if not lat_gps and not st.session_state.municipio_guardado:
             st.rerun()
     st.stop()
 
-# ESTADO 3: RESULTADOS
+# RESULTADOS
 st.markdown("<div class='titulo-app'>⛽ Buscador Gasolineras</div>", unsafe_allow_html=True)
 
 lat_ref, lon_ref, muni_ref = None, None, None
@@ -216,9 +210,15 @@ with st.expander("⚙️ Ajustes de búsqueda"):
     radio_km = st.radio("Radio:", [5, 10, 20, 50], format_func=lambda x: f"{x} km", horizontal=True)
     tipo = st.radio("Ordenar por:", ["Diésel", "G95"], horizontal=True)
 
+# --- LÓGICA DE FILTRADO CORREGIDA ---
 col_orden = "Precio_Diesel" if tipo == "Diésel" else "Precio_G95"
 df["Distancia"] = calcular_distancia(lat_ref, lon_ref, df["lat_num"], df["lon_num"])
-res = df[(df["Distancia"] <= radio_km) & (df[col_orden].notna())].sort_values(col_orden)
+
+# Ahora aceptamos cualquier gasolinera que tenga AL MENOS un precio de los dos
+res = df[
+    (df["Distancia"] <= radio_km) & 
+    ((df["Precio_Diesel"].notna()) | (df["Precio_G95"].notna()))
+].sort_values(col_orden, na_position='last') # Las que no tengan el combustible elegido van al final
 
 st.markdown(f"<div class='resumen-filtros'>📍 <b>{muni_ref}</b> | 🚗 <b>{radio_km} km</b> | ⛽ <b>{tipo}</b></div>", unsafe_allow_html=True)
 
@@ -227,7 +227,9 @@ for _, g in res.head(20).iterrows():
         c1, c2 = st.columns([2.5, 1.5], vertical_alignment="center")
         with c1:
             st.write(f"### {g['Rótulo']} - {g['Municipio']}")
-            st.write(f"⛽ **D:** {g['Precio Gasoleo A']}€ | **G95:** {g['Precio Gasolina 95 E5']}€")
+            p_diesel = f"{g['Precio Gasoleo A']}€" if pd.notnull(g['Precio_Diesel']) else "N/A"
+            p_g95 = f"{g['Precio Gasolina 95 E5']}€" if pd.notnull(g['Precio_G95']) else "N/A"
+            st.write(f"⛽ **D:** {p_diesel} | **G95:** {p_g95}")
             st.caption(f"📍 A {g['Distancia']:.2f} km")
         with c2:
             st.link_button("🗺️ Ir allí", f"https://www.google.com/maps/dir/?api=1&destination={g['lat_num']},{g['lon_num']}", use_container_width=True)
