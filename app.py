@@ -44,12 +44,13 @@ st.markdown("""
             padding: 0 !important;
         }
         
-        /* Aumentar tamaño de los radio buttons para que sean fáciles de tocar en móvil */
+        /* Aumentar tamaño de los radio buttons para móvil */
         div[data-testid="stRadio"] > label {font-weight: bold; margin-bottom: -0.5rem;}
         div[data-testid="stRadio"] {margin-bottom: 0.5rem;}
         .stRadio > div > div > label {
-            padding-top: 0.5rem;
-            padding-bottom: 0.5rem;
+            padding-top: 0.6rem;
+            padding-bottom: 0.6rem;
+            font-size: 1.05rem !important;
         }
         
         hr {margin-top: 0.5rem; margin-bottom: 1rem;}
@@ -101,6 +102,10 @@ if 'gps_fallido' not in st.session_state:
     st.session_state.gps_fallido = False
 if 'override_manual' not in st.session_state:
     st.session_state.override_manual = False
+if 'busqueda_activa_inicio' not in st.session_state:
+    st.session_state.busqueda_activa_inicio = ""
+if 'busqueda_activa_ajustes' not in st.session_state:
+    st.session_state.busqueda_activa_ajustes = ""
 
 # Recuperamos la caché persistente del navegador
 muni_cache = streamlit_js_eval(js_expressions="parent.window.localStorage.getItem('muni_gasolineras')", key="get_muni_cache")
@@ -199,36 +204,44 @@ df["Precio_G95"] = pd.to_numeric(df["Precio Gasolina 95 E5"].str.replace(",", ".
 municipios_unicos = sorted(list(set([str(g["Municipio"]) for g in datos])))
 
 # ==========================================
-# ESTADO 2: PANTALLA DE SELECCIÓN MANUAL ÚNICA (SIN DESPLEGABLE)
+# ESTADO 2: PANTALLA DE SELECCIÓN MANUAL ÚNICA (Buscador con Lupa Blindado)
 # ==========================================
 if not lat_gps and not lon_gps and not st.session_state.municipio_guardado:
     st.markdown("""
-        <div style='text-align: center; margin-top: 1rem; margin-bottom: 2rem;'>
+        <div style='text-align: center; margin-top: 1rem; margin-bottom: 1rem;'>
             <h3 style='color: #333;'>📍 Elige tu ubicación</h3>
-            <p style='color: #666; font-size: 0.95rem;'>Escribe tu municipio y pulsa buscar/intro en tu teclado:</p>
+            <p style='color: #666; font-size: 0.95rem;'>Escribe tu municipio y toca la lupa:</p>
         </div>
     """, unsafe_allow_html=True)
     
-    texto_busqueda_inicio = st.text_input(
-        "Municipio:", 
-        placeholder="Ej: Madrid, Bilbao...",
-        label_visibility="collapsed"
-    )
+    col_input, col_lupa = st.columns([4, 1])
+    with col_input:
+        texto_input = st.text_input(
+            "Municipio:", 
+            placeholder="Ej: Madrid, Bilbao...",
+            label_visibility="collapsed"
+        )
+    with col_lupa:
+        # Al pulsar la lupa, guardamos el texto en la memoria para que no se borre
+        if st.button("🔍", use_container_width=True, key="lupa_inicio"):
+            st.session_state.busqueda_activa_inicio = texto_input
 
-    if texto_busqueda_inicio:
-        opciones_filtradas_inicio = [m for m in municipios_unicos if texto_busqueda_inicio.lower() in m.lower()]
+    # Si hay algo en la memoria de búsqueda, mostramos los resultados
+    if st.session_state.busqueda_activa_inicio:
+        opciones_filtradas = [m for m in municipios_unicos if st.session_state.busqueda_activa_inicio.lower() in m.lower()]
         
-        if len(opciones_filtradas_inicio) == 0:
+        if len(opciones_filtradas) == 0:
             st.warning("No se ha encontrado ningún municipio. Revisa la escritura.")
         else:
-            # Mostramos los resultados como opciones táctiles amigables, máximo 10 para no saturar
             st.write("Sugerencias encontradas:")
-            municipio_elegido_inicio = st.radio("Selecciona tu municipio:", options=opciones_filtradas_inicio[:10], label_visibility="collapsed")
+            municipio_elegido = st.radio("Selecciona tu municipio:", options=opciones_filtradas[:10], label_visibility="collapsed")
             
+            st.write("") 
             if st.button("✅ Confirmar municipio", type="primary", use_container_width=True):
-                st.session_state.municipio_guardado = municipio_elegido_inicio
-                st.session_state.guardar_js = municipio_elegido_inicio
+                st.session_state.municipio_guardado = municipio_elegido
+                st.session_state.guardar_js = municipio_elegido
                 st.session_state.override_manual = True
+                st.session_state.busqueda_activa_inicio = "" # Limpiamos la memoria de búsqueda
                 st.rerun() 
     
     st.stop() 
@@ -251,19 +264,26 @@ elif st.session_state.municipio_guardado:
 with st.expander("⚙️ Ajustes de búsqueda", expanded=False):
     st.write("Cambia tu ubicación manual o ajusta los filtros:")
     
-    # Búsqueda manual sin desplegable también en los ajustes
-    texto_busqueda_ajustes = st.text_input("Buscar nuevo municipio (escribe y pulsa intro):", placeholder="Ej: Sevilla...")
+    col_input_aj, col_lupa_aj = st.columns([4, 1])
+    with col_input_aj:
+        texto_input_aj = st.text_input("Buscar nuevo municipio:", placeholder="Ej: Sevilla...", label_visibility="collapsed")
+    with col_lupa_aj:
+        if st.button("🔍 ", key="lupa_ajustes", use_container_width=True):
+            st.session_state.busqueda_activa_ajustes = texto_input_aj
     
-    if texto_busqueda_ajustes:
-        opciones_ajustes = [m for m in municipios_unicos if texto_busqueda_ajustes.lower() in m.lower()]
+    if st.session_state.busqueda_activa_ajustes:
+        opciones_aj = [m for m in municipios_unicos if st.session_state.busqueda_activa_ajustes.lower() in m.lower()]
         
-        if len(opciones_ajustes) > 0:
-            municipio_cambio = st.radio("Elige la nueva ubicación:", options=opciones_ajustes[:10], label_visibility="collapsed")
+        if len(opciones_aj) > 0:
+            st.write("Sugerencias:")
+            municipio_cambio = st.radio("Elige la nueva ubicación:", options=opciones_aj[:10], label_visibility="collapsed")
             
+            st.write("")
             if st.button("Actualizar municipio", use_container_width=True):
                 st.session_state.municipio_guardado = municipio_cambio
                 st.session_state.guardar_js = municipio_cambio
                 st.session_state.override_manual = True 
+                st.session_state.busqueda_activa_ajustes = "" # Limpiamos la memoria
                 st.rerun()
         else:
             st.warning("No se ha encontrado ningún municipio.")
@@ -275,6 +295,8 @@ with st.expander("⚙️ Ajustes de búsqueda", expanded=False):
         st.session_state.solicitar_gps = False
         st.session_state.gps_fallido = False
         st.session_state.override_manual = False
+        st.session_state.busqueda_activa_ajustes = ""
+        st.session_state.busqueda_activa_inicio = ""
         streamlit_js_eval(js_expressions="parent.window.localStorage.removeItem('muni_gasolineras')", key="borrar_cache")
         st.rerun()
 
