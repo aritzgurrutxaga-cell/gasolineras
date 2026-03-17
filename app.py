@@ -26,7 +26,7 @@ class SSLAdapter(HTTPAdapter):
         return super(SSLAdapter, self).init_poolmanager(*args, **kwargs)
 
 # 1. Configuración de la página
-st.set_page_config(page_title="Buscador Gasolineras", page_icon="⛽", layout="centered")
+st.set_page_config(page_title="gasolina.eus", page_icon="⛽", layout="centered")
 
 # AJUSTES DE DISEÑO CSS
 st.markdown("""
@@ -41,17 +41,19 @@ st.markdown("""
         iframe { display: none !important; height: 0px !important; }
         .element-container:has(iframe) { display: none !important; height: 0px !important; margin: 0 !important; }
         
-        /* Título */
+        /* Título gasolina.eus */
         .titulo-app {
             text-align: center; 
-            font-size: clamp(22px, 7vw, 32px); 
+            font-size: clamp(28px, 9vw, 42px); 
             white-space: nowrap; 
-            font-weight: bold;
+            font-weight: 800;
             margin-top: -1rem;
-            margin-bottom: 1rem;
+            margin-bottom: 1.5rem;
+            color: #ff4b4b;
+            letter-spacing: -1px;
         }
         
-        /* DISEÑO DE LA CAJA DE TEXTO - MÁS ALTA PARA QUE QUEPA EL NOMBRE */
+        /* DISEÑO DE LA CAJA DE TEXTO */
         div[data-baseweb="select"] > div {
             padding: 10px 12px !important; 
             min-height: 52px !important;   
@@ -81,10 +83,8 @@ st.markdown("""
         }
 
         /* --- BOTÓN ROJO INICIAL (EL ANCHO Y GIGANTE) --- */
-        /* Usamos el id del contenedor de streamlit para asegurar que se aplica */
-        div.stButton > button[kind="primary"]:has(div[p]) , 
-        button#btn_inicial_id {
-            min-height: 110px !important; 
+        #btn_inicial_id {
+            min-height: 120px !important; 
             border-radius: 20px !important;
             font-weight: bold !important;
             width: 100% !important;
@@ -96,18 +96,17 @@ st.markdown("""
             background-color: #ff4b4b !important;
         }
         
-        /* Texto del botón inicial */
         .btn-text-main { font-size: 1.5rem !important; margin: 0 !important; }
-        .btn-text-sub { font-size: 0.85rem !important; font-weight: normal !important; opacity: 0.9; margin-top: 8px; }
+        .btn-text-sub { font-size: 0.85rem !important; font-weight: normal !important; opacity: 0.9; margin-top: 10px; }
 
         /* --- BOTÓN BUSCAR EN AJUSTES (ESTRECHO) --- */
         button.btn-buscar-ajustes {
-            min-height: 45px !important; 
-            height: 45px !important;
+            min-height: 48px !important; 
+            height: 48px !important;
             border-radius: 10px !important;
             font-size: 1.1rem !important;
             padding: 0px !important;
-            margin-top: 10px !important;
+            margin-top: 15px !important;
             background-color: #ff4b4b !important;
         }
     </style>
@@ -163,14 +162,12 @@ municipios_unicos = sorted(list(set([str(g["Municipio"]) for g in datos])))
 # PANTALLA 1: INICIO
 # ==========================================
 if not (estado_permiso == "granted" or st.session_state.municipio_guardado) and not st.session_state.solicitar_gps:
-    st.markdown("<div class='titulo-app'>⛽ Buscador Gasolineras</div>", unsafe_allow_html=True)
+    st.markdown("<div class='titulo-app'>gasolina.eus</div>", unsafe_allow_html=True)
     
-    # Creamos el botón con el contenido HTML dentro para forzar el tamaño y subtexto
     if st.button("📍 Mostrar gasolineras", use_container_width=True, type="primary", key="btn_init"):
         st.session_state.solicitar_gps = True
         st.rerun()
     
-    # Inyectamos el estilo y el subtexto mediante JS para que sea el botón ancho gigante
     st.markdown("""
         <script>
             var btn = window.parent.document.querySelectorAll('button[kind="primary"]')[0];
@@ -186,7 +183,7 @@ lat_gps, lon_gps = None, None
 if (estado_permiso == "granted" or st.session_state.solicitar_gps) and not (gps_denegado or st.session_state.municipio_guardado or st.session_state.override_manual):
     loc = get_geolocation()
     if loc is None:
-        st.markdown("<div class='titulo-app'>⛽ Buscador Gasolineras</div>", unsafe_allow_html=True)
+        st.markdown("<div class='titulo-app'>gasolina.eus</div>", unsafe_allow_html=True)
         st.info("⏳ Localizando...")
         st.stop()
     elif 'coords' not in loc:
@@ -198,9 +195,15 @@ if (estado_permiso == "granted" or st.session_state.solicitar_gps) and not (gps_
 
 # SELECCIÓN MANUAL (PRIMERA VEZ)
 if not lat_gps and not st.session_state.municipio_guardado:
-    st.markdown("<div class='titulo-app'>⛽ Buscador Gasolineras</div>", unsafe_allow_html=True)
+    st.markdown("<div class='titulo-app'>gasolina.eus</div>", unsafe_allow_html=True)
     st.markdown("<p style='text-align: center;'>📍 Escribe tu municipio:</p>", unsafe_allow_html=True)
+    
     municipio_sel = st.selectbox("Municipio:", options=municipios_unicos, index=None, placeholder="Buscar...", label_visibility="collapsed")
+    
+    # TRUCO PARA BAJAR EL TECLADO AL SELECCIONAR
+    if municipio_sel:
+        st.markdown("<script>window.parent.document.activeElement.blur();</script>", unsafe_allow_html=True)
+
     if st.button("✅ Confirmar selección", type="primary", use_container_width=True):
         if municipio_sel:
             st.session_state.municipio_guardado = municipio_sel
@@ -212,7 +215,7 @@ if not lat_gps and not st.session_state.municipio_guardado:
 # ==========================================
 # PANTALLA 3: RESULTADOS
 # ==========================================
-st.markdown("<div class='titulo-app'>⛽ Buscador Gasolineras</div>", unsafe_allow_html=True)
+st.markdown("<div class='titulo-app'>gasolina.eus</div>", unsafe_allow_html=True)
 
 lat_ref, lon_ref, muni_ref = None, None, None
 if lat_gps and not st.session_state.override_manual:
@@ -224,10 +227,14 @@ else:
     fila = df[df["Municipio"] == muni_ref].iloc[0]
     lat_ref, lon_ref = fila["lat_num"], fila["lon_num"]
 
-# AJUSTES (SIN FORMULARIO PARA CONTROLAR EL CIERRE)
+# AJUSTES
 with st.expander("⚙️ Ajustes de búsqueda", expanded=st.session_state.expander_state):
     nuevo_muni = st.selectbox("Cambiar municipio:", options=municipios_unicos, 
                               index=municipios_unicos.index(muni_ref) if muni_ref in municipios_unicos else None)
+    
+    # Bajar teclado también en ajustes
+    if nuevo_muni != muni_ref:
+        st.markdown("<script>window.parent.document.activeElement.blur();</script>", unsafe_allow_html=True)
     
     nuevo_radio = st.radio("Radio de búsqueda:", [5, 10, 20, 50], 
                            index=[5, 10, 20, 50].index(st.session_state.radio_km),
@@ -244,13 +251,12 @@ with st.expander("⚙️ Ajustes de búsqueda", expanded=st.session_state.expand
         st.session_state.radio_km = nuevo_radio
         st.session_state.tipo_combustible = nuevo_tipo
         st.session_state.override_manual = True
-        st.session_state.expander_state = False # Forzamos el cierre al aplicar
+        st.session_state.expander_state = False 
         st.rerun()
     
-    # Inyectamos clase para que el botón de buscar sea estrecho
     st.markdown("<script>var b=window.parent.document.querySelectorAll('button[key=\"btn_apply_ajustes\"]')[0]; if(b) b.classList.add('btn-buscar-ajustes');</script>", unsafe_allow_html=True)
 
-# Lógica final de filtrado
+# Lógica final
 col_orden = "Precio_Diesel" if st.session_state.tipo_combustible == "Diésel" else "Precio_G95"
 df["Distancia"] = calcular_distancia(lat_ref, lon_ref, df["lat_num"], df["lon_num"])
 res = df[
