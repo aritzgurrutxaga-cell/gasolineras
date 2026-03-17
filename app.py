@@ -48,47 +48,24 @@ st.markdown("""
         /* --- ARREGLO DEFINITIVO DE LA LUPA PARA MÓVIL --- */
         /* ========================================================= */
         
-        /* Bloqueamos la fila entera para que jamás se desborde del 100% */
+        /* 1. Mantiene la caja y la lupa en la misma línea siempre */
         div[data-testid="stHorizontalBlock"]:has(input[placeholder*="Ej:"]) {
-            display: flex !important;
-            flex-direction: row !important;
             flex-wrap: nowrap !important;
-            width: 100% !important;
-            max-width: 100% !important;
-            gap: 0 !important; /* Eliminamos el espacio oculto de Streamlit */
             align-items: flex-end !important;
         }
         
-        /* Eliminamos los rellenos fantasma de las columnas internas */
+        /* 2. CLAVE MÁGICA: Permite que los elementos se encojan y NUNCA rompan la pantalla */
         div[data-testid="stHorizontalBlock"]:has(input[placeholder*="Ej:"]) > div[data-testid="column"] {
-            padding-left: 0 !important;
-            padding-right: 0 !important;
+            min-width: 0 !important;
         }
         
-        /* 1. La caja de texto: Ocupa lo que sobra menos la lupa */
-        div[data-testid="stHorizontalBlock"]:has(input[placeholder*="Ej:"]) > div[data-testid="column"]:nth-child(1) {
-            width: calc(100% - 3.2rem) !important;
-            flex: 1 1 0% !important;
-            min-width: 0 !important; /* Clave para evitar el desbordamiento flex */
-            padding-right: 0.5rem !important; /* Separación manual y controlada con la lupa */
-        }
-        
-        /* 2. La lupa: Un cuadradito estricto e inamovible a la derecha */
-        div[data-testid="stHorizontalBlock"]:has(input[placeholder*="Ej:"]) > div[data-testid="column"]:nth-child(2) {
-            width: 3rem !important;
-            flex: 0 0 3rem !important;
-            min-width: 3rem !important;
-        }
-        
-        /* Estética del botón de la lupa */
+        /* 3. Empareja la altura de la lupa con la de la caja de texto */
         div[data-testid="stHorizontalBlock"]:has(input[placeholder*="Ej:"]) button {
-            height: 2.75rem !important; 
+            height: 40px !important; 
             padding: 0 !important;
-            width: 100% !important;
             display: flex;
-            align-items: center;
             justify-content: center;
-            border-radius: 8px !important;
+            align-items: center;
         }
         
         /* ========================================================= */
@@ -263,7 +240,8 @@ if not lat_gps and not lon_gps and not st.session_state.municipio_guardado:
         </div>
     """, unsafe_allow_html=True)
     
-    col_input, col_lupa = st.columns([6, 1])
+    # Proporción [7, 1]: La caja coge el 87% del espacio y la lupa el 13%.
+    col_input, col_lupa = st.columns([7, 1])
     with col_input:
         texto_input = st.text_input(
             "Municipio:", 
@@ -311,7 +289,7 @@ elif st.session_state.municipio_guardado:
 with st.expander("⚙️ Ajustes de búsqueda", expanded=False):
     st.write("Cambia tu ubicación manual o ajusta los filtros:")
     
-    col_input_aj, col_lupa_aj = st.columns([6, 1])
+    col_input_aj, col_lupa_aj = st.columns([7, 1])
     with col_input_aj:
         texto_input_aj = st.text_input("Buscar nuevo municipio:", placeholder="Ej: Sevilla...", label_visibility="collapsed")
     with col_lupa_aj:
