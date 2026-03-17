@@ -241,4 +241,112 @@ if not lat_gps and not lon_gps and not st.session_state.municipio_guardado:
     """, unsafe_allow_html=True)
     
     municipio_seleccionado_inicio = st.selectbox(
-        "Municipio:",
+        "Municipio:", 
+        options=municipios_unicos,
+        index=None,
+        placeholder="Escribe tu municipio...",
+        label_visibility="collapsed"
+    )
+
+    if st.button("✅ Confirmar y buscar", type="primary", use_container_width=True):
+        if municipio_seleccionado_inicio:
+            st.session_state.municipio_guardado = municipio_seleccionado_inicio
+            st.session_state.guardar_js = municipio_seleccionado_inicio
+            st.session_state.override_manual = True
+            st.rerun() 
+        else:
+            st.error("Por favor, selecciona un municipio válido de la lista antes de continuar.")
+    
+    st.stop() 
+
+# ==========================================
+# ESTADO 3: PANTALLA DE RESULTADOS Y AJUSTES
+# ==========================================
+lat_ref, lon_ref, muni_ref = None, None, None
+
+if lat_gps and lon_gps and not st.session_state.override_manual:
+    df["dist_temp"] = calcular_distancia(lat_gps, lon_gps, df["lat_num"], df["lon_num"])
+    muni_ref = df.sort_values("dist_temp").iloc[0]["Municipio"]
+    lat_ref, lon_ref = lat_gps, lon_gps
+elif st.session_state.municipio_guardado:
+    muni_ref = st.session_state.municipio_guardado
+    fila_muni = df[df["Municipio"] == muni_ref].iloc[0]
+    lat_ref, lon_ref = fila_muni["lat_num"], fila_muni["lon_num"]
+
+# Panel de ajustes
+with st.expander("⚙️ Ajustes de búsqueda", expanded=False):
+    st.write("Cambia tu ubicación manual o ajusta los filtros:")
+    
+    idx_actual = municipios_unicos.index(muni_ref) if muni_ref in municipios_unicos else None
+    
+    municipio_cambio = st.selectbox(
+        "Cambiar municipio:", 
+        options=municipios_unicos,
+        index=idx_actual,
+        placeholder="Busca un nuevo municipio..."
+    )
+            
+    if st.button("Actualizar municipio"):
+        if municipio_cambio and municipio_cambio != muni_ref:
+            st.session_state.municipio_guardado = municipio_cambio
+            st.session_state.guardar_js = municipio_cambio
+            st.session_state.override_manual = True 
+            st.rerun()
+
+    st.write("") 
+    
+    if st.button("🗑️ Borrar ubicación y reiniciar", type="secondary", use_container_width=True):
+        st.session_state.municipio_guardado = None
+        st.session_state.solicitar_gps = False
+        st.session_state.gps_fallido = False
+        st.session_state.override_manual = False
+        streamlit_js_eval(js_expressions="parent.window.localStorage.removeItem('muni_gasolineras')", key="borrar_cache")
+        st.rerun()
+
+    st.divider()
+
+    col_km, col_gas = st.columns(2)
+    with col_km:
+        radio_km = st.radio(
+            "Radio de búsqueda:",
+            options=[5, 10, 20, 50],
+            format_func=lambda x: f"{x} km",
+            index=0, 
+            horizontal=True
+        )
+    with col_gas:
+        tipo_combustible = st.radio(
+            "Ordenar por precio de:", 
+            ["Diésel", "G95"], 
+            horizontal=True
+        )
+
+col_orden = "Precio_Diesel" if tipo_combustible == "Diésel" else "Precio_G95"
+
+df["Distancia"] = calcular_distancia(lat_ref, lon_ref, df["lat_num"], df["lon_num"])
+res = df[
+    (df["Distancia"] <= radio_km) & 
+    ((df["Precio_Diesel"].notna()) | (df["Precio_G95"].notna()))
+].sort_values(col_orden, na_position='last')
+
+if muni_ref:
+    st.markdown(f"<div class='resumen-filtros'>📍 <b>{muni_ref}</b>  |  🚗 <b>{radio_km} km</b>  |  ⛽ <b>{tipo_combustible}</b></div>", unsafe_allow_html=True)
+
+if not res.empty:
+    for _, g in res.head(20).iterrows():
+        with st.container(border=True):
+            col_info, col_btn = st.columns([2.4, 1.6], vertical_alignment="center")
+            with col_info:
+                st.write(f"### {g['Rótulo']} - {g['Municipio']}")
+                p_diesel = f"{g['Precio Gasoleo A']} €" if pd.notnull(g['Precio_Diesel']) else "N/A"
+                p_g95 = f"{g['Precio Gasolina 95 E5']} €" if pd.notnull(g['Precio_G95']) else "N/A"
+                st.write(f"⛽ **D:** {p_diesel} | **G95:** {p_g95}")
+                st.caption(f"📍 A {g['Distancia']:.2f} km | {g['Dirección']}")
+            with col_btn:
+                url_map = f"https://www.google.com/maps/dir/?api=1&destination={g['lat_num']},{g['lon_num']}"
+                st.link_button("🗺️ Ir allí", url_map, use_container_width=True)
+else:
+    st.warning(f"No hay resultados a {radio_km} km. Puedes cambiar el radio o el municipio en los Ajustes.")
+
+if fecha_act:
+    st.markdown(f"<div style='text-align: center; color: #a3a8b8; font-size: 0.75rem; margin-top: 25px;'>Última actualización MINETUR: {fecha_act.strftime('%d/%m/%Y %H:%M:%S')}</div>", unsafe_allow_html=True)
