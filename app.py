@@ -203,7 +203,6 @@ with st.expander("⚙️ Ajustes de búsqueda", expanded=st.session_state.ajuste
     if nuevo_muni != muni_ref:
         cerrar_teclado_movil()
 
-    # RADIO ACTUALIZADO: Sin la opción de 50 km
     nuevo_radio = st.radio("Radio de búsqueda:", [5, 10, 20], 
                            index=[5, 10, 20].index(st.session_state.radio_km) if st.session_state.radio_km in [5, 10, 20] else 0,
                            format_func=lambda x: f"{x} km", horizontal=True)
@@ -239,4 +238,5 @@ for _, g in res.head(20).iterrows():
             st.write(f"⛽ **D:** {p_diesel} | **G95:** {p_g95}")
             st.caption(f"📍 A {g['Distancia']:.2f} km")
         with c2:
-            st.link_button("🗺️ Ir allí", f"https://www.google.com/maps/dir/?api=1&destination={g['lat_num']},{g['lon_num']}", use_container_width=True)
+            # TEXTO E ICONO ACTUALIZADOS: Navegar + Icono de Maps
+            st.link_button("🗺️ Navegar", f"https://www.google.com/maps/dir/?api=1&destination={g['lat_num']},{g['lon_num']}", use_container_width=True)
