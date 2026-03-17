@@ -278,4 +278,16 @@ res = df[
     ((df["Precio_Diesel"].notna()) | (df["Precio_G95"].notna()))
 ].sort_values(col_orden, na_position='last')
 
-st.markdown(f"<div class='resumen-filtros'>📍 <b>{muni_ref}</b>  |  🚗 <b>{st.session_state.radio_km} km</b>
+st.markdown(f"<div class='resumen-filtros'>📍 <b>{muni_ref}</b>  |  🚗 <b>{st.session_state.radio_km} km</b>  |  ⛽ <b>{st.session_state.tipo_combustible}</b></div>", unsafe_allow_html=True)
+
+for _, g in res.head(20).iterrows():
+    with st.container(border=True):
+        c1, c2 = st.columns([2.5, 1.5], vertical_alignment="center")
+        with c1:
+            st.write(f"### {g['Rótulo']} - {g['Municipio']}")
+            p_diesel = f"{g['Precio Gasoleo A']} €" if pd.notnull(g['Precio_Diesel']) else "N/A"
+            p_g95 = f"{g['Precio Gasolina 95 E5']} €" if pd.notnull(g['Precio_G95']) else "N/A"
+            st.write(f"⛽ **D:** {p_diesel} | **G95:** {p_g95}")
+            st.caption(f"📍 A {g['Distancia']:.2f} km")
+        with c2:
+            st.link_button("🗺️ Ir allí", f"https://www.google.com/maps/dir/?api=1&destination={g['lat_num']},{g['lon_num']}", use_container_width=True)
