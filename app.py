@@ -29,7 +29,7 @@ class SSLAdapter(HTTPAdapter):
 st.set_page_config(page_title="gasolina.eus", page_icon="⛽", layout="centered")
 
 # ==========================================
-# CSS MINIMALISTA Y LIMPIO
+# CSS ESTRUCTURAL Y DISEÑO SERIO
 # ==========================================
 st.markdown("""
     <style>
@@ -38,8 +38,6 @@ st.markdown("""
             padding-bottom: 25vh !important; 
         }
         header {visibility: hidden !important;}
-        
-        /* Eliminar huecos de Javascript */
         iframe { display: none !important; height: 0px !important; }
         .element-container:has(iframe) { display: none !important; height: 0px !important; margin: 0 !important; }
         
@@ -51,15 +49,15 @@ st.markdown("""
             font-weight: 800;
             margin-top: -1rem;
             margin-bottom: 1.5rem;
-            color: #ff4b4b;
+            color: #d32f2f;
             letter-spacing: -1px;
         }
         
-        /* DISEÑO DE LA CAJA DE TEXTO (Altura de 56px para que el municipio respire) */
+        /* DISEÑO DE LA CAJA DE TEXTO (Altura de 56px, con aire para el municipio) */
         div[data-baseweb="select"] > div {
             padding: 10px 12px !important; 
             min-height: 56px !important;   
-            border-radius: 12px !important;
+            border-radius: 10px !important;
             font-size: 1.15rem !important;
             display: flex !important;
             align-items: center !important;
@@ -84,42 +82,53 @@ st.markdown("""
             color: inherit;
         }
 
-        /* --- BOTÓN TIPO PRIMARY (SOLO EL ROJO GIGANTE DE INICIO) --- */
+        /* --- FAMILIA PRIMARY: SOLO EL BOTÓN GIGANTE INICIAL --- */
         div[data-testid="stButton"] button[kind="primary"] {
-            min-height: 100px !important; 
-            border-radius: 15px !important;
-            font-weight: bold !important;
+            min-height: 130px !important; 
+            border-radius: 16px !important;
+            background-color: #d32f2f !important; /* Rojo serio y sólido */
+            color: white !important;
+            border: 2px solid #b71c1c !important; /* Borde oscuro para dar profundidad */
+            box-shadow: 0 6px 12px rgba(0,0,0,0.2) !important;
             width: 100% !important;
             display: flex !important;
             flex-direction: column !important;
             align-items: center !important;
             justify-content: center !important;
             padding: 20px !important;
+            transition: all 0.15s ease-in-out !important;
+        }
+        
+        div[data-testid="stButton"] button[kind="primary"]:active {
+            transform: translateY(3px) !important; /* Efecto físico de pulsación */
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2) !important;
         }
         
         div[data-testid="stButton"] button[kind="primary"] p {
-            font-size: 1.4rem !important;
+            font-size: 1.5rem !important;
+            font-weight: 800 !important;
             margin: 0 !important;
         }
         
-        /* Subtexto original del botón inicial */
+        /* Subtexto integrado en el botón gigante */
         div[data-testid="stButton"] button[kind="primary"]::after {
             content: "Es necesaria la ubicación para buscar";
-            font-size: 0.85rem !important;
-            font-weight: normal !important;
+            font-size: 0.95rem !important;
+            font-weight: 500 !important;
             opacity: 0.9;
-            margin-top: 8px;
+            margin-top: 10px;
             display: block;
         }
 
-        /* --- BOTÓN TIPO SECONDARY (PARA LOS AJUSTES, FINO Y DISCRETO) --- */
+        /* --- FAMILIA SECONDARY: BOTONES DE AJUSTES Y CONFIRMACIÓN --- */
         div[data-testid="stButton"] button[kind="secondary"] {
-            min-height: 45px !important; 
+            min-height: 50px !important; 
             height: auto !important;
             border-radius: 10px !important;
             font-size: 1.1rem !important;
-            width: 100% !important;
             font-weight: bold !important;
+            width: 100% !important;
+            border: 1px solid #666 !important;
         }
     </style>
 """, unsafe_allow_html=True)
@@ -173,9 +182,9 @@ municipios_unicos = sorted(list(set([str(g["Municipio"]) for g in datos])))
 # PANTALLA 1: INICIO 
 # ==========================================
 if not (estado_permiso == "granted" or st.session_state.municipio_guardado) and not st.session_state.solicitar_gps:
-    st.markdown("<h1 style='text-align: center; font-size: clamp(22px, 7vw, 38px); white-space: nowrap; color: #ff4b4b; letter-spacing: -1px; margin-top: -1rem; margin-bottom: 1.5rem;'>gasolina.eus</h1>", unsafe_allow_html=True)
+    st.markdown("<div class='titulo-app'>gasolina.eus</div>", unsafe_allow_html=True)
     
-    # Este es el único botón PRIMARY. Siempre será gigante por el CSS.
+    # ÚNICO BOTÓN "PRIMARY" DE LA APP. Inmune a modificaciones y con diseño gigante.
     if st.button("📍 Mostrar gasolineras", use_container_width=True, type="primary"):
         st.session_state.solicitar_gps = True
         st.rerun()
@@ -204,17 +213,17 @@ if not lat_gps and not st.session_state.municipio_guardado:
     
     municipio_sel = st.selectbox("Municipio:", options=municipios_unicos, index=None, placeholder="Buscar...", label_visibility="collapsed")
     
-    if municipio_sel:
-        st.markdown("<script>window.parent.document.activeElement.blur();</script>", unsafe_allow_html=True)
-
+    # Botón tipo "SECONDARY". Estrecho y sobrio.
     if st.button("✅ Confirmar selección", type="secondary", use_container_width=True):
         if municipio_sel:
             st.session_state.municipio_guardado = municipio_sel
             st.session_state.guardar_js = municipio_sel
-            # Sincronizamos las variables de borrador para que el cajón empiece con buen pie
+            
+            # Inicializamos los borradores para que el menú empiece sincronizado
             st.session_state.draft_muni = municipio_sel
             st.session_state.draft_radio = st.session_state.radio_km
             st.session_state.draft_tipo = st.session_state.tipo_combustible
+            
             st.session_state.override_manual = True
             st.rerun()
     st.stop()
@@ -234,18 +243,14 @@ else:
     fila = df[df["Municipio"] == muni_ref].iloc[0]
     lat_ref, lon_ref = fila["lat_num"], fila["lon_num"]
 
-# --- INICIALIZACIÓN DE BORRADORES (DRAFT) ---
-# Si llegamos aquí por GPS o por primera vez, aseguramos que los borradores del menú coincidan con la realidad
-if 'draft_muni' not in st.session_state or st.session_state.draft_muni not in municipios_unicos:
-    st.session_state.draft_muni = muni_ref
-if 'draft_radio' not in st.session_state:
-    st.session_state.draft_radio = st.session_state.radio_km
-if 'draft_tipo' not in st.session_state:
-    st.session_state.draft_tipo = st.session_state.tipo_combustible
+# Sincronización preventiva por si entramos vía GPS
+if 'draft_muni' not in st.session_state: st.session_state.draft_muni = muni_ref
+if 'draft_radio' not in st.session_state: st.session_state.draft_radio = st.session_state.radio_km
+if 'draft_tipo' not in st.session_state: st.session_state.draft_tipo = st.session_state.tipo_combustible
 
-# --- EL EXPANDER NATIVO Y BLINDADO ---
+# --- EL EXPANDER NATIVO, SIN SCRIPTS INTRUSIVOS ---
 with st.expander("⚙️ Ajustes de búsqueda"):
-    # Al usar 'key', Streamlit gestiona el estado automáticamente sin colapsar el menú
+    # Vinculamos los widgets directamente a variables borrador (keys)
     st.selectbox("Cambiar municipio:", options=municipios_unicos, key="draft_muni")
     
     st.radio("Radio de búsqueda:", [5, 10, 20, 50], 
@@ -255,7 +260,8 @@ with st.expander("⚙️ Ajustes de búsqueda"):
              horizontal=True, key="draft_tipo")
     
     st.write("")
-    # Este botón vuelca los borradores a las variables principales y recarga la lista
+    
+    # Botón tipo "SECONDARY". Fino y funcional. Vuelca los borradores a la app.
     if st.button("🔍 Buscar", use_container_width=True, type="secondary"):
         st.session_state.municipio_guardado = st.session_state.draft_muni
         st.session_state.guardar_js = st.session_state.draft_muni
@@ -263,12 +269,6 @@ with st.expander("⚙️ Ajustes de búsqueda"):
         st.session_state.tipo_combustible = st.session_state.draft_tipo
         st.session_state.override_manual = True
         st.rerun()
-
-# --- SCRIPT DE TECLADO MOVIDO FUERA DEL CAJÓN ---
-# Si el usuario ha cambiado el municipio en el borrador, bajamos el teclado. 
-# Al estar fuera del 'with st.expander', no muta su estructura y no lo cierra.
-if st.session_state.draft_muni != muni_ref:
-    st.markdown("<script>window.parent.document.activeElement.blur();</script>", unsafe_allow_html=True)
 
 # Lógica de filtrado
 col_orden = "Precio_Diesel" if st.session_state.tipo_combustible == "Diésel" else "Precio_G95"
@@ -278,16 +278,4 @@ res = df[
     ((df["Precio_Diesel"].notna()) | (df["Precio_G95"].notna()))
 ].sort_values(col_orden, na_position='last')
 
-st.markdown(f"<div class='resumen-filtros'>📍 <b>{muni_ref}</b>  |  🚗 <b>{st.session_state.radio_km} km</b>  |  ⛽ <b>{st.session_state.tipo_combustible}</b></div>", unsafe_allow_html=True)
-
-for _, g in res.head(20).iterrows():
-    with st.container(border=True):
-        c1, c2 = st.columns([2.5, 1.5], vertical_alignment="center")
-        with c1:
-            st.write(f"### {g['Rótulo']} - {g['Municipio']}")
-            p_diesel = f"{g['Precio Gasoleo A']} €" if pd.notnull(g['Precio_Diesel']) else "N/A"
-            p_g95 = f"{g['Precio Gasolina 95 E5']} €" if pd.notnull(g['Precio_G95']) else "N/A"
-            st.write(f"⛽ **D:** {p_diesel} | **G95:** {p_g95}")
-            st.caption(f"📍 A {g['Distancia']:.2f} km")
-        with c2:
-            st.link_button("🗺️ Ir allí", f"https://www.google.com/maps/dir/?api=1&destination={g['lat_num']},{g['lon_num']}", use_container_width=True)
+st.markdown(f"<div class='resumen-filtros'>📍 <b>{muni_ref}</b>  |  🚗 <b>{st.session_state.radio_km} km</b>
