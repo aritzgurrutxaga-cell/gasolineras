@@ -142,6 +142,19 @@ municipios_unicos = sorted(list(set([str(g["Municipio"]) for g in datos])))
 js_permiso = "navigator.permissions ? navigator.permissions.query({name: 'geolocation'}).then(res => res.state) : 'prompt'"
 estado_permiso = streamlit_js_eval(js_expressions=js_permiso, key="permiso_gps")
 
+# SCRIPT "GHOST FOCUS" PARA MATAR EL TECLADO
+js_hide_keyboard = """
+    var tempInput = document.createElement('input');
+    tempInput.style.position = 'absolute';
+    tempInput.style.top = '-1000px';
+    document.body.appendChild(tempInput);
+    tempInput.focus();
+    setTimeout(function() {
+        tempInput.blur();
+        document.body.removeChild(tempInput);
+    }, 10);
+"""
+
 # --- PANTALLA 1: INICIO ---
 if not (estado_permiso == "granted" or st.session_state.municipio_guardado) and not st.session_state.solicitar_gps:
     st.markdown("<div class='titulo-app'>gasolina<span>.eus</span></div>", unsafe_allow_html=True)
@@ -168,8 +181,8 @@ if not lat_gps and not st.session_state.municipio_guardado:
     st.markdown("<p style='text-align: center; color: #64748b;'>📍 Escribe tu municipio:</p>", unsafe_allow_html=True)
     muni_sel = st.selectbox("Municipio:", options=municipios_unicos, index=None, placeholder="Buscar...", label_visibility="collapsed")
     
-    # TRUCO DEL TECLADO: El key cambia con el municipio seleccionado para forzar el cierre del teclado
-    if muni_sel: streamlit_js_eval(js_expressions="document.activeElement.blur()", key=f"blur_{muni_sel}")
+    # EJECUTAR GHOST FOCUS AL SELECCIONAR
+    if muni_sel: streamlit_js_eval(js_expressions=js_hide_keyboard, key=f"kb_start_{muni_sel}")
 
     if st.button("✅ Confirmar selección", type="primary", use_container_width=True):
         if muni_sel:
@@ -196,8 +209,8 @@ with st.expander("⚙️ Ajustes de búsqueda", expanded=st.session_state.ajuste
     nuevo_muni = st.selectbox("Cambiar municipio:", options=municipios_unicos, 
                               index=municipios_unicos.index(muni_ref) if muni_ref in municipios_unicos else None)
     
-    # TRUCO DEL TECLADO EN AJUSTES
-    if nuevo_muni != muni_ref: streamlit_js_eval(js_expressions="document.activeElement.blur()", key=f"blur_aj_{nuevo_muni}")
+    # EJECUTAR GHOST FOCUS EN AJUSTES
+    if nuevo_muni != muni_ref: streamlit_js_eval(js_expressions=js_hide_keyboard, key=f"kb_aj_{nuevo_muni}")
 
     nuevo_radio = st.radio("Radio de búsqueda:", [5, 10, 20, 50], 
                            index=[5, 10, 20, 50].index(st.session_state.radio_km),
@@ -214,11 +227,11 @@ with st.expander("⚙️ Ajustes de búsqueda", expanded=st.session_state.ajuste
         st.session_state.override_manual = True
         st.session_state.ajustes_abiertos = False; st.rerun()
 
-# --- FILTRADO FLEXIBLE ---
+# --- FILTRADO POR DISTANCIA Y ORDENACIÓN ---
 col_orden = "Precio_Diesel" if st.session_state.tipo_combustible == "Diésel" else "Precio_G95"
 df["Distancia"] = calcular_distancia(lat_ref, lon_ref, df["lat_num"], df["lon_num"])
 
-# Todas las gasolineras en el radio, ordenadas por el combustible elegido (poniendo NAs al final)
+# Mostramos todo lo que esté en el radio, ordenando por precio (las sin precio van al final)
 res = df[df["Distancia"] <= st.session_state.radio_km].sort_values(col_orden, na_position='last')
 
 st.markdown(f"<div class='resumen-filtros'>📍 <b>{muni_ref}</b> | 🚗 <b>{st.session_state.radio_km} km</b> | ⛽ <b>{st.session_state.tipo_combustible}</b></div>", unsafe_allow_html=True)
