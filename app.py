@@ -86,7 +86,7 @@ st.markdown("""
             color: #111;
         }
 
-        /* BOTÓN ROJO DE INICIO */
+        /* BOTÓN ROJO DE INICIO (Aplica por defecto) */
         div[data-testid="stButton"] button[kind="primary"] {
             min-height: 100px !important; 
             border-radius: 15px !important;
@@ -112,6 +112,16 @@ st.markdown("""
             opacity: 0.9;
             margin-top: 8px;
             display: block;
+        }
+        
+        /* EXCEPCIÓN: REVERTIR ESTILOS PARA EL BOTÓN DENTRO DEL DESPLEGABLE DE AJUSTES */
+        details div[data-testid="stButton"] button[kind="primary"] {
+            min-height: 45px !important; 
+            padding: 0.5rem 1rem !important;
+        }
+        details div[data-testid="stButton"] button[kind="primary"]::after {
+            content: none !important;
+            display: none !important;
         }
     </style>
 """, unsafe_allow_html=True)
