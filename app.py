@@ -48,25 +48,27 @@ st.markdown("""
         /* --- DISEÑO PREMIUM DEL DESPLEGABLE (SELECTBOX) --- */
         /* ========================================================= */
         
-        /* 1. Caja de texto con el ESPACIO INTERNO CORRECTO para que el texto no se pegue */
+        /* 1. Caja de texto con ALTURA Y AIRE correctos */
         div[data-baseweb="select"] > div {
-            padding: 0.5rem 0.8rem !important; /* Devuelve el aire horizontal al texto */
-            border-radius: 10px !important;
+            padding: 10px 15px !important; /* Más espacio vertical para que no sea estrecho */
+            min-height: 50px !important;   /* Altura mínima para que sea cómodo al dedo */
+            border-radius: 12px !important;
             font-size: 1.1rem !important;
+            display: flex !important;
+            align-items: center !important;
         }
         
-        /* 2. Ampliar la lista flotante y darle sombras */
+        /* 2. Lista flotante optimizada */
         ul[role="listbox"] {
-            max-height: 45vh !important; 
-            border-radius: 10px !important;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2) !important;
+            max-height: 40vh !important; 
+            border-radius: 12px !important;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3) !important;
         }
         
-        /* 3. Opciones más grandes (Fat-finger friendly) */
+        /* 3. Opciones de la lista */
         li[role="option"] {
-            padding-top: 14px !important;
-            padding-bottom: 14px !important;
-            font-size: 1.05rem !important;
+            padding: 15px !important;
+            font-size: 1.1rem !important;
             border-bottom: 1px solid rgba(150, 150, 150, 0.1) !important;
         }
         
@@ -76,7 +78,16 @@ st.markdown("""
         div[data-testid="stRadio"] {margin-bottom: 0.5rem;}
         
         hr {margin-top: 0.5rem; margin-bottom: 1rem;}
-        h1, h2 {margin-top: -1rem; margin-bottom: 0.5rem;}
+        
+        /* Título en una sola línea sin romperse */
+        .titulo-app {
+            text-align: center; 
+            font-size: clamp(20px, 6.5vw, 32px); 
+            white-space: nowrap; 
+            font-weight: bold;
+            margin-top: -1rem;
+            margin-bottom: 1rem;
+        }
         
         .resumen-filtros {
             text-align: center; 
@@ -89,23 +100,18 @@ st.markdown("""
             border: 1px solid #e0e0e0;
         }
 
-        /* --- CSS PARA EL BOTÓN GIGANTE --- */
+        /* --- BOTÓN GIGANTE --- */
         div[data-testid="stButton"] button[kind="primary"] {
-            font-size: 1.4rem !important;
+            font-size: 1.2rem !important;
             font-weight: bold !important;
-            padding: 1.5rem !important;
+            padding: 1rem !important;
             border-radius: 12px !important;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.15) !important;
-            transition: all 0.2s ease-in-out !important;
-        }
-        div[data-testid="stButton"] button[kind="primary"]:hover {
-            transform: scale(1.02);
-            box-shadow: 0 6px 14px rgba(0,0,0,0.2) !important;
+            margin-top: 1rem !important; /* Espacio extra respecto a la caja */
         }
     </style>
 """, unsafe_allow_html=True)
 
-# --- INICIALIZACIÓN DE MEMORIA Y LOCAL STORAGE ---
+# --- INICIALIZACIÓN DE MEMORIA ---
 if 'solicitar_gps' not in st.session_state:
     st.session_state.solicitar_gps = False
 if 'municipio_guardado' not in st.session_state:
@@ -115,53 +121,44 @@ if 'gps_fallido' not in st.session_state:
 if 'override_manual' not in st.session_state:
     st.session_state.override_manual = False
 
-# Recuperamos la caché persistente del navegador
+# Recuperamos la caché persistente
 muni_cache = streamlit_js_eval(js_expressions="parent.window.localStorage.getItem('muni_gasolineras')", key="get_muni_cache")
 if muni_cache and muni_cache != "null" and not st.session_state.municipio_guardado:
     st.session_state.municipio_guardado = muni_cache
 
-# Guardar en caché permanente en segundo plano
+# Guardar en caché permanente
 if 'guardar_js' in st.session_state and st.session_state.guardar_js:
     js_code = f"parent.window.localStorage.setItem('muni_gasolineras', '{st.session_state.guardar_js}')"
     streamlit_js_eval(js_expressions=js_code, key=f"set_{st.session_state.guardar_js}")
     st.session_state.guardar_js = None
 
-# Consultar permisos de ubicación
+# Consultar permisos GPS
 js_permiso = "navigator.permissions ? navigator.permissions.query({name: 'geolocation'}).then(res => res.state) : 'prompt'"
 estado_permiso = streamlit_js_eval(js_expressions=js_permiso, key="permiso_gps")
 gps_denegado = (estado_permiso == "denied") or st.session_state.gps_fallido
 
-
 # ==========================================
-# ESTADO 1: PANTALLA INICIAL PURA (Botón rojo)
+# ESTADO 1: PANTALLA INICIAL
 # ==========================================
-mostrar_pantalla_inicial = True
-if estado_permiso == "granted" or st.session_state.municipio_guardado:
-    mostrar_pantalla_inicial = False
-
-if mostrar_pantalla_inicial and not st.session_state.solicitar_gps:
-    st.markdown("<h1 style='text-align: center; font-size: clamp(22px, 7vw, 38px); white-space: nowrap;'>⛽ Buscador Gasolineras</h1>", unsafe_allow_html=True)
-    st.markdown("<h3 style='text-align: center; color: inherit; font-size: 1.1rem; margin-top: 1.5rem; margin-bottom: 1rem;'>Descubre al instante dónde repostar más barato</h3>", unsafe_allow_html=True)
+if not (estado_permiso == "granted" or st.session_state.municipio_guardado) and not st.session_state.solicitar_gps:
+    st.markdown("<div class='titulo-app'>⛽ Buscador Gasolineras</div>", unsafe_allow_html=True)
+    st.markdown("<h3 style='text-align: center; font-size: 1.1rem;'>Encuentra el mejor precio al instante</h3>", unsafe_allow_html=True)
     
     if st.button("📍 Mostrar gasolineras", use_container_width=True, type="primary"):
         st.session_state.solicitar_gps = True
         st.rerun()
     st.stop() 
 
-
 # ==========================================
-# PROCESAMIENTO DE UBICACIÓN
+# PROCESAMIENTO GPS
 # ==========================================
 loc = None
 lat_gps, lon_gps = None, None
-
-intentar_gps = (estado_permiso == "granted") or (st.session_state.solicitar_gps and not gps_denegado)
-
-if intentar_gps and not st.session_state.override_manual:
+if (estado_permiso == "granted" or st.session_state.solicitar_gps) and not (gps_denegado or st.session_state.municipio_guardado or st.session_state.override_manual):
     loc = get_geolocation()
     if loc is None:
-        st.markdown("<h1 style='text-align: center; font-size: clamp(22px, 7vw, 38px); white-space: nowrap;'>⛽ Buscador Gasolineras</h1>", unsafe_allow_html=True)
-        st.info("⏳ Localizando tu posición...")
+        st.markdown("<div class='titulo-app'>⛽ Buscador Gasolineras</div>", unsafe_allow_html=True)
+        st.info("⏳ Localizando...")
         st.stop() 
     elif 'coords' not in loc:
         st.session_state.gps_fallido = True
@@ -171,43 +168,25 @@ if intentar_gps and not st.session_state.override_manual:
         lat_gps = loc['coords']['latitude']
         lon_gps = loc['coords']['longitude']
 
-
 # ==========================================
-# CARGA DE DATOS 
+# CARGA DE DATOS
 # ==========================================
-@st.cache_data(ttl=3600, show_spinner="Descargando precios oficiales...")
+@st.cache_data(ttl=3600)
 def cargar_datos():
     url = "https://sedeaplicaciones.minetur.gob.es/ServiciosRESTCarburantes/PreciosCarburantes/EstacionesTerrestres/"
     headers = {'User-Agent': 'Mozilla/5.0'}
     session = requests.Session()
     session.mount("https://", SSLAdapter())
-    archivo_backup = "gasolineras_backup.csv"
-    tz_madrid = pytz.timezone('Europe/Madrid')
-    
     try:
         r = session.get(url, headers=headers, timeout=25)
-        r.raise_for_status()
-        lista = r.json()["ListaEESSPrecio"]
-        pd.DataFrame(lista).to_csv(archivo_backup, index=False)
-        return lista, datetime.datetime.now(tz_madrid)
-    except Exception:
-        if os.path.exists(archivo_backup):
-            df_rec = pd.read_csv(archivo_backup)
-            mtime = os.path.getmtime(archivo_backup)
-            fecha_utc = datetime.datetime.fromtimestamp(mtime, pytz.utc)
-            return df_rec.to_dict('records'), fecha_utc.astimezone(tz_madrid)
+        return r.json()["ListaEESSPrecio"], datetime.datetime.now()
+    except:
         return None, None
-
-def calcular_distancia(lat1, lon1, lat2, lon2):
-    R = 6371.0
-    dlat, dlon = np.radians(lat2 - lat1), np.radians(lon2 - lon1)
-    a = np.sin(dlat / 2)**2 + np.cos(np.radians(lat1)) * np.cos(np.radians(lat2)) * np.sin(dlon / 2)**2
-    return R * 2 * np.arctan2(np.sqrt(a), np.sqrt(1 - a))
 
 datos, fecha_act = cargar_datos()
 
 if not datos:
-    st.error("Sin conexión a los datos oficiales.")
+    st.error("Error al cargar datos oficiales.")
     st.stop()
 
 df = pd.DataFrame(datos)
@@ -217,121 +196,72 @@ df["Precio_Diesel"] = pd.to_numeric(df["Precio Gasoleo A"].str.replace(",", ".")
 df["Precio_G95"] = pd.to_numeric(df["Precio Gasolina 95 E5"].str.replace(",", "."), errors='coerce')
 municipios_unicos = sorted(list(set([str(g["Municipio"]) for g in datos])))
 
-
 # ==========================================
-# ESTADO 2: PANTALLA DE SELECCIÓN MANUAL
+# ESTADO 2: SELECCIÓN MANUAL (DISEÑO AMPLIADO)
 # ==========================================
-if not lat_gps and not lon_gps and not st.session_state.municipio_guardado:
-    # Título forzado en una sola línea y márgenes ajustados
-    st.markdown("""
-        <div style='text-align: center; margin-top: -1.5rem; margin-bottom: 0.5rem;'>
-            <h2 style='color: inherit; margin-bottom: 0; font-size: 1.6rem; white-space: nowrap;'>⛽ Buscador Gasolineras</h2>
-            <p style='color: inherit; opacity: 0.8; font-size: 0.95rem; margin-top: 5px;'>📍 Escribe tu municipio:</p>
-        </div>
-    """, unsafe_allow_html=True)
+if not lat_gps and not st.session_state.municipio_guardado:
+    st.markdown("<div class='titulo-app'>⛽ Buscador Gasolineras</div>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: center; opacity: 0.8;'>📍 Escribe tu municipio:</p>", unsafe_allow_html=True)
     
-    municipio_seleccionado_inicio = st.selectbox(
+    municipio_sel = st.selectbox(
         "Municipio:", 
         options=municipios_unicos,
         index=None,
-        placeholder="Toca aquí para escribir...",
+        placeholder="Toca aquí para buscar...",
         label_visibility="collapsed"
     )
 
-    st.write("")
     if st.button("✅ Confirmar selección", type="primary", use_container_width=True):
-        if municipio_seleccionado_inicio:
-            st.session_state.municipio_guardado = municipio_seleccionado_inicio
-            st.session_state.guardar_js = municipio_seleccionado_inicio
+        if municipio_sel:
+            st.session_state.municipio_guardado = municipio_sel
+            st.session_state.guardar_js = municipio_sel
             st.session_state.override_manual = True
             st.rerun() 
-        else:
-            st.error("Por favor, selecciona un municipio de la lista.")
-    
     st.stop() 
 
-
 # ==========================================
-# ESTADO 3: PANTALLA DE RESULTADOS Y AJUSTES
+# ESTADO 3: RESULTADOS
 # ==========================================
-st.markdown("<h1 style='text-align: center; font-size: clamp(22px, 7vw, 38px); white-space: nowrap;'>⛽ Buscador Gasolineras</h1>", unsafe_allow_html=True)
+st.markdown("<div class='titulo-app'>⛽ Buscador Gasolineras</div>", unsafe_allow_html=True)
 
 lat_ref, lon_ref, muni_ref = None, None, None
-
-if lat_gps and lon_gps and not st.session_state.override_manual:
-    df["dist_temp"] = calcular_distancia(lat_gps, lon_gps, df["lat_num"], df["lon_num"])
-    muni_ref = df.sort_values("dist_temp").iloc[0]["Municipio"]
+if lat_gps and not st.session_state.override_manual:
     lat_ref, lon_ref = lat_gps, lon_gps
-elif st.session_state.municipio_guardado:
-    muni_ref = st.session_state.municipio_guardado
-    fila_muni = df[df["Municipio"] == muni_ref].iloc[0]
-    lat_ref, lon_ref = fila_muni["lat_num"], fila_muni["lon_num"]
-
-# Panel de ajustes
-with st.expander("⚙️ Ajustes de búsqueda", expanded=False):
-    st.write("Cambia tu ubicación manual o ajusta los filtros:")
-    
-    idx_actual = municipios_unicos.index(muni_ref) if muni_ref in municipios_unicos else None
-    
-    municipio_cambio = st.selectbox(
-        "Cambiar municipio:", 
-        options=municipios_unicos,
-        index=idx_actual,
-        placeholder="Escribe el nuevo municipio..."
-    )
-            
-    st.write("")
-    if st.button("Actualizar municipio", use_container_width=True):
-        if municipio_cambio and municipio_cambio != muni_ref:
-            st.session_state.municipio_guardado = municipio_cambio
-            st.session_state.guardar_js = municipio_cambio
-            st.session_state.override_manual = True 
-            st.rerun()
-
-    st.divider()
-
-    col_km, col_gas = st.columns(2)
-    with col_km:
-        radio_km = st.radio(
-            "Radio de búsqueda:",
-            options=[5, 10, 20, 50],
-            format_func=lambda x: f"{x} km",
-            index=0, 
-            horizontal=True
-        )
-    with col_gas:
-        tipo_combustible = st.radio(
-            "Ordenar por precio de:", 
-            ["Diésel", "G95"], 
-            horizontal=True
-        )
-
-col_orden = "Precio_Diesel" if tipo_combustible == "Diésel" else "Precio_G95"
-
-df["Distancia"] = calcular_distancia(lat_ref, lon_ref, df["lat_num"], df["lon_num"])
-res = df[
-    (df["Distancia"] <= radio_km) & 
-    ((df["Precio_Diesel"].notna()) | (df["Precio_G95"].notna()))
-].sort_values(col_orden, na_position='last')
-
-if muni_ref:
-    st.markdown(f"<div class='resumen-filtros'>📍 <b>{muni_ref}</b>  |  🚗 <b>{radio_km} km</b>  |  ⛽ <b>{tipo_combustible}</b></div>", unsafe_allow_html=True)
-
-if not res.empty:
-    for _, g in res.head(20).iterrows():
-        with st.container(border=True):
-            col_info, col_btn = st.columns([2.4, 1.6], vertical_alignment="center")
-            with col_info:
-                st.write(f"### {g['Rótulo']} - {g['Municipio']}")
-                p_diesel = f"{g['Precio Gasoleo A']} €" if pd.notnull(g['Precio_Diesel']) else "N/A"
-                p_g95 = f"{g['Precio Gasolina 95 E5']} €" if pd.notnull(g['Precio_G95']) else "N/A"
-                st.write(f"⛽ **D:** {p_diesel} | **G95:** {p_g95}")
-                st.caption(f"📍 A {g['Distancia']:.2f} km | {g['Dirección']}")
-            with col_btn:
-                url_map = f"https://www.google.com/maps/dir/?api=1&destination={g['lat_num']},{g['lon_num']}"
-                st.link_button("🗺️ Ir allí", url_map, use_container_width=True)
+    df["dist_temp"] = calcular_distancia(lat_ref, lon_ref, df["lat_num"], df["lon_num"])
+    muni_ref = df.sort_values("dist_temp").iloc[0]["Municipio"]
 else:
-    st.warning(f"No hay resultados a {radio_km} km. Puedes cambiar el radio o el municipio en los Ajustes.")
+    muni_ref = st.session_state.municipio_guardado
+    fila = df[df["Municipio"] == muni_ref].iloc[0]
+    lat_ref, lon_ref = fila["lat_num"], fila["lon_num"]
 
-if fecha_act:
-    st.markdown(f"<div style='text-align: center; color: inherit; opacity: 0.6; font-size: 0.75rem; margin-top: 25px;'>Última actualización MINETUR: {fecha_act.strftime('%d/%m/%Y %H:%M:%S')}</div>", unsafe_allow_html=True)
+with st.expander("⚙️ Ajustes de búsqueda"):
+    muni_cambio = st.selectbox("Cambiar municipio:", options=municipios_unicos, index=municipios_unicos.index(muni_ref) if muni_ref in municipios_unicos else None)
+    if st.button("Actualizar"):
+        st.session_state.municipio_guardado = muni_cambio
+        st.session_state.guardar_js = muni_cambio
+        st.session_state.override_manual = True
+        st.rerun()
+    radio_km = st.radio("Radio:", [5, 10, 20, 50], format_func=lambda x: f"{x} km", horizontal=True)
+    tipo = st.radio("Ordenar por:", ["Diésel", "G95"], horizontal=True)
+
+col_orden = "Precio_Diesel" if tipo == "Diésel" else "Precio_G95"
+df["Distancia"] = calcular_distancia(lat_ref, lon_ref, df["lat_num"], df["lon_num"])
+res = df[(df["Distancia"] <= radio_km) & (df[col_orden].notna())].sort_values(col_orden)
+
+st.markdown(f"<div class='resumen-filtros'>📍 <b>{muni_ref}</b> | 🚗 <b>{radio_km} km</b> | ⛽ <b>{tipo}</b></div>", unsafe_allow_html=True)
+
+for _, g in res.head(20).iterrows():
+    with st.container(border=True):
+        c1, c2 = st.columns([2.5, 1.5], vertical_alignment="center")
+        with c1:
+            st.write(f"### {g['Rótulo']} - {g['Municipio']}")
+            st.write(f"⛽ **D:** {g['Precio Gasoleo A']}€ | **G95:** {g['Precio Gasolina 95 E5']}€")
+            st.caption(f"📍 A {g['Distancia']:.2f} km")
+        with c2:
+            st.link_button("🗺️ Ir allí", f"https://www.google.com/maps/dir/?api=1&destination={g['lat_num']},{g['lon_num']}", use_container_width=True)
+
+def calcular_distancia(lat1, lon1, lat2, lon2):
+    R = 6371.0
+    dlat, dlon = np.radians(lat2 - lat1), np.radians(lon2 - lon1)
+    a = np.sin(dlat / 2)**2 + np.cos(np.radians(lat1)) * np.cos(np.radians(lat2)) * np.sin(dlon / 2)**2
+    return R * 2 * np.arctan2(np.sqrt(a), np.sqrt(1 - a))
