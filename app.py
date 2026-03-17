@@ -40,7 +40,7 @@ class SSLAdapter(HTTPAdapter):
 # 1. Configuración de la página
 st.set_page_config(page_title="gasolina.eus", page_icon="⛽", layout="centered")
 
-# --- AJUSTES DE DISEÑO CSS (VERSIÓN ESTABLE) ---
+# --- AJUSTES DE DISEÑO CSS ---
 st.markdown("""
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@500;800&display=swap');
@@ -107,7 +107,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# --- INICIALIZACIÓN DE MEMORIA ---
+# --- INICIALIZACIÓN ---
 if 'solicitar_gps' not in st.session_state: st.session_state.solicitar_gps = False
 if 'municipio_guardado' not in st.session_state: st.session_state.municipio_guardado = None
 if 'gps_fallido' not in st.session_state: st.session_state.gps_fallido = False
@@ -203,8 +203,9 @@ with st.expander("⚙️ Ajustes de búsqueda", expanded=st.session_state.ajuste
     if nuevo_muni != muni_ref:
         cerrar_teclado_movil()
 
-    nuevo_radio = st.radio("Radio de búsqueda:", [5, 10, 20, 50], 
-                           index=[5, 10, 20, 50].index(st.session_state.radio_km),
+    # RADIO ACTUALIZADO: Sin la opción de 50 km
+    nuevo_radio = st.radio("Radio de búsqueda:", [5, 10, 20], 
+                           index=[5, 10, 20].index(st.session_state.radio_km) if st.session_state.radio_km in [5, 10, 20] else 0,
                            format_func=lambda x: f"{x} km", horizontal=True)
     
     nuevo_tipo = st.radio("Ordenar por precio de:", ["Diésel", "G95"], 
@@ -222,7 +223,6 @@ with st.expander("⚙️ Ajustes de búsqueda", expanded=st.session_state.ajuste
 col_orden = "Precio_Diesel" if st.session_state.tipo_combustible == "Diésel" else "Precio_G95"
 df["Distancia"] = calcular_distancia(lat_ref, lon_ref, df["lat_num"], df["lon_num"])
 
-# Ranking por distancia, ordenando por precio (las sin precio van al final)
 res = df[df["Distancia"] <= st.session_state.radio_km].sort_values(col_orden, na_position='last')
 
 # Barra de resumen
@@ -233,13 +233,10 @@ for _, g in res.head(20).iterrows():
     with st.container(border=True):
         c1, c2 = st.columns([2.5, 1.5], vertical_alignment="center")
         with c1:
-            # FORMATO ACTUALIZADO: Nombre - Municipio
             st.write(f"#### {g['Rótulo']} - {g['Municipio']}")
-            
             p_diesel = f"{g['Precio Gasoleo A']}€" if pd.notnull(g['Precio_Diesel']) else "N/A"
             p_g95 = f"{g['Precio Gasolina 95 E5']}€" if pd.notnull(g['Precio_G95']) else "N/A"
             st.write(f"⛽ **D:** {p_diesel} | **G95:** {p_g95}")
             st.caption(f"📍 A {g['Distancia']:.2f} km")
         with c2:
-            # Enlace de navegación directa
             st.link_button("🗺️ Ir allí", f"https://www.google.com/maps/dir/?api=1&destination={g['lat_num']},{g['lon_num']}", use_container_width=True)
