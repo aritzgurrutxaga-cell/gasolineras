@@ -28,11 +28,11 @@ class SSLAdapter(HTTPAdapter):
 # 1. Configuración de la página
 st.set_page_config(page_title="gasolina.eus", page_icon="⛽", layout="centered")
 
-# AJUSTES DE DISEÑO CSS
+# AJUSTES DE DISEÑO CSS (VERSIÓN MINIMALISTA Y LIMPIA)
 st.markdown("""
     <style>
         /* Importar fuente profesional desde Google Fonts */
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@500;800&display=swap');
 
         .block-container {
             padding-top: 1rem !important; 
@@ -53,6 +53,7 @@ st.markdown("""
             font-size: 1.1rem !important;
             display: flex !important;
             align-items: center !important;
+            border: 1px solid #e2e8f0 !important; /* Borde suave */
         }
         
         /* TÍTULO TIPOGRÁFICO PROFESIONAL (LOGO) */
@@ -62,15 +63,22 @@ st.markdown("""
             font-size: clamp(32px, 9vw, 46px); 
             white-space: nowrap; 
             font-weight: 800;
-            color: #1e293b; /* Pizarra oscuro elegante */
-            letter-spacing: -1.5px; /* Condensa las letras para efecto logo */
+            color: #1e293b;
+            letter-spacing: -1.5px;
             margin-top: -1rem;
             margin-bottom: 0.5rem;
         }
+        .titulo-app span { color: #ef4444; }
         
-        /* Color de contraste para la extensión del dominio */
-        .titulo-app span {
-            color: #ef4444; /* Rojo vibrante */
+        /* PROPUESTA DE VALOR MINIMALISTA */
+        .subtitulo-app {
+            text-align: center; 
+            color: #64748b; /* Gris azulado suave */
+            font-size: 1.05rem; 
+            margin-bottom: 2rem; 
+            margin-top: -0.5rem;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 500;
         }
         
         /* FUERZA RADIO KM EN UNA FILA */
@@ -86,18 +94,32 @@ st.markdown("""
             white-space: nowrap !important;
         }
 
+        /* RESUMEN DE FILTROS (ESTILO PÍLDORA) */
         .resumen-filtros {
             text-align: center; 
             font-size: 0.95rem; 
             margin-bottom: 1.5rem; 
-            padding: 10px; 
-            border-radius: 8px;
-            border: 1px solid #444;
-            background-color: #f0f2f6;
-            color: #111;
+            padding: 12px 20px; 
+            border-radius: 40px;
+            border: 1px solid #e2e8f0;
+            background-color: #ffffff;
+            color: #334155;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+            font-family: 'Poppins', sans-serif;
+            font-weight: 500;
         }
 
-        /* BOTÓN ROJO DE INICIO (Aplica por defecto) */
+        /* TARJETAS DE RESULTADOS FLOTANTES (CLEAN UI) */
+        div[data-testid="stVerticalBlockBorderWrapper"] > div {
+            background-color: #ffffff !important;
+            border: 1px solid #f1f5f9 !important;
+            border-radius: 16px !important;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04) !important;
+            padding: 0.5rem !important;
+            margin-bottom: 0.5rem !important;
+        }
+
+        /* BOTÓN ROJO DE INICIO */
         div[data-testid="stButton"] button[kind="primary"] {
             min-height: 100px !important; 
             border-radius: 15px !important;
@@ -109,13 +131,16 @@ st.markdown("""
             justify-content: center !important;
             line-height: 1.2 !important;
             padding: 20px !important;
+            box-shadow: 0 4px 14px rgba(239, 68, 68, 0.25) !important; /* Sombra roja sutil */
+            transition: transform 0.1s;
         }
-        
+        div[data-testid="stButton"] button[kind="primary"]:active {
+            transform: scale(0.98);
+        }
         div[data-testid="stButton"] button[kind="primary"] p {
             font-size: 1.4rem !important;
             margin: 0 !important;
         }
-        
         div[data-testid="stButton"] button[kind="primary"]::after {
             content: "Es recomendable la ubicación para buscar";
             font-size: 0.85rem !important;
@@ -125,10 +150,11 @@ st.markdown("""
             display: block;
         }
         
-        /* EXCEPCIÓN: REVERTIR ESTILOS PARA EL BOTÓN DENTRO DEL DESPLEGABLE DE AJUSTES */
+        /* EXCEPCIÓN BOTÓN DE AJUSTES */
         details div[data-testid="stButton"] button[kind="primary"] {
             min-height: 45px !important; 
             padding: 0.5rem 1rem !important;
+            box-shadow: none !important;
         }
         details div[data-testid="stButton"] button[kind="primary"]::after {
             content: none !important;
@@ -169,9 +195,7 @@ gps_denegado = (estado_permiso == "denied") or st.session_state.gps_fallido
 # ESTADO 1: INICIO
 if not (estado_permiso == "granted" or st.session_state.municipio_guardado) and not st.session_state.solicitar_gps:
     st.markdown("<div class='titulo-app'>gasolina<span>.eus</span></div>", unsafe_allow_html=True)
-    
-    # Subtítulo minimalista / Propuesta de valor
-    st.markdown("<p style='text-align: center; color: #888; font-size: 1.05rem; margin-bottom: 2rem; margin-top: -0.5rem;'>Compara precios en tiempo real y ahorra en cada repostaje.</p>", unsafe_allow_html=True)
+    st.markdown("<p class='subtitulo-app'>Compara precios en tiempo real y ahorra en cada repostaje.</p>", unsafe_allow_html=True)
     
     if st.button("📍 Mostrar gasolineras", use_container_width=True, type="primary"):
         st.session_state.solicitar_gps = True
@@ -220,7 +244,7 @@ municipios_unicos = sorted(list(set([str(g["Municipio"]) for g in datos])))
 # ESTADO 2: SELECCIÓN MANUAL (PRIMERA VEZ)
 if not lat_gps and not st.session_state.municipio_guardado:
     st.markdown("<div class='titulo-app'>gasolina<span>.eus</span></div>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align: center;'>📍 Escribe tu municipio:</p>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: center; color: #64748b;'>📍 Escribe tu municipio:</p>", unsafe_allow_html=True)
     municipio_sel = st.selectbox("Municipio:", options=municipios_unicos, index=None, placeholder="Buscar...", label_visibility="collapsed")
     if st.button("✅ Confirmar selección", type="primary", use_container_width=True):
         if municipio_sel:
@@ -246,29 +270,24 @@ else:
 
 # CAJÓN DE AJUSTES REFORMADO
 with st.expander("⚙️ Ajustes de búsqueda", expanded=st.session_state.ajustes_abiertos):
-    # 1. Municipio
     nuevo_muni = st.selectbox("Cambiar municipio:", options=municipios_unicos, 
                               index=municipios_unicos.index(muni_ref) if muni_ref in municipios_unicos else None)
     
-    # 2. Radio (Forzado en una fila por CSS)
     nuevo_radio = st.radio("Radio de búsqueda:", [5, 10, 20, 50], 
                            index=[5, 10, 20, 50].index(st.session_state.radio_km),
                            format_func=lambda x: f"{x} km", horizontal=True)
     
-    # 3. Combustible
     nuevo_tipo = st.radio("Ordenar por precio de:", ["Diésel", "G95"], 
                           index=0 if st.session_state.tipo_combustible == "Diésel" else 1,
                           horizontal=True)
     
     st.write("")
-    # BOTÓN BUSCAR FINAL
     if st.button("🔍 Buscar", use_container_width=True, type="primary"):
         st.session_state.municipio_guardado = nuevo_muni
         st.session_state.guardar_js = nuevo_muni
         st.session_state.radio_km = nuevo_radio
         st.session_state.tipo_combustible = nuevo_tipo
         st.session_state.override_manual = True
-        # Truco para cerrar el expander: forzamos el estado a falso
         st.session_state.ajustes_abiertos = False
         st.rerun()
 
@@ -288,7 +307,8 @@ for _, g in res.head(20).iterrows():
     with st.container(border=True):
         c1, c2 = st.columns([2.5, 1.5], vertical_alignment="center")
         with c1:
-            st.write(f"### {g['Rótulo']} - {g['Municipio']}")
+            st.write(f"#### {g['Rótulo']}")
+            st.write(f"<span style='color: #64748b; font-size: 0.9rem;'>{g['Municipio']}</span>", unsafe_allow_html=True)
             p_diesel = f"{g['Precio Gasoleo A']}€" if pd.notnull(g['Precio_Diesel']) else "N/A"
             p_g95 = f"{g['Precio Gasolina 95 E5']}€" if pd.notnull(g['Precio_G95']) else "N/A"
             st.write(f"⛽ **D:** {p_diesel} | **G95:** {p_g95}")
