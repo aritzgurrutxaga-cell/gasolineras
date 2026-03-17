@@ -24,10 +24,9 @@ st.set_page_config(page_title="Buscador Gasolineras", page_icon="⛽", layout="c
 # AJUSTES DE ESPACIADO PRECISOS Y DISEÑO CSS
 st.markdown("""
     <style>
-        /* Eliminación agresiva del espacio superior y colchón inferior para el teclado virtual */
         .block-container {
             padding-top: 1rem !important; 
-            padding-bottom: 25vh !important; /* Fuerza a que el menú desplegable tenga sitio para caer hacia abajo */
+            padding-bottom: 2rem !important;
             margin-top: 0rem !important;
         }
         header {visibility: hidden !important;}
@@ -44,45 +43,15 @@ st.markdown("""
             margin: 0 !important;
             padding: 0 !important;
         }
-
-        /* ========================================================= */
-        /* --- MEJORAS PREMIUM DEL DESPLEGABLE PARA MÓVIL --- */
-        /* ========================================================= */
         
-        /* 1. Aspecto de botón redondeado y limpio para el input */
-        div[data-baseweb="select"] > div {
-            padding: 0.5rem !important;
-            border-radius: 12px !important;
-            border: 2px solid #e0e0e0 !important;
-            background-color: #ffffff !important;
-            font-size: 1.15rem !important;
-        }
-        
-        /* 2. Ampliar la lista hacia abajo y darle estilo flotante */
-        ul[role="listbox"] {
-            max-height: 45vh !important; 
-            border-radius: 12px !important;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.15) !important;
-            background-color: #ffffff !important;
-        }
-        
-        /* 3. Opciones enormes para que sea facilísimo tocar con el dedo */
-        li[role="option"] {
-            padding-top: 16px !important;
-            padding-bottom: 16px !important;
-            font-size: 1.1rem !important;
-            border-bottom: 1px solid #f0f2f6 !important;
-        }
-        
-        /* 4. Efecto de pulsación en el móvil */
-        li[role="option"]:active {
-            background-color: #f0f2f6 !important;
-        }
-        
-        /* ========================================================= */
-        
+        /* Aumentar tamaño de los radio buttons para que sean fáciles de tocar en móvil */
         div[data-testid="stRadio"] > label {font-weight: bold; margin-bottom: -0.5rem;}
         div[data-testid="stRadio"] {margin-bottom: 0.5rem;}
+        .stRadio > div > div > label {
+            padding-top: 0.5rem;
+            padding-bottom: 0.5rem;
+        }
+        
         hr {margin-top: 0.5rem; margin-bottom: 1rem;}
         h1 {margin-top: -1rem; margin-bottom: 0.5rem;}
         
@@ -230,32 +199,37 @@ df["Precio_G95"] = pd.to_numeric(df["Precio Gasolina 95 E5"].str.replace(",", ".
 municipios_unicos = sorted(list(set([str(g["Municipio"]) for g in datos])))
 
 # ==========================================
-# ESTADO 2: PANTALLA DE SELECCIÓN MANUAL ÚNICA
+# ESTADO 2: PANTALLA DE SELECCIÓN MANUAL ÚNICA (SIN DESPLEGABLE)
 # ==========================================
 if not lat_gps and not lon_gps and not st.session_state.municipio_guardado:
     st.markdown("""
         <div style='text-align: center; margin-top: 1rem; margin-bottom: 2rem;'>
             <h3 style='color: #333;'>📍 Elige tu ubicación</h3>
-            <p style='color: #666; font-size: 0.95rem;'>Busca y selecciona tu municipio para empezar:</p>
+            <p style='color: #666; font-size: 0.95rem;'>Escribe tu municipio y pulsa buscar/intro en tu teclado:</p>
         </div>
     """, unsafe_allow_html=True)
     
-    municipio_seleccionado_inicio = st.selectbox(
+    texto_busqueda_inicio = st.text_input(
         "Municipio:", 
-        options=municipios_unicos,
-        index=None,
-        placeholder="Escribe tu municipio...",
+        placeholder="Ej: Madrid, Bilbao...",
         label_visibility="collapsed"
     )
 
-    if st.button("✅ Confirmar y buscar", type="primary", use_container_width=True):
-        if municipio_seleccionado_inicio:
-            st.session_state.municipio_guardado = municipio_seleccionado_inicio
-            st.session_state.guardar_js = municipio_seleccionado_inicio
-            st.session_state.override_manual = True
-            st.rerun() 
+    if texto_busqueda_inicio:
+        opciones_filtradas_inicio = [m for m in municipios_unicos if texto_busqueda_inicio.lower() in m.lower()]
+        
+        if len(opciones_filtradas_inicio) == 0:
+            st.warning("No se ha encontrado ningún municipio. Revisa la escritura.")
         else:
-            st.error("Por favor, selecciona un municipio válido de la lista antes de continuar.")
+            # Mostramos los resultados como opciones táctiles amigables, máximo 10 para no saturar
+            st.write("Sugerencias encontradas:")
+            municipio_elegido_inicio = st.radio("Selecciona tu municipio:", options=opciones_filtradas_inicio[:10], label_visibility="collapsed")
+            
+            if st.button("✅ Confirmar municipio", type="primary", use_container_width=True):
+                st.session_state.municipio_guardado = municipio_elegido_inicio
+                st.session_state.guardar_js = municipio_elegido_inicio
+                st.session_state.override_manual = True
+                st.rerun() 
     
     st.stop() 
 
@@ -277,21 +251,22 @@ elif st.session_state.municipio_guardado:
 with st.expander("⚙️ Ajustes de búsqueda", expanded=False):
     st.write("Cambia tu ubicación manual o ajusta los filtros:")
     
-    idx_actual = municipios_unicos.index(muni_ref) if muni_ref in municipios_unicos else None
+    # Búsqueda manual sin desplegable también en los ajustes
+    texto_busqueda_ajustes = st.text_input("Buscar nuevo municipio (escribe y pulsa intro):", placeholder="Ej: Sevilla...")
     
-    municipio_cambio = st.selectbox(
-        "Cambiar municipio:", 
-        options=municipios_unicos,
-        index=idx_actual,
-        placeholder="Busca un nuevo municipio..."
-    )
+    if texto_busqueda_ajustes:
+        opciones_ajustes = [m for m in municipios_unicos if texto_busqueda_ajustes.lower() in m.lower()]
+        
+        if len(opciones_ajustes) > 0:
+            municipio_cambio = st.radio("Elige la nueva ubicación:", options=opciones_ajustes[:10], label_visibility="collapsed")
             
-    if st.button("Actualizar municipio"):
-        if municipio_cambio and municipio_cambio != muni_ref:
-            st.session_state.municipio_guardado = municipio_cambio
-            st.session_state.guardar_js = municipio_cambio
-            st.session_state.override_manual = True 
-            st.rerun()
+            if st.button("Actualizar municipio", use_container_width=True):
+                st.session_state.municipio_guardado = municipio_cambio
+                st.session_state.guardar_js = municipio_cambio
+                st.session_state.override_manual = True 
+                st.rerun()
+        else:
+            st.warning("No se ha encontrado ningún municipio.")
 
     st.write("") 
     
