@@ -28,7 +28,7 @@ class SSLAdapter(HTTPAdapter):
 # 1. Configuración de la página
 st.set_page_config(page_title="gasolina.eus", page_icon="⛽", layout="centered")
 
-# --- AJUSTES DE DISEÑO CSS (ESTILO BETA 2) ---
+# --- AJUSTES DE DISEÑO CSS (BETA 2) ---
 st.markdown("""
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@500;800&display=swap');
@@ -142,7 +142,7 @@ municipios_unicos = sorted(list(set([str(g["Municipio"]) for g in datos])))
 js_permiso = "navigator.permissions ? navigator.permissions.query({name: 'geolocation'}).then(res => res.state) : 'prompt'"
 estado_permiso = streamlit_js_eval(js_expressions=js_permiso, key="permiso_gps")
 
-# --- ESTADO 1: INICIO ---
+# --- PANTALLA 1: INICIO ---
 if not (estado_permiso == "granted" or st.session_state.municipio_guardado) and not st.session_state.solicitar_gps:
     st.markdown("<div class='titulo-app'>gasolina<span>.eus</span></div>", unsafe_allow_html=True)
     st.markdown("<p class='subtitulo-app'>Compara precios en tiempo real y ahorra en cada repostaje.</p>", unsafe_allow_html=True)
@@ -162,14 +162,14 @@ if (estado_permiso == "granted" or st.session_state.solicitar_gps) and not (st.s
     else:
         st.session_state.gps_fallido = True; st.rerun()
 
-# --- ESTADO 2: SELECCIÓN MANUAL ---
+# --- PANTALLA 2: MANUAL ---
 if not lat_gps and not st.session_state.municipio_guardado:
     st.markdown("<div class='titulo-app'>gasolina<span>.eus</span></div>", unsafe_allow_html=True)
     st.markdown("<p style='text-align: center; color: #64748b;'>📍 Escribe tu municipio:</p>", unsafe_allow_html=True)
     muni_sel = st.selectbox("Municipio:", options=municipios_unicos, index=None, placeholder="Buscar...", label_visibility="collapsed")
     
-    # Ocultar teclado al seleccionar
-    if muni_sel: streamlit_js_eval(js_expressions="document.activeElement.blur()", key="blur_manual")
+    # TRUCO DEL TECLADO: El key cambia con el municipio seleccionado para forzar el cierre del teclado
+    if muni_sel: streamlit_js_eval(js_expressions="document.activeElement.blur()", key=f"blur_{muni_sel}")
 
     if st.button("✅ Confirmar selección", type="primary", use_container_width=True):
         if muni_sel:
@@ -178,7 +178,7 @@ if not lat_gps and not st.session_state.municipio_guardado:
             st.session_state.override_manual = True; st.rerun()
     st.stop()
 
-# --- ESTADO 3: RESULTADOS ---
+# --- PANTALLA 3: RESULTADOS ---
 st.markdown("<div class='titulo-app'>gasolina<span>.eus</span></div>", unsafe_allow_html=True)
 
 if lat_gps and not st.session_state.override_manual:
@@ -196,8 +196,8 @@ with st.expander("⚙️ Ajustes de búsqueda", expanded=st.session_state.ajuste
     nuevo_muni = st.selectbox("Cambiar municipio:", options=municipios_unicos, 
                               index=municipios_unicos.index(muni_ref) if muni_ref in municipios_unicos else None)
     
-    # Ocultar teclado al seleccionar en ajustes
-    if nuevo_muni != muni_ref: streamlit_js_eval(js_expressions="document.activeElement.blur()", key="blur_ajustes")
+    # TRUCO DEL TECLADO EN AJUSTES
+    if nuevo_muni != muni_ref: streamlit_js_eval(js_expressions="document.activeElement.blur()", key=f"blur_aj_{nuevo_muni}")
 
     nuevo_radio = st.radio("Radio de búsqueda:", [5, 10, 20, 50], 
                            index=[5, 10, 20, 50].index(st.session_state.radio_km),
@@ -214,11 +214,11 @@ with st.expander("⚙️ Ajustes de búsqueda", expanded=st.session_state.ajuste
         st.session_state.override_manual = True
         st.session_state.ajustes_abiertos = False; st.rerun()
 
-# --- LÓGICA DE FILTRADO CORREGIDA ---
+# --- FILTRADO FLEXIBLE ---
 col_orden = "Precio_Diesel" if st.session_state.tipo_combustible == "Diésel" else "Precio_G95"
 df["Distancia"] = calcular_distancia(lat_ref, lon_ref, df["lat_num"], df["lon_num"])
 
-# Filtramos SOLO por distancia para que no desaparezcan gasolineras sin el combustible elegido
+# Todas las gasolineras en el radio, ordenadas por el combustible elegido (poniendo NAs al final)
 res = df[df["Distancia"] <= st.session_state.radio_km].sort_values(col_orden, na_position='last')
 
 st.markdown(f"<div class='resumen-filtros'>📍 <b>{muni_ref}</b> | 🚗 <b>{st.session_state.radio_km} km</b> | ⛽ <b>{st.session_state.tipo_combustible}</b></div>", unsafe_allow_html=True)
@@ -234,5 +234,4 @@ for _, g in res.head(20).iterrows():
             st.write(f"⛽ **D:** {p_diesel} | **G95:** {p_g95}")
             st.caption(f"📍 A {g['Distancia']:.2f} km")
         with c2:
-            # Enlace corregido a navegación directa
             st.link_button("🗺️ Ir allí", f"https://www.google.com/maps/dir/?api=1&destination={g['lat_num']},{g['lon_num']}", use_container_width=True)
