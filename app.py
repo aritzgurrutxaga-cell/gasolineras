@@ -24,9 +24,10 @@ st.set_page_config(page_title="Buscador Gasolineras", page_icon="⛽", layout="c
 # AJUSTES DE ESPACIADO PRECISOS Y DISEÑO CSS
 st.markdown("""
     <style>
+        /* Reducimos al máximo los márgenes superiores para ganar espacio */
         .block-container {
             padding-top: 1rem !important; 
-            padding-bottom: 2rem !important;
+            padding-bottom: 25vh !important; /* Espacio extra abajo para que el menú pueda caer */
             margin-top: 0rem !important;
         }
         header {visibility: hidden !important;}
@@ -43,18 +44,40 @@ st.markdown("""
             margin: 0 !important;
             padding: 0 !important;
         }
-
-        /* Aumentar tamaño de los radio buttons para móvil */
-        div[data-testid="stRadio"] > label {font-weight: bold; margin-bottom: -0.5rem;}
-        div[data-testid="stRadio"] {margin-bottom: 0.5rem;}
-        .stRadio > div > div > label {
-            padding-top: 0.6rem;
-            padding-bottom: 0.6rem;
-            font-size: 1.05rem !important;
+        
+        /* ========================================================= */
+        /* --- DISEÑO PREMIUM DEL DESPLEGABLE (SELECTBOX) --- */
+        /* ========================================================= */
+        
+        /* 1. Caja de texto más redondeada y limpia */
+        div[data-baseweb="select"] > div {
+            padding: 0.2rem !important;
+            border-radius: 10px !important;
+            font-size: 1.1rem !important;
         }
         
+        /* 2. Ampliar la lista flotante y darle sombras */
+        ul[role="listbox"] {
+            max-height: 45vh !important; 
+            border-radius: 10px !important;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2) !important;
+        }
+        
+        /* 3. Opciones más grandes (Fat-finger friendly) */
+        li[role="option"] {
+            padding-top: 14px !important;
+            padding-bottom: 14px !important;
+            font-size: 1.05rem !important;
+            border-bottom: 1px solid rgba(150, 150, 150, 0.1) !important;
+        }
+        
+        /* ========================================================= */
+
+        div[data-testid="stRadio"] > label {font-weight: bold; margin-bottom: -0.5rem;}
+        div[data-testid="stRadio"] {margin-bottom: 0.5rem;}
+        
         hr {margin-top: 0.5rem; margin-bottom: 1rem;}
-        h1 {margin-top: -1rem; margin-bottom: 0.5rem;}
+        h1, h2 {margin-top: -1rem; margin-bottom: 0.5rem;}
         
         .resumen-filtros {
             text-align: center; 
@@ -83,16 +106,6 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# Título SIEMPRE VISIBLE
-st.markdown(
-    """
-    <h1 style='text-align: center; font-size: clamp(22px, 7vw, 38px);'>
-        ⛽ Buscador Gasolineras
-    </h1>
-    """, 
-    unsafe_allow_html=True
-)
-
 # --- INICIALIZACIÓN DE MEMORIA Y LOCAL STORAGE ---
 if 'solicitar_gps' not in st.session_state:
     st.session_state.solicitar_gps = False
@@ -102,10 +115,6 @@ if 'gps_fallido' not in st.session_state:
     st.session_state.gps_fallido = False
 if 'override_manual' not in st.session_state:
     st.session_state.override_manual = False
-if 'busqueda_activa_inicio' not in st.session_state:
-    st.session_state.busqueda_activa_inicio = ""
-if 'busqueda_activa_ajustes' not in st.session_state:
-    st.session_state.busqueda_activa_ajustes = ""
 
 # Recuperamos la caché persistente del navegador
 muni_cache = streamlit_js_eval(js_expressions="parent.window.localStorage.getItem('muni_gasolineras')", key="get_muni_cache")
@@ -123,6 +132,7 @@ js_permiso = "navigator.permissions ? navigator.permissions.query({name: 'geoloc
 estado_permiso = streamlit_js_eval(js_expressions=js_permiso, key="permiso_gps")
 gps_denegado = (estado_permiso == "denied") or st.session_state.gps_fallido
 
+
 # ==========================================
 # ESTADO 1: PANTALLA INICIAL PURA (Botón rojo)
 # ==========================================
@@ -131,11 +141,15 @@ if estado_permiso == "granted" or st.session_state.municipio_guardado:
     mostrar_pantalla_inicial = False
 
 if mostrar_pantalla_inicial and not st.session_state.solicitar_gps:
+    # Título visible normal
+    st.markdown("<h1 style='text-align: center; font-size: clamp(22px, 7vw, 38px);'>⛽ Buscador Gasolineras</h1>", unsafe_allow_html=True)
     st.markdown("<h3 style='text-align: center; color: inherit; font-size: 1.1rem; margin-top: 1.5rem; margin-bottom: 1rem;'>Descubre al instante dónde repostar más barato</h3>", unsafe_allow_html=True)
+    
     if st.button("📍 Mostrar gasolineras", use_container_width=True, type="primary"):
         st.session_state.solicitar_gps = True
         st.rerun()
     st.stop() 
+
 
 # ==========================================
 # PROCESAMIENTO DE UBICACIÓN
@@ -148,6 +162,8 @@ intentar_gps = (estado_permiso == "granted") or (st.session_state.solicitar_gps 
 if intentar_gps and not st.session_state.override_manual:
     loc = get_geolocation()
     if loc is None:
+        # Título visible mientras carga
+        st.markdown("<h1 style='text-align: center; font-size: clamp(22px, 7vw, 38px);'>⛽ Buscador Gasolineras</h1>", unsafe_allow_html=True)
         st.info("⏳ Localizando tu posición...")
         st.stop() 
     elif 'coords' not in loc:
@@ -157,6 +173,7 @@ if intentar_gps and not st.session_state.override_manual:
     else:
         lat_gps = loc['coords']['latitude']
         lon_gps = loc['coords']['longitude']
+
 
 # ==========================================
 # CARGA DE DATOS 
@@ -203,52 +220,46 @@ df["Precio_Diesel"] = pd.to_numeric(df["Precio Gasoleo A"].str.replace(",", ".")
 df["Precio_G95"] = pd.to_numeric(df["Precio Gasolina 95 E5"].str.replace(",", "."), errors='coerce')
 municipios_unicos = sorted(list(set([str(g["Municipio"]) for g in datos])))
 
+
 # ==========================================
-# ESTADO 2: PANTALLA DE SELECCIÓN MANUAL ÚNICA (Estrategia Vertical)
+# ESTADO 2: PANTALLA DE SELECCIÓN MANUAL (SÚPER COMPACTA ARRIBA)
 # ==========================================
 if not lat_gps and not lon_gps and not st.session_state.municipio_guardado:
+    # Título reducido y comprimido para dejarle espacio vital al teclado
     st.markdown("""
-        <div style='text-align: center; margin-top: 1rem; margin-bottom: 1rem;'>
-            <h3 style='color: inherit; margin-bottom: 0.5rem;'>📍 Elige tu ubicación</h3>
-            <p style='color: inherit; opacity: 0.8; font-size: 0.95rem;'>Escribe tu municipio y pulsa buscar:</p>
+        <div style='text-align: center; margin-top: -1.5rem; margin-bottom: 0.5rem;'>
+            <h2 style='color: inherit; margin-bottom: 0;'>⛽ Buscador Gasolineras</h2>
+            <p style='color: inherit; opacity: 0.8; font-size: 0.95rem; margin-top: 5px;'>📍 Escribe tu municipio:</p>
         </div>
     """, unsafe_allow_html=True)
     
-    # 1. Caja de texto amplia y cómoda
-    texto_input = st.text_input(
+    municipio_seleccionado_inicio = st.selectbox(
         "Municipio:", 
-        placeholder="Ej: Madrid, Bilbao...",
+        options=municipios_unicos,
+        index=None,
+        placeholder="Toca aquí para escribir...",
         label_visibility="collapsed"
     )
-    
-    # 2. Botón ancho justo debajo para ejecutar la búsqueda sin usar el teclado virtual
-    if st.button("🔍 Buscar municipio", use_container_width=True, key="btn_buscar_inicio"):
-        st.session_state.busqueda_activa_inicio = texto_input
 
-    # 3. Resultados
-    if st.session_state.busqueda_activa_inicio:
-        st.divider()
-        opciones_filtradas = [m for m in municipios_unicos if st.session_state.busqueda_activa_inicio.lower() in m.lower()]
-        
-        if len(opciones_filtradas) == 0:
-            st.warning("No se ha encontrado ningún municipio. Revisa la escritura.")
+    st.write("")
+    if st.button("✅ Confirmar selección", type="primary", use_container_width=True):
+        if municipio_seleccionado_inicio:
+            st.session_state.municipio_guardado = municipio_seleccionado_inicio
+            st.session_state.guardar_js = municipio_seleccionado_inicio
+            st.session_state.override_manual = True
+            st.rerun() 
         else:
-            st.write("Sugerencias encontradas:")
-            municipio_elegido = st.radio("Selecciona tu municipio:", options=opciones_filtradas[:10], label_visibility="collapsed")
-            
-            st.write("") 
-            if st.button("✅ Confirmar selección", type="primary", use_container_width=True):
-                st.session_state.municipio_guardado = municipio_elegido
-                st.session_state.guardar_js = municipio_elegido
-                st.session_state.override_manual = True
-                st.session_state.busqueda_activa_inicio = "" 
-                st.rerun() 
+            st.error("Por favor, selecciona un municipio de la lista.")
     
     st.stop() 
+
 
 # ==========================================
 # ESTADO 3: PANTALLA DE RESULTADOS Y AJUSTES
 # ==========================================
+# Volvemos a mostrar el título principal gigante en la pantalla de resultados
+st.markdown("<h1 style='text-align: center; font-size: clamp(22px, 7vw, 38px);'>⛽ Buscador Gasolineras</h1>", unsafe_allow_html=True)
+
 lat_ref, lon_ref, muni_ref = None, None, None
 
 if lat_gps and lon_gps and not st.session_state.override_manual:
@@ -264,28 +275,22 @@ elif st.session_state.municipio_guardado:
 with st.expander("⚙️ Ajustes de búsqueda", expanded=False):
     st.write("Cambia tu ubicación manual o ajusta los filtros:")
     
-    # Estrategia Vertical también en los ajustes
-    texto_input_aj = st.text_input("Buscar nuevo municipio:", placeholder="Ej: Sevilla...", label_visibility="collapsed")
-    if st.button("🔍 Buscar nuevo municipio", key="btn_buscar_ajustes", use_container_width=True):
-        st.session_state.busqueda_activa_ajustes = texto_input_aj
+    idx_actual = municipios_unicos.index(muni_ref) if muni_ref in municipios_unicos else None
     
-    if st.session_state.busqueda_activa_ajustes:
-        st.divider()
-        opciones_aj = [m for m in municipios_unicos if st.session_state.busqueda_activa_ajustes.lower() in m.lower()]
-        
-        if len(opciones_aj) > 0:
-            st.write("Sugerencias:")
-            municipio_cambio = st.radio("Elige la nueva ubicación:", options=opciones_aj[:10], label_visibility="collapsed")
+    municipio_cambio = st.selectbox(
+        "Cambiar municipio:", 
+        options=municipios_unicos,
+        index=idx_actual,
+        placeholder="Escribe el nuevo municipio..."
+    )
             
-            st.write("")
-            if st.button("✅ Actualizar municipio", use_container_width=True):
-                st.session_state.municipio_guardado = municipio_cambio
-                st.session_state.guardar_js = municipio_cambio
-                st.session_state.override_manual = True 
-                st.session_state.busqueda_activa_ajustes = "" 
-                st.rerun()
-        else:
-            st.warning("No se ha encontrado ningún municipio.")
+    st.write("")
+    if st.button("Actualizar municipio", use_container_width=True):
+        if municipio_cambio and municipio_cambio != muni_ref:
+            st.session_state.municipio_guardado = municipio_cambio
+            st.session_state.guardar_js = municipio_cambio
+            st.session_state.override_manual = True 
+            st.rerun()
 
     st.divider()
 
