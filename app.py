@@ -40,7 +40,7 @@ class SSLAdapter(HTTPAdapter):
 # 1. Configuración de la página
 st.set_page_config(page_title="gasolina.eus", page_icon="⛽", layout="centered")
 
-# --- AJUSTES DE DISEÑO CSS ---
+# --- AJUSTES DE DISEÑO CSS (ESTABLE 1) ---
 st.markdown("""
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@500;800&display=swap');
@@ -70,23 +70,9 @@ st.markdown("""
             font-family: 'Poppins', sans-serif; font-weight: 500;
         }
         
-        /* BOTÓN DE NAVEGACIÓN (ESTILO FINAL AJUSTADO) */
-        .btn-navegar {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            background-color: #f8fafc !important;
-            border: 1px solid #e2e8f0;
-            border-radius: 10px;
-            color: #475569 !important;
-            font-family: 'Poppins', sans-serif;
-            font-weight: 500;
-            font-size: 0.85rem;
-            padding: 0.5rem 0.8rem;
-            text-decoration: none !important;
-            transition: all 0.2s;
+        div[data-testid="stHorizontalBlock"] div[data-testid="stRadio"] > div {
+            flex-direction: row !important; justify-content: space-between !important; gap: 2px !important;
         }
-        .btn-navegar img { width: 16px; margin-right: 8px; }
 
         .resumen-filtros {
             text-align: center; font-size: 0.95rem; margin-bottom: 1.5rem; 
@@ -115,7 +101,10 @@ st.markdown("""
             font-size: 0.85rem !important; font-weight: normal !important;
             opacity: 0.9; display: block; margin-top: 8px;
         }
-        details div[data-testid="stButton"] button[kind="primary"] {
+        
+        /* BOTONES DENTRO DE TARJETAS Y AJUSTES */
+        details div[data-testid="stButton"] button[kind="primary"],
+        div[data-testid="stVerticalBlockBorderWrapper"] div[data-testid="stButton"] button {
             min-height: 48px !important; padding: 0.5rem 1rem !important; box-shadow: none !important;
         }
         details div[data-testid="stButton"] button[kind="primary"]::after { content: none !important; }
@@ -131,7 +120,7 @@ if 'radio_km' not in st.session_state: st.session_state.radio_km = 5
 if 'tipo_combustible' not in st.session_state: st.session_state.tipo_combustible = "Diésel"
 if 'ajustes_abiertos' not in st.session_state: st.session_state.ajustes_abiertos = False
 
-# Recuperar caché persistente
+# Recuperar caché
 muni_cache = streamlit_js_eval(js_expressions="parent.window.localStorage.getItem('muni_gasolineras')", key="get_muni_cache")
 if muni_cache and muni_cache != "null" and not st.session_state.municipio_guardado:
     st.session_state.municipio_guardado = muni_cache
@@ -159,14 +148,6 @@ municipios_unicos = sorted(list(set([str(g["Municipio"]) for g in datos])))
 js_permiso = "navigator.permissions ? navigator.permissions.query({name: 'geolocation'}).then(res => res.state) : 'prompt'"
 estado_permiso = streamlit_js_eval(js_expressions=js_permiso, key="permiso_gps")
 
-# SCRIPT "GHOST FOCUS"
-js_hide_keyboard = """
-    var tempInput = document.createElement('input');
-    tempInput.style.position = 'absolute'; tempInput.style.top = '-1000px';
-    document.body.appendChild(tempInput); tempInput.focus();
-    setTimeout(function() { tempInput.blur(); document.body.removeChild(tempInput); }, 10);
-"""
-
 # --- PANTALLAS ---
 if not (estado_permiso == "granted" or st.session_state.municipio_guardado) and not st.session_state.solicitar_gps:
     st.markdown("<div class='titulo-app'>gasolina<span>.eus</span></div>", unsafe_allow_html=True)
@@ -190,7 +171,7 @@ if not lat_gps and not st.session_state.municipio_guardado:
     st.markdown("<div class='titulo-app'>gasolina<span>.eus</span></div>", unsafe_allow_html=True)
     st.markdown("<p style='text-align: center; color: #64748b;'>📍 Escribe tu municipio:</p>", unsafe_allow_html=True)
     muni_sel = st.selectbox("Municipio:", options=municipios_unicos, index=None, placeholder="Buscar...", label_visibility="collapsed")
-    if muni_sel: streamlit_js_eval(js_expressions=js_hide_keyboard, key=f"kb_start_{muni_sel}")
+    if muni_sel: cerrar_teclado_movil()
     if st.button("✅ Confirmar selección", type="primary", use_container_width=True):
         if muni_sel:
             st.session_state.municipio_guardado = muni_sel
@@ -213,7 +194,7 @@ with st.expander("⚙️ Ajustes de búsqueda", expanded=st.session_state.ajuste
     st.session_state.ajustes_abiertos = True
     nuevo_muni = st.selectbox("Cambiar municipio:", options=municipios_unicos, 
                               index=municipios_unicos.index(muni_ref) if muni_ref in municipios_unicos else None)
-    if nuevo_muni != muni_ref: streamlit_js_eval(js_expressions=js_hide_keyboard, key=f"kb_aj_{nuevo_muni}")
+    if nuevo_muni != muni_ref: cerrar_teclado_movil()
     nuevo_radio = st.radio("Radio de búsqueda:", [5, 10, 20], 
                            index=[5, 10, 20].index(st.session_state.radio_km) if st.session_state.radio_km in [5, 10, 20] else 0,
                            format_func=lambda x: f"{x} km", horizontal=True)
@@ -232,7 +213,6 @@ res = df[df["Distancia"] <= st.session_state.radio_km].sort_values(col_orden, na
 
 st.markdown(f"<div class='resumen-filtros'>📍 <b>{muni_ref}</b> | 🚗 <b>{st.session_state.radio_km} km</b> | ⛽ <b>{st.session_state.tipo_combustible}</b></div>", unsafe_allow_html=True)
 
-# LISTADO DE RESULTADOS (RECUPERADO Y AJUSTADO)
 for _, g in res.head(20).iterrows():
     with st.container(border=True):
         c1, c2 = st.columns([2.5, 1.5], vertical_alignment="center")
@@ -243,12 +223,4 @@ for _, g in res.head(20).iterrows():
             st.write(f"⛽ **D:** {p_diesel} | **G95:** {p_g95}")
             st.caption(f"📍 A {g['Distancia']:.2f} km")
         with c2:
-            maps_url = f"https://www.google.com/maps/dir/?api=1&destination={g['lat_num']},{g['lon_num']}"
-            st.markdown(f"""
-                <div style="display: flex; justify-content: flex-end; margin-top: -15px;">
-                    <a href="{maps_url}" target="_blank" class="btn-navegar">
-                        <img src="https://upload.wikimedia.org/wikipedia/commons/a/aa/Google_Maps_icon_%282020%29.svg">
-                        Navegar
-                    </a>
-                </div>
-            """, unsafe_allow_html=True)
+            st.link_button("Navegar", f"https://www.google.com/maps/dir/?api=1&destination={g['lat_num']},{g['lon_num']}", use_container_width=True)
