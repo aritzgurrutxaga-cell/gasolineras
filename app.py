@@ -43,32 +43,6 @@ st.markdown("""
             margin: 0 !important;
             padding: 0 !important;
         }
-        
-        /* ========================================================= */
-        /* --- ARREGLO DEFINITIVO DE LA LUPA PARA MÓVIL --- */
-        /* ========================================================= */
-        
-        /* 1. Mantiene la caja y la lupa en la misma línea siempre */
-        div[data-testid="stHorizontalBlock"]:has(input[placeholder*="Ej:"]) {
-            flex-wrap: nowrap !important;
-            align-items: flex-end !important;
-        }
-        
-        /* 2. CLAVE MÁGICA: Permite que los elementos se encojan y NUNCA rompan la pantalla */
-        div[data-testid="stHorizontalBlock"]:has(input[placeholder*="Ej:"]) > div[data-testid="column"] {
-            min-width: 0 !important;
-        }
-        
-        /* 3. Empareja la altura de la lupa con la de la caja de texto */
-        div[data-testid="stHorizontalBlock"]:has(input[placeholder*="Ej:"]) button {
-            height: 40px !important; 
-            padding: 0 !important;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-        
-        /* ========================================================= */
 
         /* Aumentar tamaño de los radio buttons para móvil */
         div[data-testid="stRadio"] > label {font-weight: bold; margin-bottom: -0.5rem;}
@@ -230,29 +204,30 @@ df["Precio_G95"] = pd.to_numeric(df["Precio Gasolina 95 E5"].str.replace(",", ".
 municipios_unicos = sorted(list(set([str(g["Municipio"]) for g in datos])))
 
 # ==========================================
-# ESTADO 2: PANTALLA DE SELECCIÓN MANUAL ÚNICA (Buscador con Lupa Blindado)
+# ESTADO 2: PANTALLA DE SELECCIÓN MANUAL ÚNICA (Estrategia Vertical)
 # ==========================================
 if not lat_gps and not lon_gps and not st.session_state.municipio_guardado:
     st.markdown("""
         <div style='text-align: center; margin-top: 1rem; margin-bottom: 1rem;'>
             <h3 style='color: inherit; margin-bottom: 0.5rem;'>📍 Elige tu ubicación</h3>
-            <p style='color: inherit; opacity: 0.8; font-size: 0.95rem;'>Escribe tu municipio y toca la lupa:</p>
+            <p style='color: inherit; opacity: 0.8; font-size: 0.95rem;'>Escribe tu municipio y pulsa buscar:</p>
         </div>
     """, unsafe_allow_html=True)
     
-    # Proporción [7, 1]: La caja coge el 87% del espacio y la lupa el 13%.
-    col_input, col_lupa = st.columns([7, 1])
-    with col_input:
-        texto_input = st.text_input(
-            "Municipio:", 
-            placeholder="Ej: Madrid, Bilbao...",
-            label_visibility="collapsed"
-        )
-    with col_lupa:
-        if st.button("🔍", use_container_width=True, key="lupa_inicio"):
-            st.session_state.busqueda_activa_inicio = texto_input
+    # 1. Caja de texto amplia y cómoda
+    texto_input = st.text_input(
+        "Municipio:", 
+        placeholder="Ej: Madrid, Bilbao...",
+        label_visibility="collapsed"
+    )
+    
+    # 2. Botón ancho justo debajo para ejecutar la búsqueda sin usar el teclado virtual
+    if st.button("🔍 Buscar municipio", use_container_width=True, key="btn_buscar_inicio"):
+        st.session_state.busqueda_activa_inicio = texto_input
 
+    # 3. Resultados
     if st.session_state.busqueda_activa_inicio:
+        st.divider()
         opciones_filtradas = [m for m in municipios_unicos if st.session_state.busqueda_activa_inicio.lower() in m.lower()]
         
         if len(opciones_filtradas) == 0:
@@ -262,7 +237,7 @@ if not lat_gps and not lon_gps and not st.session_state.municipio_guardado:
             municipio_elegido = st.radio("Selecciona tu municipio:", options=opciones_filtradas[:10], label_visibility="collapsed")
             
             st.write("") 
-            if st.button("✅ Confirmar municipio", type="primary", use_container_width=True):
+            if st.button("✅ Confirmar selección", type="primary", use_container_width=True):
                 st.session_state.municipio_guardado = municipio_elegido
                 st.session_state.guardar_js = municipio_elegido
                 st.session_state.override_manual = True
@@ -289,14 +264,13 @@ elif st.session_state.municipio_guardado:
 with st.expander("⚙️ Ajustes de búsqueda", expanded=False):
     st.write("Cambia tu ubicación manual o ajusta los filtros:")
     
-    col_input_aj, col_lupa_aj = st.columns([7, 1])
-    with col_input_aj:
-        texto_input_aj = st.text_input("Buscar nuevo municipio:", placeholder="Ej: Sevilla...", label_visibility="collapsed")
-    with col_lupa_aj:
-        if st.button("🔍", key="lupa_ajustes", use_container_width=True):
-            st.session_state.busqueda_activa_ajustes = texto_input_aj
+    # Estrategia Vertical también en los ajustes
+    texto_input_aj = st.text_input("Buscar nuevo municipio:", placeholder="Ej: Sevilla...", label_visibility="collapsed")
+    if st.button("🔍 Buscar nuevo municipio", key="btn_buscar_ajustes", use_container_width=True):
+        st.session_state.busqueda_activa_ajustes = texto_input_aj
     
     if st.session_state.busqueda_activa_ajustes:
+        st.divider()
         opciones_aj = [m for m in municipios_unicos if st.session_state.busqueda_activa_ajustes.lower() in m.lower()]
         
         if len(opciones_aj) > 0:
@@ -304,7 +278,7 @@ with st.expander("⚙️ Ajustes de búsqueda", expanded=False):
             municipio_cambio = st.radio("Elige la nueva ubicación:", options=opciones_aj[:10], label_visibility="collapsed")
             
             st.write("")
-            if st.button("Actualizar municipio", use_container_width=True):
+            if st.button("✅ Actualizar municipio", use_container_width=True):
                 st.session_state.municipio_guardado = municipio_cambio
                 st.session_state.guardar_js = municipio_cambio
                 st.session_state.override_manual = True 
