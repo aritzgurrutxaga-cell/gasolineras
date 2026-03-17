@@ -44,24 +44,46 @@ st.markdown("""
             padding: 0 !important;
         }
         
-        /* --- BLOQUEO CONTRA APILAMIENTO EN MÓVILES --- */
-        /* Fuerza a que las columnas de la barra de búsqueda y filtros se mantengan SIEMPRE en la misma línea */
-        div[data-testid="stHorizontalBlock"] {
+        /* ========================================================= */
+        /* --- ARREGLO DEFINITIVO DE LA LUPA PARA MÓVIL --- */
+        /* ========================================================= */
+        
+        /* Seleccionamos SOLO la fila que contiene un texto de "Ej:" para no romper el resto de la web */
+        div[data-testid="stHorizontalBlock"]:has(input[placeholder*="Ej:"]) {
+            display: flex !important;
+            flex-direction: row !important;
             flex-wrap: nowrap !important;
-            gap: 0.5rem !important;
             align-items: flex-end !important;
+            gap: 0.5rem !important;
         }
         
-        /* Diseño específico para hacer la lupa pequeñita y cuadrada */
-        button[kind="secondary"] {
+        /* La caja de texto se lleva todo el ancho posible */
+        div[data-testid="stHorizontalBlock"]:has(input[placeholder*="Ej:"]) > div[data-testid="column"]:nth-child(1) {
+            width: calc(100% - 55px) !important;
+            flex: 1 1 auto !important;
+            min-width: 0 !important;
+        }
+        
+        /* La lupa ocupa EXACTAMENTE 50 píxeles, imposible que se corte */
+        div[data-testid="stHorizontalBlock"]:has(input[placeholder*="Ej:"]) > div[data-testid="column"]:nth-child(2) {
+            width: 50px !important;
+            flex: 0 0 50px !important;
+            min-width: 50px !important;
+        }
+        
+        /* Estética del botón de la lupa */
+        div[data-testid="stHorizontalBlock"]:has(input[placeholder*="Ej:"]) button {
+            height: 2.75rem !important; /* Altura perfecta alineada con la caja */
             padding: 0 !important;
-            height: 2.8rem !important; /* Coincide con la altura exacta de la caja de texto */
             width: 100% !important;
             display: flex;
             align-items: center;
             justify-content: center;
+            border-radius: 8px !important;
         }
         
+        /* ========================================================= */
+
         /* Aumentar tamaño de los radio buttons para móvil */
         div[data-testid="stRadio"] > label {font-weight: bold; margin-bottom: -0.5rem;}
         div[data-testid="stRadio"] {margin-bottom: 0.5rem;}
@@ -76,10 +98,10 @@ st.markdown("""
         
         .resumen-filtros {
             text-align: center; 
-            color: #444; 
+            color: inherit; 
             font-size: 0.95rem; 
             margin-bottom: 1.5rem; 
-            background-color: #f0f2f6; 
+            background-color: transparent; 
             padding: 10px; 
             border-radius: 8px;
             border: 1px solid #e0e0e0;
@@ -149,7 +171,7 @@ if estado_permiso == "granted" or st.session_state.municipio_guardado:
     mostrar_pantalla_inicial = False
 
 if mostrar_pantalla_inicial and not st.session_state.solicitar_gps:
-    st.markdown("<h3 style='text-align: center; color: #555; font-size: 1.1rem; margin-top: 1.5rem; margin-bottom: 1rem;'>Descubre al instante dónde repostar más barato</h3>", unsafe_allow_html=True)
+    st.markdown("<h3 style='text-align: center; color: inherit; font-size: 1.1rem; margin-top: 1.5rem; margin-bottom: 1rem;'>Descubre al instante dónde repostar más barato</h3>", unsafe_allow_html=True)
     if st.button("📍 Mostrar gasolineras", use_container_width=True, type="primary"):
         st.session_state.solicitar_gps = True
         st.rerun()
@@ -222,17 +244,16 @@ df["Precio_G95"] = pd.to_numeric(df["Precio Gasolina 95 E5"].str.replace(",", ".
 municipios_unicos = sorted(list(set([str(g["Municipio"]) for g in datos])))
 
 # ==========================================
-# ESTADO 2: PANTALLA DE SELECCIÓN MANUAL ÚNICA
+# ESTADO 2: PANTALLA DE SELECCIÓN MANUAL ÚNICA (Buscador con Lupa Blindado)
 # ==========================================
 if not lat_gps and not lon_gps and not st.session_state.municipio_guardado:
     st.markdown("""
         <div style='text-align: center; margin-top: 1rem; margin-bottom: 1rem;'>
-            <h3 style='color: #333;'>📍 Elige tu ubicación</h3>
-            <p style='color: #666; font-size: 0.95rem;'>Escribe tu municipio y toca la lupa:</p>
+            <h3 style='color: inherit; margin-bottom: 0.5rem;'>📍 Elige tu ubicación</h3>
+            <p style='color: inherit; opacity: 0.8; font-size: 0.95rem;'>Escribe tu municipio y toca la lupa:</p>
         </div>
     """, unsafe_allow_html=True)
     
-    # Proporción ajustada: 6 partes para texto, 1 parte para lupa (muy pequeña)
     col_input, col_lupa = st.columns([6, 1])
     with col_input:
         texto_input = st.text_input(
@@ -281,12 +302,11 @@ elif st.session_state.municipio_guardado:
 with st.expander("⚙️ Ajustes de búsqueda", expanded=False):
     st.write("Cambia tu ubicación manual o ajusta los filtros:")
     
-    # Proporción ajustada también en los ajustes: 6 a 1
     col_input_aj, col_lupa_aj = st.columns([6, 1])
     with col_input_aj:
         texto_input_aj = st.text_input("Buscar nuevo municipio:", placeholder="Ej: Sevilla...", label_visibility="collapsed")
     with col_lupa_aj:
-        if st.button("🔍 ", key="lupa_ajustes", use_container_width=True):
+        if st.button("🔍", key="lupa_ajustes", use_container_width=True):
             st.session_state.busqueda_activa_ajustes = texto_input_aj
     
     if st.session_state.busqueda_activa_ajustes:
@@ -352,4 +372,4 @@ else:
     st.warning(f"No hay resultados a {radio_km} km. Puedes cambiar el radio o el municipio en los Ajustes.")
 
 if fecha_act:
-    st.markdown(f"<div style='text-align: center; color: #a3a8b8; font-size: 0.75rem; margin-top: 25px;'>Última actualización MINETUR: {fecha_act.strftime('%d/%m/%Y %H:%M:%S')}</div>", unsafe_allow_html=True)
+    st.markdown(f"<div style='text-align: center; color: inherit; opacity: 0.6; font-size: 0.75rem; margin-top: 25px;'>Última actualización MINETUR: {fecha_act.strftime('%d/%m/%Y %H:%M:%S')}</div>", unsafe_allow_html=True)
