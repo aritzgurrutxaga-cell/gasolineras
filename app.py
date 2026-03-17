@@ -26,9 +26,11 @@ class SSLAdapter(HTTPAdapter):
         return super(SSLAdapter, self).init_poolmanager(*args, **kwargs)
 
 # 1. Configuración de la página
-st.set_page_config(page_title="gasolina.eus", page_icon="⛽", layout="centered")
+st.set_page_config(page_title="Buscador Gasolineras", page_icon="⛽", layout="centered")
 
-# AJUSTES DE DISEÑO CSS
+# ==========================================
+# CSS MINIMALISTA Y LIMPIO
+# ==========================================
 st.markdown("""
     <style>
         .block-container {
@@ -41,22 +43,10 @@ st.markdown("""
         iframe { display: none !important; height: 0px !important; }
         .element-container:has(iframe) { display: none !important; height: 0px !important; margin: 0 !important; }
         
-        /* Título gasolina.eus */
-        .titulo-app {
-            text-align: center; 
-            font-size: clamp(28px, 9vw, 42px); 
-            white-space: nowrap; 
-            font-weight: 800;
-            margin-top: -1rem;
-            margin-bottom: 1.5rem;
-            color: #ff4b4b;
-            letter-spacing: -1px;
-        }
-        
-        /* DISEÑO DE LA CAJA DE TEXTO (Altura corregida para que el texto respire) */
+        /* DISEÑO DE LA CAJA DE TEXTO (Altura de 56px para que el municipio respire) */
         div[data-baseweb="select"] > div {
-            padding: 12px 14px !important; 
-            min-height: 60px !important;   
+            padding: 10px 12px !important; 
+            min-height: 56px !important;   
             border-radius: 12px !important;
             font-size: 1.15rem !important;
             display: flex !important;
@@ -78,67 +68,47 @@ st.markdown("""
             padding: 10px; 
             border-radius: 8px;
             border: 1px solid #444;
-            background-color: #f0f2f6;
-            color: #111;
+            background-color: transparent;
+            color: inherit;
         }
 
-        /* --- BOTÓN ROJO INICIAL (REDISEÑADO: MINIMALISTA Y SERIO) --- */
-        div.block-container div[data-testid="stButton"] button[kind="primary"] {
-            min-height: 120px !important; /* Más alto */
-            border-radius: 20px !important;
-            background-color: #A03030 !important; /* Rojo oscuro serio, sin degradados */
-            box-shadow: 0 4px 8px rgba(0,0,0,0.15) !important; /* Sombra más notable pero limpia */
-            border: 2px solid #702020 !important; /* Borde más oscuro */
+        /* --- BOTÓN TIPO PRIMARY (SOLO EL ROJO GIGANTE DE INICIO) --- */
+        div[data-testid="stButton"] button[kind="primary"] {
+            min-height: 100px !important; 
+            border-radius: 15px !important;
+            font-weight: bold !important;
+            width: 100% !important;
             display: flex !important;
             flex-direction: column !important;
             align-items: center !important;
             justify-content: center !important;
-            transition: all 0.2s ease-in-out !important;
-        }
-        div.block-container div[data-testid="stButton"] button[kind="primary"]:hover {
-            background-color: #802020 !important; /* Oscurecer un poco al hover */
-        }
-        div.block-container div[data-testid="stButton"] button[kind="primary"]:active {
-            transform: translateY(1px) !important; /* Efecto de presionar */
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+            padding: 20px !important;
         }
         
-        div.block-container div[data-testid="stButton"] button[kind="primary"] p {
-            display: none !important; /* Ocultamos el texto por defecto */
-        }
-        
-        /* Insertamos el contenido minimalista y serio */
-        div.block-container div[data-testid="stButton"] button[kind="primary"]::before {
-            content: "📍 "; /* Icono minimalista */
-            font-size: 1.8rem !important;
-            display: block;
-            margin-bottom: -5px;
-        }
-        div.block-container div[data-testid="stButton"] button[kind="primary"]::after {
-            content: "BUSCAR GASOLINERAS"; /* Texto principal serio y en mayúsculas */
+        div[data-testid="stButton"] button[kind="primary"] p {
             font-size: 1.4rem !important;
-            font-weight: 800 !important;
-            color: white !important;
+            margin: 0 !important;
+        }
+        
+        /* Subtexto original del botón inicial */
+        div[data-testid="stButton"] button[kind="primary"]::after {
+            content: "Es necesaria la ubicación para buscar";
+            font-size: 0.85rem !important;
+            font-weight: normal !important;
+            opacity: 0.9;
+            margin-top: 8px;
             display: block;
         }
-        
-        /* Subtítulo discreto debajo del botón */
-        div.block-container div[data-testid="stButton"]::after {
-             content: "Activa ubicación para mejores resultados";
-             font-size: 0.9rem;
-             opacity: 0.8;
-             text-align: center;
-             display: block;
-             margin-top: 10px;
-             width: 100%;
+
+        /* --- BOTÓN TIPO SECONDARY (PARA LOS AJUSTES, FINO Y DISCRETO) --- */
+        div[data-testid="stButton"] button[kind="secondary"] {
+            min-height: 45px !important; 
+            height: auto !important;
+            border-radius: 10px !important;
+            font-size: 1.1rem !important;
+            width: 100% !important;
+            font-weight: bold !important;
         }
-        div.block-container div[data-testid="stButton"] {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-        }
-        
     </style>
 """, unsafe_allow_html=True)
 
@@ -177,7 +147,7 @@ def cargar_datos():
 
 datos, fecha_act = cargar_datos()
 if not datos:
-    st.error("Error de conexión con los datos oficiales.")
+    st.error("Error de conexión.")
     st.stop()
 
 df = pd.DataFrame(datos)
@@ -188,12 +158,12 @@ df["Precio_G95"] = pd.to_numeric(df["Precio Gasolina 95 E5"].str.replace(",", ".
 municipios_unicos = sorted(list(set([str(g["Municipio"]) for g in datos])))
 
 # ==========================================
-# PANTALLA 1: INICIO (Con el Botón Indestructible y Serio)
+# PANTALLA 1: INICIO 
 # ==========================================
 if not (estado_permiso == "granted" or st.session_state.municipio_guardado) and not st.session_state.solicitar_gps:
-    st.markdown("<div class='titulo-app'>gasolina.eus</div>", unsafe_allow_html=True)
+    st.markdown("<h1 style='text-align: center; font-size: clamp(22px, 7vw, 38px); white-space: nowrap;'>⛽ Buscador Gasolineras</h1>", unsafe_allow_html=True)
     
-    # Creamos el botón normalmente. El CSS de arriba lo obligará a ser gigante y serio.
+    # Este es el único botón PRIMARY de toda la aplicación. Siempre será gigante.
     if st.button("📍 Mostrar gasolineras", use_container_width=True, type="primary"):
         st.session_state.solicitar_gps = True
         st.rerun()
@@ -205,7 +175,7 @@ lat_gps, lon_gps = None, None
 if (estado_permiso == "granted" or st.session_state.solicitar_gps) and not (gps_denegado or st.session_state.municipio_guardado or st.session_state.override_manual):
     loc = get_geolocation()
     if loc is None:
-        st.markdown("<div class='titulo-app'>gasolina.eus</div>", unsafe_allow_html=True)
+        st.markdown("<h1 style='text-align: center; font-size: clamp(22px, 7vw, 38px); white-space: nowrap;'>⛽ Buscador Gasolineras</h1>", unsafe_allow_html=True)
         st.info("⏳ Localizando tu posición...")
         st.stop()
     elif 'coords' not in loc:
@@ -217,15 +187,19 @@ if (estado_permiso == "granted" or st.session_state.solicitar_gps) and not (gps_
 
 # SELECCIÓN MANUAL (PRIMERA VEZ)
 if not lat_gps and not st.session_state.municipio_guardado:
-    st.markdown("<div class='titulo-app'>gasolina.eus</div>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align: center;'>📍 Escribe tu municipio:</p>", unsafe_allow_html=True)
+    st.markdown("""
+        <div style='text-align: center; margin-top: -1.5rem; margin-bottom: 0.5rem;'>
+            <h2 style='color: inherit; margin-bottom: 0; font-size: 1.6rem; white-space: nowrap;'>⛽ Buscador Gasolineras</h2>
+            <p style='color: inherit; opacity: 0.8; font-size: 0.95rem; margin-top: 5px;'>📍 Escribe tu municipio:</p>
+        </div>
+    """, unsafe_allow_html=True)
     
     municipio_sel = st.selectbox("Municipio:", options=municipios_unicos, index=None, placeholder="Buscar...", label_visibility="collapsed")
     
     if municipio_sel:
         st.markdown("<script>window.parent.document.activeElement.blur();</script>", unsafe_allow_html=True)
 
-    if st.button("✅ Confirmar selección", type="primary", use_container_width=True):
+    if st.button("✅ Confirmar selección", type="secondary", use_container_width=True):
         if municipio_sel:
             st.session_state.municipio_guardado = municipio_sel
             st.session_state.guardar_js = municipio_sel
@@ -236,7 +210,7 @@ if not lat_gps and not st.session_state.municipio_guardado:
 # ==========================================
 # PANTALLA 3: RESULTADOS Y AJUSTES
 # ==========================================
-st.markdown("<div class='titulo-app'>gasolina.eus</div>", unsafe_allow_html=True)
+st.markdown("<h1 style='text-align: center; font-size: clamp(22px, 7vw, 38px); white-space: nowrap;'>⛽ Buscador Gasolineras</h1>", unsafe_allow_html=True)
 
 lat_ref, lon_ref, muni_ref = None, None, None
 if lat_gps and not st.session_state.override_manual:
@@ -248,8 +222,7 @@ else:
     fila = df[df["Municipio"] == muni_ref].iloc[0]
     lat_ref, lon_ref = fila["lat_num"], fila["lon_num"]
 
-# --- EL EXPANDER CLÁSICO (Sin forzar variables que lo rompan) ---
-# He eliminado el control de expanded desde session_state para que sea 100% nativo
+# --- EL EXPANDER NATIVO (Sin variables forzadas que lo cierren) ---
 with st.expander("⚙️ Ajustes de búsqueda"):
     idx_muni = municipios_unicos.index(muni_ref) if muni_ref in municipios_unicos else 0
     nuevo_muni = st.selectbox("Cambiar municipio:", options=municipios_unicos, index=idx_muni)
@@ -266,7 +239,8 @@ with st.expander("⚙️ Ajustes de búsqueda"):
                           horizontal=True)
     
     st.write("")
-    if st.button("🔍 Buscar", use_container_width=True, type="primary"):
+    # ESTE BOTÓN AHORA ES SECONDARY. Será gris, estrecho, y jamás heredará lo de "Obligatorio"
+    if st.button("🔍 Buscar", use_container_width=True, type="secondary"):
         st.session_state.municipio_guardado = nuevo_muni
         st.session_state.guardar_js = nuevo_muni
         st.session_state.radio_km = nuevo_radio
@@ -274,7 +248,7 @@ with st.expander("⚙️ Ajustes de búsqueda"):
         st.session_state.override_manual = True
         st.rerun()
 
-# Lógica de filtrado con protección anti-desaparición
+# Lógica de filtrado
 col_orden = "Precio_Diesel" if st.session_state.tipo_combustible == "Diésel" else "Precio_G95"
 df["Distancia"] = calcular_distancia(lat_ref, lon_ref, df["lat_num"], df["lon_num"])
 res = df[
@@ -282,15 +256,15 @@ res = df[
     ((df["Precio_Diesel"].notna()) | (df["Precio_G95"].notna()))
 ].sort_values(col_orden, na_position='last')
 
-st.markdown(f"<div class='resumen-filtros'>📍 <b>{muni_ref}</b> | 🚗 <b>{st.session_state.radio_km} km</b> | ⛽ <b>{st.session_state.tipo_combustible}</b></div>", unsafe_allow_html=True)
+st.markdown(f"<div class='resumen-filtros'>📍 <b>{muni_ref}</b>  |  🚗 <b>{st.session_state.radio_km} km</b>  |  ⛽ <b>{st.session_state.tipo_combustible}</b></div>", unsafe_allow_html=True)
 
 for _, g in res.head(20).iterrows():
     with st.container(border=True):
         c1, c2 = st.columns([2.5, 1.5], vertical_alignment="center")
         with c1:
             st.write(f"### {g['Rótulo']} - {g['Municipio']}")
-            p_diesel = f"{g['Precio Gasoleo A']}€" if pd.notnull(g['Precio_Diesel']) else "N/A"
-            p_g95 = f"{g['Precio Gasolina 95 E5']}€" if pd.notnull(g['Precio_G95']) else "N/A"
+            p_diesel = f"{g['Precio Gasoleo A']} €" if pd.notnull(g['Precio_Diesel']) else "N/A"
+            p_g95 = f"{g['Precio Gasolina 95 E5']} €" if pd.notnull(g['Precio_G95']) else "N/A"
             st.write(f"⛽ **D:** {p_diesel} | **G95:** {p_g95}")
             st.caption(f"📍 A {g['Distancia']:.2f} km")
         with c2:
