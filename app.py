@@ -28,7 +28,9 @@ class SSLAdapter(HTTPAdapter):
 # 1. Configuración de la página
 st.set_page_config(page_title="gasolina.eus", page_icon="⛽", layout="centered")
 
-# AJUSTES DE DISEÑO CSS
+# ==========================================
+# CSS GLOBAL (Aplica a toda la aplicación)
+# ==========================================
 st.markdown("""
     <style>
         .block-container {
@@ -36,8 +38,6 @@ st.markdown("""
             padding-bottom: 25vh !important; 
         }
         header {visibility: hidden !important;}
-        
-        /* Eliminar huecos de Javascript */
         iframe { display: none !important; height: 0px !important; }
         .element-container:has(iframe) { display: none !important; height: 0px !important; margin: 0 !important; }
         
@@ -53,17 +53,14 @@ st.markdown("""
             letter-spacing: -1px;
         }
         
-        /* DISEÑO DE LA CAJA DE TEXTO (Altura corregida para que respire el texto) */
+        /* Caja de texto (Municipio) */
         div[data-baseweb="select"] > div {
             padding: 10px 12px !important; 
             min-height: 56px !important;   
             border-radius: 12px !important;
             font-size: 1.15rem !important;
-            display: flex !important;
-            align-items: center !important;
         }
 
-        /* FUERZA RADIO KM EN UNA FILA */
         div[data-testid="stHorizontalBlock"] div[data-testid="stRadio"] > div {
             flex-direction: row !important;
             flex-wrap: nowrap !important;
@@ -82,36 +79,17 @@ st.markdown("""
             color: #111;
         }
 
-        /* --- BOTÓN ROJO INICIAL (GIGANTE) --- */
-        button.btn-gigante-inicio {
-            min-height: 120px !important; 
-            border-radius: 20px !important;
-            font-weight: bold !important;
-            width: 100% !important;
-            display: flex !important;
-            flex-direction: column !important;
-            align-items: center !important;
-            justify-content: center !important;
-            padding: 20px !important;
-            background-color: #ff4b4b !important;
-            color: white !important;
-            border: none !important;
-        }
-        
-        .btn-text-main { font-size: 1.6rem !important; margin: 0 !important; font-weight: 800 !important; }
-        .btn-text-sub { font-size: 0.95rem !important; font-weight: normal !important; opacity: 0.95; margin-top: 12px; }
-
-        /* --- BOTÓN BUSCAR EN AJUSTES (ESTRECHO Y FINO) --- */
-        button.btn-ajustes-estrecho {
+        /* ESTILO GLOBAL PARA LOS BOTONES ROJOS (Estrechos para los Ajustes) */
+        div[data-testid="stButton"] button[kind="primary"] {
             min-height: 48px !important; 
-            height: 48px !important;
+            height: auto !important;
             border-radius: 10px !important;
             font-size: 1.1rem !important;
-            padding: 0px !important;
-            margin-top: 10px !important;
+            padding: 10px !important;
             background-color: #ff4b4b !important;
             color: white !important;
             border: none !important;
+            font-weight: bold !important;
         }
     </style>
 """, unsafe_allow_html=True)
@@ -124,7 +102,6 @@ if 'override_manual' not in st.session_state: st.session_state.override_manual =
 if 'radio_km' not in st.session_state: st.session_state.radio_km = 5
 if 'tipo_combustible' not in st.session_state: st.session_state.tipo_combustible = "Diésel"
 
-# LocalStorage
 muni_cache = streamlit_js_eval(js_expressions="parent.window.localStorage.getItem('muni_gasolineras')", key="get_muni_cache")
 if muni_cache and muni_cache != "null" and not st.session_state.municipio_guardado:
     st.session_state.municipio_guardado = muni_cache
@@ -151,7 +128,7 @@ def cargar_datos():
 
 datos, fecha_act = cargar_datos()
 if not datos:
-    st.error("Error de conexión con los datos oficiales.")
+    st.error("Error de conexión.")
     st.stop()
 
 df = pd.DataFrame(datos)
@@ -162,24 +139,51 @@ df["Precio_G95"] = pd.to_numeric(df["Precio Gasolina 95 E5"].str.replace(",", ".
 municipios_unicos = sorted(list(set([str(g["Municipio"]) for g in datos])))
 
 # ==========================================
-# PANTALLA 1: INICIO 
+# PANTALLA 1: INICIO (Botón Condicional)
 # ==========================================
 if not (estado_permiso == "granted" or st.session_state.municipio_guardado) and not st.session_state.solicitar_gps:
+    
+    # ESTE CSS SOLO EXISTE EN ESTA PANTALLA: Transforma el botón estándar en el botón gigante
+    st.markdown("""
+        <style>
+            div[data-testid="stButton"] button[kind="primary"] {
+                min-height: 130px !important; 
+                border-radius: 20px !important;
+                font-size: 1.6rem !important;
+                display: flex !important;
+                flex-direction: column !important;
+                align-items: center !important;
+                justify-content: center !important;
+            }
+            div[data-testid="stButton"] button[kind="primary"]::after {
+                content: "Es recomendable la ubicación para buscar";
+                font-size: 0.95rem !important;
+                font-weight: normal !important;
+                opacity: 0.9;
+                margin-top: 10px;
+                display: block;
+            }
+        </style>
+    """, unsafe_allow_html=True)
+
     st.markdown("<div class='titulo-app'>gasolina.eus</div>", unsafe_allow_html=True)
     
+    # Creamos el botón normalmente. El CSS de arriba lo volverá gigante mágicamente.
     if st.button("📍 Mostrar gasolineras", use_container_width=True, type="primary"):
         st.session_state.solicitar_gps = True
         st.rerun()
     st.stop()
 
-# GPS
+# ==========================================
+# GPS Y SELECCIÓN MANUAL
+# ==========================================
 loc = None
 lat_gps, lon_gps = None, None
 if (estado_permiso == "granted" or st.session_state.solicitar_gps) and not (gps_denegado or st.session_state.municipio_guardado or st.session_state.override_manual):
     loc = get_geolocation()
     if loc is None:
         st.markdown("<div class='titulo-app'>gasolina.eus</div>", unsafe_allow_html=True)
-        st.info("⏳ Localizando tu posición...")
+        st.info("⏳ Localizando...")
         st.stop()
     elif 'coords' not in loc:
         st.session_state.gps_fallido = True
@@ -188,13 +192,11 @@ if (estado_permiso == "granted" or st.session_state.solicitar_gps) and not (gps_
     else:
         lat_gps, lon_gps = loc['coords']['latitude'], loc['coords']['longitude']
 
-# SELECCIÓN MANUAL (PRIMERA VEZ)
 if not lat_gps and not st.session_state.municipio_guardado:
     st.markdown("<div class='titulo-app'>gasolina.eus</div>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align: center; opacity: 0.8;'>📍 Escribe tu municipio:</p>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: center;'>📍 Escribe tu municipio:</p>", unsafe_allow_html=True)
     
     municipio_sel = st.selectbox("Municipio:", options=municipios_unicos, index=None, placeholder="Buscar...", label_visibility="collapsed")
-    
     if municipio_sel:
         st.markdown("<script>window.parent.document.activeElement.blur();</script>", unsafe_allow_html=True)
 
@@ -221,12 +223,11 @@ else:
     fila = df[df["Municipio"] == muni_ref].iloc[0]
     lat_ref, lon_ref = fila["lat_num"], fila["lon_num"]
 
-# --- CAJÓN DE AJUSTES RESTAURADO AL ESTILO CLÁSICO ---
+# AJUSTES DE BÚSQUEDA
 with st.expander("⚙️ Ajustes de búsqueda"):
     idx_muni = municipios_unicos.index(muni_ref) if muni_ref in municipios_unicos else 0
     nuevo_muni = st.selectbox("Cambiar municipio:", options=municipios_unicos, index=idx_muni)
     
-    # Bajar teclado al seleccionar
     if nuevo_muni != muni_ref:
         st.markdown("<script>window.parent.document.activeElement.blur();</script>", unsafe_allow_html=True)
         
@@ -247,7 +248,7 @@ with st.expander("⚙️ Ajustes de búsqueda"):
         st.session_state.override_manual = True
         st.rerun()
 
-# Lógica de filtrado con protección anti-desaparición
+# LÓGICA FINAL Y TARJETAS
 col_orden = "Precio_Diesel" if st.session_state.tipo_combustible == "Diésel" else "Precio_G95"
 df["Distancia"] = calcular_distancia(lat_ref, lon_ref, df["lat_num"], df["lon_num"])
 res = df[
@@ -268,24 +269,3 @@ for _, g in res.head(20).iterrows():
             st.caption(f"📍 A {g['Distancia']:.2f} km")
         with c2:
             st.link_button("🗺️ Ir allí", f"https://www.google.com/maps/dir/?api=1&destination={g['lat_num']},{g['lon_num']}", use_container_width=True)
-
-# ==========================================
-# INYECCIÓN DINÁMICA DE ESTILOS PARA LOS BOTONES
-# ==========================================
-st.markdown("""
-    <script>
-        // Este script se asegura de diferenciar el botón gigante de inicio del botón estrecho de ajustes
-        setTimeout(function() {
-            var btns = window.parent.document.querySelectorAll('button[kind="primary"]');
-            btns.forEach(b => {
-                if(b.innerText.includes("Mostrar gasolineras")) {
-                    b.classList.add("btn-gigante-inicio");
-                    b.innerHTML = '<div class="btn-text-main">📍 Mostrar gasolineras</div><div class="btn-text-sub">Es recomendable la ubicación para buscar</div>';
-                }
-                if(b.innerText.includes("Buscar") && !b.innerText.includes("Mostrar")) {
-                    b.classList.add("btn-ajustes-estrecho");
-                }
-            });
-        }, 50);
-    </script>
-""", unsafe_allow_html=True)
