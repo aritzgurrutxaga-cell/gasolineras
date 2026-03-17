@@ -44,6 +44,24 @@ st.markdown("""
             padding: 0 !important;
         }
         
+        /* --- BLOQUEO CONTRA APILAMIENTO EN MÓVILES --- */
+        /* Fuerza a que las columnas de la barra de búsqueda y filtros se mantengan SIEMPRE en la misma línea */
+        div[data-testid="stHorizontalBlock"] {
+            flex-wrap: nowrap !important;
+            gap: 0.5rem !important;
+            align-items: flex-end !important;
+        }
+        
+        /* Diseño específico para hacer la lupa pequeñita y cuadrada */
+        button[kind="secondary"] {
+            padding: 0 !important;
+            height: 2.8rem !important; /* Coincide con la altura exacta de la caja de texto */
+            width: 100% !important;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
         /* Aumentar tamaño de los radio buttons para móvil */
         div[data-testid="stRadio"] > label {font-weight: bold; margin-bottom: -0.5rem;}
         div[data-testid="stRadio"] {margin-bottom: 0.5rem;}
@@ -204,7 +222,7 @@ df["Precio_G95"] = pd.to_numeric(df["Precio Gasolina 95 E5"].str.replace(",", ".
 municipios_unicos = sorted(list(set([str(g["Municipio"]) for g in datos])))
 
 # ==========================================
-# ESTADO 2: PANTALLA DE SELECCIÓN MANUAL ÚNICA (Buscador con Lupa Blindado)
+# ESTADO 2: PANTALLA DE SELECCIÓN MANUAL ÚNICA
 # ==========================================
 if not lat_gps and not lon_gps and not st.session_state.municipio_guardado:
     st.markdown("""
@@ -214,7 +232,8 @@ if not lat_gps and not lon_gps and not st.session_state.municipio_guardado:
         </div>
     """, unsafe_allow_html=True)
     
-    col_input, col_lupa = st.columns([4, 1])
+    # Proporción ajustada: 6 partes para texto, 1 parte para lupa (muy pequeña)
+    col_input, col_lupa = st.columns([6, 1])
     with col_input:
         texto_input = st.text_input(
             "Municipio:", 
@@ -222,11 +241,9 @@ if not lat_gps and not lon_gps and not st.session_state.municipio_guardado:
             label_visibility="collapsed"
         )
     with col_lupa:
-        # Al pulsar la lupa, guardamos el texto en la memoria para que no se borre
         if st.button("🔍", use_container_width=True, key="lupa_inicio"):
             st.session_state.busqueda_activa_inicio = texto_input
 
-    # Si hay algo en la memoria de búsqueda, mostramos los resultados
     if st.session_state.busqueda_activa_inicio:
         opciones_filtradas = [m for m in municipios_unicos if st.session_state.busqueda_activa_inicio.lower() in m.lower()]
         
@@ -241,7 +258,7 @@ if not lat_gps and not lon_gps and not st.session_state.municipio_guardado:
                 st.session_state.municipio_guardado = municipio_elegido
                 st.session_state.guardar_js = municipio_elegido
                 st.session_state.override_manual = True
-                st.session_state.busqueda_activa_inicio = "" # Limpiamos la memoria de búsqueda
+                st.session_state.busqueda_activa_inicio = "" 
                 st.rerun() 
     
     st.stop() 
@@ -264,7 +281,8 @@ elif st.session_state.municipio_guardado:
 with st.expander("⚙️ Ajustes de búsqueda", expanded=False):
     st.write("Cambia tu ubicación manual o ajusta los filtros:")
     
-    col_input_aj, col_lupa_aj = st.columns([4, 1])
+    # Proporción ajustada también en los ajustes: 6 a 1
+    col_input_aj, col_lupa_aj = st.columns([6, 1])
     with col_input_aj:
         texto_input_aj = st.text_input("Buscar nuevo municipio:", placeholder="Ej: Sevilla...", label_visibility="collapsed")
     with col_lupa_aj:
@@ -283,22 +301,10 @@ with st.expander("⚙️ Ajustes de búsqueda", expanded=False):
                 st.session_state.municipio_guardado = municipio_cambio
                 st.session_state.guardar_js = municipio_cambio
                 st.session_state.override_manual = True 
-                st.session_state.busqueda_activa_ajustes = "" # Limpiamos la memoria
+                st.session_state.busqueda_activa_ajustes = "" 
                 st.rerun()
         else:
             st.warning("No se ha encontrado ningún municipio.")
-
-    st.write("") 
-    
-    if st.button("🗑️ Borrar ubicación y reiniciar", type="secondary", use_container_width=True):
-        st.session_state.municipio_guardado = None
-        st.session_state.solicitar_gps = False
-        st.session_state.gps_fallido = False
-        st.session_state.override_manual = False
-        st.session_state.busqueda_activa_ajustes = ""
-        st.session_state.busqueda_activa_inicio = ""
-        streamlit_js_eval(js_expressions="parent.window.localStorage.removeItem('muni_gasolineras')", key="borrar_cache")
-        st.rerun()
 
     st.divider()
 
