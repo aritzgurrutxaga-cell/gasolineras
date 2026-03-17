@@ -48,28 +48,36 @@ st.markdown("""
         /* --- ARREGLO DEFINITIVO DE LA LUPA PARA MÓVIL --- */
         /* ========================================================= */
         
-        /* Seleccionamos la fila de búsqueda sin romper el resto */
+        /* Bloqueamos la fila entera para que jamás se desborde del 100% */
         div[data-testid="stHorizontalBlock"]:has(input[placeholder*="Ej:"]) {
             display: flex !important;
             flex-direction: row !important;
             flex-wrap: nowrap !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            gap: 0 !important; /* Eliminamos el espacio oculto de Streamlit */
             align-items: flex-end !important;
-            gap: 5px !important; /* Pequeño margen entre input y lupa */
-            width: 100% !important; /* Bloquea el desbordamiento */
         }
         
-        /* 1. La caja de texto: Se encoge inteligentemente para no salirse */
+        /* Eliminamos los rellenos fantasma de las columnas internas */
+        div[data-testid="stHorizontalBlock"]:has(input[placeholder*="Ej:"]) > div[data-testid="column"] {
+            padding-left: 0 !important;
+            padding-right: 0 !important;
+        }
+        
+        /* 1. La caja de texto: Ocupa lo que sobra menos la lupa */
         div[data-testid="stHorizontalBlock"]:has(input[placeholder*="Ej:"]) > div[data-testid="column"]:nth-child(1) {
-            flex: 1 1 0% !important; 
-            width: auto !important;
-            min-width: 0 !important; /* Clave para que el flexbox no desborde */
+            width: calc(100% - 3.2rem) !important;
+            flex: 1 1 0% !important;
+            min-width: 0 !important; /* Clave para evitar el desbordamiento flex */
+            padding-right: 0.5rem !important; /* Separación manual y controlada con la lupa */
         }
         
-        /* 2. La lupa: Pequeñita y con tamaño exacto inamovible (45px) */
+        /* 2. La lupa: Un cuadradito estricto e inamovible a la derecha */
         div[data-testid="stHorizontalBlock"]:has(input[placeholder*="Ej:"]) > div[data-testid="column"]:nth-child(2) {
-            flex: 0 0 45px !important; 
-            width: 45px !important;
-            min-width: 45px !important;
+            width: 3rem !important;
+            flex: 0 0 3rem !important;
+            min-width: 3rem !important;
         }
         
         /* Estética del botón de la lupa */
@@ -245,7 +253,7 @@ df["Precio_G95"] = pd.to_numeric(df["Precio Gasolina 95 E5"].str.replace(",", ".
 municipios_unicos = sorted(list(set([str(g["Municipio"]) for g in datos])))
 
 # ==========================================
-# ESTADO 2: PANTALLA DE SELECCIÓN MANUAL ÚNICA (Buscador con Lupa)
+# ESTADO 2: PANTALLA DE SELECCIÓN MANUAL ÚNICA (Buscador con Lupa Blindado)
 # ==========================================
 if not lat_gps and not lon_gps and not st.session_state.municipio_guardado:
     st.markdown("""
