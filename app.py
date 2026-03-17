@@ -40,7 +40,7 @@ class SSLAdapter(HTTPAdapter):
 # 1. Configuración de la página
 st.set_page_config(page_title="gasolina.eus", page_icon="⛽", layout="centered")
 
-# --- AJUSTES DE DISEÑO CSS (ESTABLE 1) ---
+# --- AJUSTES DE DISEÑO CSS (VERSION REFINADA CON TARJETAS ALTAS) ---
 st.markdown("""
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@500;800&display=swap');
@@ -69,9 +69,39 @@ st.markdown("""
             margin-bottom: 2rem; margin-top: -0.5rem;
             font-family: 'Poppins', sans-serif; font-weight: 500;
         }
-        
-        div[data-testid="stHorizontalBlock"] div[data-testid="stRadio"] > div {
-            flex-direction: row !important; justify-content: space-between !important; gap: 2px !important;
+
+        /* BOTÓN NAVEGAR CON ICONO GOOGLE MAPS */
+        .btn-navegar {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #f1f5f9; /* Color sutil */
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            color: #475569 !important;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 500;
+            font-size: 0.85rem;
+            padding: 0.6rem 0.9rem;
+            text-decoration: none !important;
+            transition: all 0.2s;
+            margin-top: 5px;
+        }
+        .btn-navegar:hover { background-color: #e2e8f0; }
+        .btn-navegar img { width: 18px; margin-right: 8px; }
+
+        /* TARJETAS MÁS ALTAS Y ESPACIADAS */
+        div[data-testid="stVerticalBlockBorderWrapper"] > div {
+            background-color: #ffffff !important; 
+            border: 1px solid #f1f5f9 !important;
+            border-radius: 16px !important; 
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04) !important;
+            padding: 1.2rem !important; /* Más padding interno */
+            margin-bottom: 0.8rem !important;
+            min-height: 170px !important; /* Altura mínima garantizada */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
         }
 
         .resumen-filtros {
@@ -80,12 +110,6 @@ st.markdown("""
             background-color: #ffffff; color: #334155;
             box-shadow: 0 2px 10px rgba(0,0,0,0.02);
             font-family: 'Poppins', sans-serif; font-weight: 500;
-        }
-
-        div[data-testid="stVerticalBlockBorderWrapper"] > div {
-            background-color: #ffffff !important; border: 1px solid #f1f5f9 !important;
-            border-radius: 16px !important; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04) !important;
-            padding: 0.8rem !important; margin-bottom: 0.5rem !important;
         }
 
         div[data-testid="stButton"] button[kind="primary"] {
@@ -101,10 +125,7 @@ st.markdown("""
             font-size: 0.85rem !important; font-weight: normal !important;
             opacity: 0.9; display: block; margin-top: 8px;
         }
-        
-        /* BOTONES DENTRO DE TARJETAS Y AJUSTES */
-        details div[data-testid="stButton"] button[kind="primary"],
-        div[data-testid="stVerticalBlockBorderWrapper"] div[data-testid="stButton"] button {
+        details div[data-testid="stButton"] button[kind="primary"] {
             min-height: 48px !important; padding: 0.5rem 1rem !important; box-shadow: none !important;
         }
         details div[data-testid="stButton"] button[kind="primary"]::after { content: none !important; }
@@ -114,8 +135,6 @@ st.markdown("""
 # --- INICIALIZACIÓN ---
 if 'solicitar_gps' not in st.session_state: st.session_state.solicitar_gps = False
 if 'municipio_guardado' not in st.session_state: st.session_state.municipio_guardado = None
-if 'gps_fallido' not in st.session_state: st.session_state.gps_fallido = False
-if 'override_manual' not in st.session_state: st.session_state.override_manual = False
 if 'radio_km' not in st.session_state: st.session_state.radio_km = 5
 if 'tipo_combustible' not in st.session_state: st.session_state.tipo_combustible = "Diésel"
 if 'ajustes_abiertos' not in st.session_state: st.session_state.ajustes_abiertos = False
@@ -157,15 +176,10 @@ if not (estado_permiso == "granted" or st.session_state.municipio_guardado) and 
     st.stop()
 
 loc = None; lat_gps, lon_gps = None, None
-if (estado_permiso == "granted" or st.session_state.solicitar_gps) and not (st.session_state.gps_fallido or st.session_state.municipio_guardado or st.session_state.override_manual):
+if (estado_permiso == "granted" or st.session_state.solicitar_gps) and not (st.session_state.municipio_guardado):
     loc = get_geolocation()
-    if loc is None:
-        st.markdown("<div class='titulo-app'>gasolina<span>.eus</span></div>", unsafe_allow_html=True)
-        st.info("⏳ Localizando..."); st.stop()
-    elif 'coords' in loc:
+    if loc and 'coords' in loc:
         lat_gps, lon_gps = loc['coords']['latitude'], loc['coords']['longitude']
-    else:
-        st.session_state.gps_fallido = True; st.rerun()
 
 if not lat_gps and not st.session_state.municipio_guardado:
     st.markdown("<div class='titulo-app'>gasolina<span>.eus</span></div>", unsafe_allow_html=True)
@@ -176,12 +190,12 @@ if not lat_gps and not st.session_state.municipio_guardado:
         if muni_sel:
             st.session_state.municipio_guardado = muni_sel
             streamlit_js_eval(js_expressions=f"parent.window.localStorage.setItem('muni_gasolineras', '{muni_sel}')")
-            st.session_state.override_manual = True; st.rerun()
+            st.rerun()
     st.stop()
 
 st.markdown("<div class='titulo-app'>gasolina<span>.eus</span></div>", unsafe_allow_html=True)
 
-if lat_gps and not st.session_state.override_manual:
+if lat_gps:
     lat_ref, lon_ref = lat_gps, lon_gps
     df["dist_temp"] = calcular_distancia(lat_ref, lon_ref, df["lat_num"], df["lon_num"])
     muni_ref = df.sort_values("dist_temp").iloc[0]["Municipio"]
@@ -192,19 +206,12 @@ else:
 
 with st.expander("⚙️ Ajustes de búsqueda", expanded=st.session_state.ajustes_abiertos):
     st.session_state.ajustes_abiertos = True
-    nuevo_muni = st.selectbox("Cambiar municipio:", options=municipios_unicos, 
-                              index=municipios_unicos.index(muni_ref) if muni_ref in municipios_unicos else None)
+    nuevo_muni = st.selectbox("Cambiar municipio:", options=municipios_unicos, index=municipios_unicos.index(muni_ref))
     if nuevo_muni != muni_ref: cerrar_teclado_movil()
-    nuevo_radio = st.radio("Radio de búsqueda:", [5, 10, 20], 
-                           index=[5, 10, 20].index(st.session_state.radio_km) if st.session_state.radio_km in [5, 10, 20] else 0,
-                           format_func=lambda x: f"{x} km", horizontal=True)
-    nuevo_tipo = st.radio("Ordenar por precio de:", ["Diésel", "G95"], 
-                          index=0 if st.session_state.tipo_combustible == "Diésel" else 1, horizontal=True)
+    nuevo_radio = st.radio("Radio de búsqueda:", [5, 10, 20], index=[5, 10, 20].index(st.session_state.radio_km), format_func=lambda x: f"{x} km", horizontal=True)
+    nuevo_tipo = st.radio("Ordenar por precio de:", ["Diésel", "G95"], index=0 if st.session_state.tipo_combustible == "Diésel" else 1, horizontal=True)
     if st.button("🔍 Buscar", use_container_width=True, type="primary"):
-        st.session_state.municipio_guardado = nuevo_muni
-        st.session_state.radio_km = nuevo_radio
-        st.session_state.tipo_combustible = nuevo_tipo
-        st.session_state.override_manual = True
+        st.session_state.municipio_guardado, st.session_state.radio_km, st.session_state.tipo_combustible = nuevo_muni, nuevo_radio, nuevo_tipo
         st.session_state.ajustes_abiertos = False; st.rerun()
 
 col_orden = "Precio_Diesel" if st.session_state.tipo_combustible == "Diésel" else "Precio_G95"
@@ -223,4 +230,5 @@ for _, g in res.head(20).iterrows():
             st.write(f"⛽ **D:** {p_diesel} | **G95:** {p_g95}")
             st.caption(f"📍 A {g['Distancia']:.2f} km")
         with c2:
-            st.link_button("Navegar", f"https://www.google.com/maps/dir/?api=1&destination={g['lat_num']},{g['lon_num']}", use_container_width=True)
+            maps_url = f"https://www.google.com/maps/dir/?api=1&destination={g['lat_num']},{g['lon_num']}"
+            st.markdown(f'<div style="text-align: center;"><a href="{maps_url}" target="_blank" class="btn-navegar"><img src="https://upload.wikimedia.org/wikipedia/commons/a/aa/Google_Maps_icon_%282020%29.svg">Navegar</a></div>', unsafe_allow_html=True)
