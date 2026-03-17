@@ -31,6 +31,9 @@ st.set_page_config(page_title="gasolina.eus", page_icon="⛽", layout="centered"
 # AJUSTES DE DISEÑO CSS
 st.markdown("""
     <style>
+        /* Importar fuente profesional desde Google Fonts */
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@800&display=swap');
+
         .block-container {
             padding-top: 1rem !important; 
             padding-bottom: 25vh !important; 
@@ -52,14 +55,22 @@ st.markdown("""
             align-items: center !important;
         }
         
-        /* Título en una sola línea */
+        /* TÍTULO TIPOGRÁFICO PROFESIONAL (LOGO) */
         .titulo-app {
             text-align: center; 
-            font-size: clamp(22px, 7vw, 32px); 
+            font-family: 'Poppins', sans-serif;
+            font-size: clamp(32px, 9vw, 46px); 
             white-space: nowrap; 
-            font-weight: bold;
+            font-weight: 800;
+            color: #1e293b; /* Pizarra oscuro elegante */
+            letter-spacing: -1.5px; /* Condensa las letras para efecto logo */
             margin-top: -1rem;
-            margin-bottom: 1rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        /* Color de contraste para la extensión del dominio */
+        .titulo-app span {
+            color: #ef4444; /* Rojo vibrante */
         }
         
         /* FUERZA RADIO KM EN UNA FILA */
@@ -157,9 +168,9 @@ gps_denegado = (estado_permiso == "denied") or st.session_state.gps_fallido
 
 # ESTADO 1: INICIO
 if not (estado_permiso == "granted" or st.session_state.municipio_guardado) and not st.session_state.solicitar_gps:
-    st.markdown("<div class='titulo-app'>⛽ gasolina.eus</div>", unsafe_allow_html=True)
+    st.markdown("<div class='titulo-app'>gasolina<span>.eus</span></div>", unsafe_allow_html=True)
     
-    # NUEVA LÍNEA: Subtítulo minimalista / Propuesta de valor
+    # Subtítulo minimalista / Propuesta de valor
     st.markdown("<p style='text-align: center; color: #888; font-size: 1.05rem; margin-bottom: 2rem; margin-top: -0.5rem;'>Compara precios en tiempo real y ahorra en cada repostaje.</p>", unsafe_allow_html=True)
     
     if st.button("📍 Mostrar gasolineras", use_container_width=True, type="primary"):
@@ -173,7 +184,7 @@ lat_gps, lon_gps = None, None
 if (estado_permiso == "granted" or st.session_state.solicitar_gps) and not (gps_denegado or st.session_state.municipio_guardado or st.session_state.override_manual):
     loc = get_geolocation()
     if loc is None:
-        st.markdown("<div class='titulo-app'>⛽ gasolina.eus</div>", unsafe_allow_html=True)
+        st.markdown("<div class='titulo-app'>gasolina<span>.eus</span></div>", unsafe_allow_html=True)
         st.info("⏳ Localizando...")
         st.stop()
     elif 'coords' not in loc:
@@ -208,7 +219,7 @@ municipios_unicos = sorted(list(set([str(g["Municipio"]) for g in datos])))
 
 # ESTADO 2: SELECCIÓN MANUAL (PRIMERA VEZ)
 if not lat_gps and not st.session_state.municipio_guardado:
-    st.markdown("<div class='titulo-app'>⛽ gasolina.eus</div>", unsafe_allow_html=True)
+    st.markdown("<div class='titulo-app'>gasolina<span>.eus</span></div>", unsafe_allow_html=True)
     st.markdown("<p style='text-align: center;'>📍 Escribe tu municipio:</p>", unsafe_allow_html=True)
     municipio_sel = st.selectbox("Municipio:", options=municipios_unicos, index=None, placeholder="Buscar...", label_visibility="collapsed")
     if st.button("✅ Confirmar selección", type="primary", use_container_width=True):
@@ -220,7 +231,7 @@ if not lat_gps and not st.session_state.municipio_guardado:
     st.stop()
 
 # ESTADO 3: RESULTADOS
-st.markdown("<div class='titulo-app'>⛽ gasolina.eus</div>", unsafe_allow_html=True)
+st.markdown("<div class='titulo-app'>gasolina<span>.eus</span></div>", unsafe_allow_html=True)
 
 # Lógica de referencia
 lat_ref, lon_ref, muni_ref = None, None, None
