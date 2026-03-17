@@ -24,10 +24,9 @@ st.set_page_config(page_title="Buscador Gasolineras", page_icon="⛽", layout="c
 # AJUSTES DE ESPACIADO PRECISOS Y DISEÑO CSS
 st.markdown("""
     <style>
-        /* Reducimos al máximo los márgenes superiores para ganar espacio */
         .block-container {
             padding-top: 1rem !important; 
-            padding-bottom: 25vh !important; /* Espacio extra abajo para que el menú pueda caer */
+            padding-bottom: 25vh !important; 
             margin-top: 0rem !important;
         }
         header {visibility: hidden !important;}
@@ -49,9 +48,9 @@ st.markdown("""
         /* --- DISEÑO PREMIUM DEL DESPLEGABLE (SELECTBOX) --- */
         /* ========================================================= */
         
-        /* 1. Caja de texto más redondeada y limpia */
+        /* 1. Caja de texto con el ESPACIO INTERNO CORRECTO para que el texto no se pegue */
         div[data-baseweb="select"] > div {
-            padding: 0.2rem !important;
+            padding: 0.5rem 0.8rem !important; /* Devuelve el aire horizontal al texto */
             border-radius: 10px !important;
             font-size: 1.1rem !important;
         }
@@ -141,8 +140,7 @@ if estado_permiso == "granted" or st.session_state.municipio_guardado:
     mostrar_pantalla_inicial = False
 
 if mostrar_pantalla_inicial and not st.session_state.solicitar_gps:
-    # Título visible normal
-    st.markdown("<h1 style='text-align: center; font-size: clamp(22px, 7vw, 38px);'>⛽ Buscador Gasolineras</h1>", unsafe_allow_html=True)
+    st.markdown("<h1 style='text-align: center; font-size: clamp(22px, 7vw, 38px); white-space: nowrap;'>⛽ Buscador Gasolineras</h1>", unsafe_allow_html=True)
     st.markdown("<h3 style='text-align: center; color: inherit; font-size: 1.1rem; margin-top: 1.5rem; margin-bottom: 1rem;'>Descubre al instante dónde repostar más barato</h3>", unsafe_allow_html=True)
     
     if st.button("📍 Mostrar gasolineras", use_container_width=True, type="primary"):
@@ -162,8 +160,7 @@ intentar_gps = (estado_permiso == "granted") or (st.session_state.solicitar_gps 
 if intentar_gps and not st.session_state.override_manual:
     loc = get_geolocation()
     if loc is None:
-        # Título visible mientras carga
-        st.markdown("<h1 style='text-align: center; font-size: clamp(22px, 7vw, 38px);'>⛽ Buscador Gasolineras</h1>", unsafe_allow_html=True)
+        st.markdown("<h1 style='text-align: center; font-size: clamp(22px, 7vw, 38px); white-space: nowrap;'>⛽ Buscador Gasolineras</h1>", unsafe_allow_html=True)
         st.info("⏳ Localizando tu posición...")
         st.stop() 
     elif 'coords' not in loc:
@@ -222,13 +219,13 @@ municipios_unicos = sorted(list(set([str(g["Municipio"]) for g in datos])))
 
 
 # ==========================================
-# ESTADO 2: PANTALLA DE SELECCIÓN MANUAL (SÚPER COMPACTA ARRIBA)
+# ESTADO 2: PANTALLA DE SELECCIÓN MANUAL
 # ==========================================
 if not lat_gps and not lon_gps and not st.session_state.municipio_guardado:
-    # Título reducido y comprimido para dejarle espacio vital al teclado
+    # Título forzado en una sola línea y márgenes ajustados
     st.markdown("""
         <div style='text-align: center; margin-top: -1.5rem; margin-bottom: 0.5rem;'>
-            <h2 style='color: inherit; margin-bottom: 0;'>⛽ Buscador Gasolineras</h2>
+            <h2 style='color: inherit; margin-bottom: 0; font-size: 1.6rem; white-space: nowrap;'>⛽ Buscador Gasolineras</h2>
             <p style='color: inherit; opacity: 0.8; font-size: 0.95rem; margin-top: 5px;'>📍 Escribe tu municipio:</p>
         </div>
     """, unsafe_allow_html=True)
@@ -257,8 +254,7 @@ if not lat_gps and not lon_gps and not st.session_state.municipio_guardado:
 # ==========================================
 # ESTADO 3: PANTALLA DE RESULTADOS Y AJUSTES
 # ==========================================
-# Volvemos a mostrar el título principal gigante en la pantalla de resultados
-st.markdown("<h1 style='text-align: center; font-size: clamp(22px, 7vw, 38px);'>⛽ Buscador Gasolineras</h1>", unsafe_allow_html=True)
+st.markdown("<h1 style='text-align: center; font-size: clamp(22px, 7vw, 38px); white-space: nowrap;'>⛽ Buscador Gasolineras</h1>", unsafe_allow_html=True)
 
 lat_ref, lon_ref, muni_ref = None, None, None
 
