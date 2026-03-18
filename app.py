@@ -235,8 +235,9 @@ for _, g in res.head(20).iterrows():
             st.write(f"#### {g['Rótulo']} - {g['Municipio']}")
             p_diesel = f"{g['Precio Gasoleo A']}€" if pd.notnull(g['Precio_Diesel']) else "N/A"
             p_g95 = f"{g['Precio Gasolina 95 E5']}€" if pd.notnull(g['Precio_G95']) else "N/A"
-            st.write(f"⛽ **D:** {p_diesel} | **G95:** {p_g95}")
+            # CAMBIO SOLICITADO: D: -> Diesel:
+            st.write(f"⛽ **Diesel:** {p_diesel} | **G95:** {p_g95}")
             st.caption(f"📍 A {g['Distancia']:.2f} km")
         with c2:
-            # TEXTO E ICONO ACTUALIZADOS: Navegar + Icono de Maps
+            # Enlace de Google Maps mejorado para navegación
             st.link_button("🗺️ Navegar", f"https://www.google.com/maps/dir/?api=1&destination={g['lat_num']},{g['lon_num']}", use_container_width=True)
