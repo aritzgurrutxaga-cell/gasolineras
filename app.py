@@ -113,7 +113,6 @@ if 'gps_fallido' not in st.session_state: st.session_state.gps_fallido = False
 if 'override_manual' not in st.session_state: st.session_state.override_manual = False
 if 'radio_km' not in st.session_state: st.session_state.radio_km = 5
 if 'tipo_combustible' not in st.session_state: st.session_state.tipo_combustible = "Diésel"
-if 'expander_state' not in st.session_state: st.session_state.expander_state = False
 
 # Recuperar caché persistente
 muni_cache = streamlit_js_eval(js_expressions="parent.window.localStorage.getItem('muni_gasolineras')", key="get_muni_cache")
@@ -187,8 +186,8 @@ else:
     fila = df[df["Municipio"] == muni_ref].iloc[0]
     lat_ref, lon_ref = fila["lat_num"], fila["lon_num"]
 
-# AJUSTES DE BÚSQUEDA
-with st.expander("⚙️ Ajustes de búsqueda", expanded=st.session_state.expander_state):
+# AJUSTES DE BÚSQUEDA (expanded=False asegura que se cierre al recargar)
+with st.expander("⚙️ Ajustes de búsqueda", expanded=False):
     nuevo_muni = st.selectbox("Cambiar municipio:", options=municipios_unicos, index=municipios_unicos.index(muni_ref) if muni_ref in municipios_unicos else None)
     if nuevo_muni != muni_ref: cerrar_teclado_movil()
     nuevo_radio = st.radio("Radio de búsqueda:", [5, 10, 20], index=[5, 10, 20].index(st.session_state.radio_km), format_func=lambda x: f"{x} km", horizontal=True)
@@ -196,15 +195,12 @@ with st.expander("⚙️ Ajustes de búsqueda", expanded=st.session_state.expand
     
     if st.button("🔍 Buscar", use_container_width=True, type="primary"):
         st.session_state.municipio_guardado = nuevo_muni
+        # Guardamos en LocalStorage para que se acuerde la próxima vez que entre en la web
         streamlit_js_eval(js_expressions=f"parent.window.localStorage.setItem('muni_gasolineras', '{nuevo_muni}')")
         st.session_state.radio_km = nuevo_radio
         st.session_state.tipo_combustible = nuevo_tipo
         st.session_state.override_manual = True
-        st.session_state.expander_state = False # Cierra al pulsar
         st.rerun()
-
-# Si no ha pulsado buscar, permitimos que el expander se maneje solo sin romper tipos
-st.session_state.expander_state = False
 
 col_orden = "Precio_Diesel" if st.session_state.tipo_combustible == "Diésel" else "Precio_G95"
 df["Distancia"] = calcular_distancia(lat_ref, lon_ref, df["lat_num"], df["lon_num"])
