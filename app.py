@@ -1,4 +1,4 @@
-import streamlit as st
+oimport streamlit as st
 import requests
 import pandas as pd
 import numpy as np
@@ -240,4 +240,4 @@ for _, g in res.head(20).iterrows():
             st.caption(f"📍 A {g['Distancia']:.2f} km")
         with c2:
             # Enlace de Google Maps mejorado para navegación
-            st.link_button("🗺️ Navegar", f"https://www.google.com/maps/dir/?api=1&destination={g['lat_num']},{g['lon_num']}", use_container_width=True)
+            st.link_button("Navegar", f"https://www.google.com/maps/dir/?api=1&destination={g['lat_num']},{g['lon_num']}", use_container_width=True)
