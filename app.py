@@ -15,6 +15,7 @@ def calcular_distancia(lat1, lon1, lat2, lon2):
     a = np.sin(dlat / 2)**2 + np.cos(np.radians(lat1)) * np.cos(np.radians(lat2)) * np.sin(dlon / 2)**2
     return R * 2 * np.arctan2(np.sqrt(a), np.sqrt(1 - a))
 
+# FUNCIÓN PARA CERRAR EL TECLADO (FORZADO PARA MÓVILES)
 def cerrar_teclado_movil():
     components.html(
         """
@@ -113,6 +114,7 @@ if 'gps_fallido' not in st.session_state: st.session_state.gps_fallido = False
 if 'override_manual' not in st.session_state: st.session_state.override_manual = False
 if 'radio_km' not in st.session_state: st.session_state.radio_km = 5
 if 'tipo_combustible' not in st.session_state: st.session_state.tipo_combustible = "Diésel"
+if 'ajustes_abiertos' not in st.session_state: st.session_state.ajustes_abiertos = False
 
 # Recuperar caché persistente
 muni_cache = streamlit_js_eval(js_expressions="parent.window.localStorage.getItem('muni_gasolineras')", key="get_muni_cache")
@@ -143,14 +145,15 @@ municipios_unicos = sorted(list(set([str(g["Municipio"]) for g in datos])))
 js_permiso = "navigator.permissions ? navigator.permissions.query({name: 'geolocation'}).then(res => res.state) : 'prompt'"
 estado_permiso = streamlit_js_eval(js_expressions=js_permiso, key="permiso_gps")
 
-# --- LÓGICA DE NAVEGACIÓN ---
-if not st.session_state.municipio_guardado and not st.session_state.solicitar_gps:
+# --- PANTALLA 1: INICIO ---
+if not (estado_permiso == "granted" or st.session_state.municipio_guardado) and not st.session_state.solicitar_gps:
     st.markdown("<div class='titulo-app'>gasolina<span>.eus</span></div>", unsafe_allow_html=True)
     st.markdown("<p class='subtitulo-app'>Compara precios en tiempo real y ahorra en cada repostaje.</p>", unsafe_allow_html=True)
     if st.button("📍 Mostrar gasolineras", use_container_width=True, type="primary"):
         st.session_state.solicitar_gps = True; st.rerun()
     st.stop()
 
+# GPS
 loc = None; lat_gps, lon_gps = None, None
 if (estado_permiso == "granted" or st.session_state.solicitar_gps) and not (st.session_state.gps_fallido or st.session_state.municipio_guardado or st.session_state.override_manual):
     loc = get_geolocation()
@@ -162,11 +165,16 @@ if (estado_permiso == "granted" or st.session_state.solicitar_gps) and not (st.s
     else:
         st.session_state.gps_fallido = True; st.rerun()
 
+# --- PANTALLA 2: SELECCIÓN MANUAL ---
 if not lat_gps and not st.session_state.municipio_guardado:
     st.markdown("<div class='titulo-app'>gasolina<span>.eus</span></div>", unsafe_allow_html=True)
     st.markdown("<p style='text-align: center; color: #64748b;'>📍 Escribe tu municipio:</p>", unsafe_allow_html=True)
+    
     muni_sel = st.selectbox("Municipio:", options=municipios_unicos, index=None, placeholder="Buscar...", label_visibility="collapsed")
-    if muni_sel: cerrar_teclado_movil()
+    
+    if muni_sel:
+        cerrar_teclado_movil()
+
     if st.button("✅ Confirmar selección", type="primary", use_container_width=True):
         if muni_sel:
             st.session_state.municipio_guardado = muni_sel
@@ -186,28 +194,40 @@ else:
     fila = df[df["Municipio"] == muni_ref].iloc[0]
     lat_ref, lon_ref = fila["lat_num"], fila["lon_num"]
 
-# AJUSTES DE BÚSQUEDA (expanded=False asegura que se cierre al recargar)
-with st.expander("⚙️ Ajustes de búsqueda", expanded=False):
-    nuevo_muni = st.selectbox("Cambiar municipio:", options=municipios_unicos, index=municipios_unicos.index(muni_ref) if muni_ref in municipios_unicos else None)
-    if nuevo_muni != muni_ref: cerrar_teclado_movil()
-    nuevo_radio = st.radio("Radio de búsqueda:", [5, 10, 20], index=[5, 10, 20].index(st.session_state.radio_km), format_func=lambda x: f"{x} km", horizontal=True)
-    nuevo_tipo = st.radio("Ordenar por precio de:", ["Diésel", "G95"], index=0 if st.session_state.tipo_combustible == "Diésel" else 1, horizontal=True)
+with st.expander("⚙️ Ajustes de búsqueda", expanded=st.session_state.ajustes_abiertos):
+    st.session_state.ajustes_abiertos = True
+    
+    nuevo_muni = st.selectbox("Cambiar municipio:", options=municipios_unicos, 
+                              index=municipios_unicos.index(muni_ref) if muni_ref in municipios_unicos else None)
+    
+    if nuevo_muni != muni_ref:
+        cerrar_teclado_movil()
+
+    nuevo_radio = st.radio("Radio de búsqueda:", [5, 10, 20], 
+                           index=[5, 10, 20].index(st.session_state.radio_km) if st.session_state.radio_km in [5, 10, 20] else 0,
+                           format_func=lambda x: f"{x} km", horizontal=True)
+    
+    nuevo_tipo = st.radio("Ordenar por precio de:", ["Diésel", "G95"], 
+                          index=0 if st.session_state.tipo_combustible == "Diésel" else 1,
+                          horizontal=True)
     
     if st.button("🔍 Buscar", use_container_width=True, type="primary"):
         st.session_state.municipio_guardado = nuevo_muni
-        # Guardamos en LocalStorage para que se acuerde la próxima vez que entre en la web
-        streamlit_js_eval(js_expressions=f"parent.window.localStorage.setItem('muni_gasolineras', '{nuevo_muni}')")
         st.session_state.radio_km = nuevo_radio
         st.session_state.tipo_combustible = nuevo_tipo
         st.session_state.override_manual = True
-        st.rerun()
+        st.session_state.ajustes_abiertos = False; st.rerun()
 
+# --- FILTRADO FLEXIBLE Y ORDENACIÓN ---
 col_orden = "Precio_Diesel" if st.session_state.tipo_combustible == "Diésel" else "Precio_G95"
 df["Distancia"] = calcular_distancia(lat_ref, lon_ref, df["lat_num"], df["lon_num"])
+
 res = df[df["Distancia"] <= st.session_state.radio_km].sort_values(col_orden, na_position='last')
 
+# Barra de resumen
 st.markdown(f"<div class='resumen-filtros'>📍 <b>{muni_ref}</b> | 🚗 <b>{st.session_state.radio_km} km</b> | ⛽ <b>{st.session_state.tipo_combustible}</b></div>", unsafe_allow_html=True)
 
+# Listado de tarjetas
 for _, g in res.head(20).iterrows():
     with st.container(border=True):
         c1, c2 = st.columns([2.5, 1.5], vertical_alignment="center")
