@@ -1,4 +1,4 @@
-oimport streamlit as st
+import streamlit as st
 import requests
 import pandas as pd
 import numpy as np
@@ -235,9 +235,8 @@ for _, g in res.head(20).iterrows():
             st.write(f"#### {g['Rótulo']} - {g['Municipio']}")
             p_diesel = f"{g['Precio Gasoleo A']}€" if pd.notnull(g['Precio_Diesel']) else "N/A"
             p_g95 = f"{g['Precio Gasolina 95 E5']}€" if pd.notnull(g['Precio_G95']) else "N/A"
-            # CAMBIO SOLICITADO: D: -> Diesel:
             st.write(f"⛽ **Diesel:** {p_diesel} | **G95:** {p_g95}")
             st.caption(f"📍 A {g['Distancia']:.2f} km")
         with c2:
-            # Enlace de Google Maps mejorado para navegación
+            # CAMBIO AQUÍ: Se ha quitado el icono 🗺️ del texto del botón
             st.link_button("Navegar", f"https://www.google.com/maps/dir/?api=1&destination={g['lat_num']},{g['lon_num']}", use_container_width=True)
