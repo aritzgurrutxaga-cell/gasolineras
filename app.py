@@ -169,10 +169,7 @@ if not (estado_permiso == "granted" or st.session_state.municipio_guardado) and 
     st.stop()
 
 loc = None; lat_gps, lon_gps = None, None
-
-# ¡AQUÍ ESTÁ LA MAGIA! Hemos quitado "st.session_state.municipio_guardado" de la condición negativa.
-# Ahora, si el GPS está concedido, siempre va a intentar cargar la ubicación a menos que hayas buscado a mano en esta misma sesión.
-if (estado_permiso == "granted" or st.session_state.solicitar_gps) and not (st.session_state.gps_fallido or st.session_state.override_manual):
+if (estado_permiso == "granted" or st.session_state.solicitar_gps) and not (st.session_state.gps_fallido or st.session_state.municipio_guardado or st.session_state.override_manual):
     loc = get_geolocation()
     if loc is None:
         st.markdown("<div class='titulo-app'>gasolina<span>.eus</span></div>", unsafe_allow_html=True)
