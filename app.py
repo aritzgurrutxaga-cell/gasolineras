@@ -15,7 +15,6 @@ def calcular_distancia(lat1, lon1, lat2, lon2):
     a = np.sin(dlat / 2)**2 + np.cos(np.radians(lat1)) * np.cos(np.radians(lat2)) * np.sin(dlon / 2)**2
     return R * 2 * np.arctan2(np.sqrt(a), np.sqrt(1 - a))
 
-# FUNCIÓN PARA CERRAR EL TECLADO (FORZADO PARA MÓVILES)
 def cerrar_teclado_movil():
     components.html(
         """
@@ -96,7 +95,7 @@ st.markdown("""
         }
         div[data-testid="stButton"] button[kind="primary"] p { font-size: 1.4rem !important; margin: 0 !important; }
         div[data-testid="stButton"] button[kind="primary"]::after {
-            content: "Es recomendable la ubicación para buscar";
+            content: "Se usará tu última ubicación guardada si no hay GPS";
             font-size: 0.85rem !important; font-weight: normal !important;
             opacity: 0.9; display: block; margin-top: 8px;
         }
@@ -116,7 +115,7 @@ if 'radio_km' not in st.session_state: st.session_state.radio_km = 5
 if 'tipo_combustible' not in st.session_state: st.session_state.tipo_combustible = "Diésel"
 if 'ajustes_abiertos' not in st.session_state: st.session_state.ajustes_abiertos = False
 
-# Recuperar caché persistente
+# Leer caché del navegador (Persistencia real)
 muni_cache = streamlit_js_eval(js_expressions="parent.window.localStorage.getItem('muni_gasolineras')", key="get_muni_cache")
 if muni_cache and muni_cache != "null" and not st.session_state.municipio_guardado:
     st.session_state.municipio_guardado = muni_cache
@@ -146,29 +145,37 @@ js_permiso = "navigator.permissions ? navigator.permissions.query({name: 'geoloc
 estado_permiso = streamlit_js_eval(js_expressions=js_permiso, key="permiso_gps")
 
 # --- PANTALLA 1: INICIO ---
-if not (estado_permiso == "granted" or st.session_state.municipio_guardado) and not st.session_state.solicitar_gps:
+# Si ya tenemos un municipio guardado en caché, saltamos directamente a resultados si no se fuerza GPS
+if not st.session_state.solicitar_gps and st.session_state.municipio_guardado:
+    pass # Continuar a la lógica de resultados
+elif not (estado_permiso == "granted") and not st.session_state.solicitar_gps:
     st.markdown("<div class='titulo-app'>gasolina<span>.eus</span></div>", unsafe_allow_html=True)
     st.markdown("<p class='subtitulo-app'>Compara precios en tiempo real y ahorra en cada repostaje.</p>", unsafe_allow_html=True)
     if st.button("📍 Mostrar gasolineras", use_container_width=True, type="primary"):
         st.session_state.solicitar_gps = True; st.rerun()
     st.stop()
 
-# GPS
+# Lógica GPS
 loc = None; lat_gps, lon_gps = None, None
-if (estado_permiso == "granted" or st.session_state.solicitar_gps) and not (st.session_state.gps_fallido or st.session_state.municipio_guardado or st.session_state.override_manual):
+if (estado_permiso == "granted" or st.session_state.solicitar_gps) and not (st.session_state.gps_fallido or st.session_state.override_manual):
+    # Solo intentamos GPS si no hay un override manual activo en esta sesión
     loc = get_geolocation()
-    if loc is None:
+    if loc is None and not st.session_state.municipio_guardado:
         st.markdown("<div class='titulo-app'>gasolina<span>.eus</span></div>", unsafe_allow_html=True)
         st.info("⏳ Localizando..."); st.stop()
-    elif 'coords' in loc:
+    elif loc and 'coords' in loc:
         lat_gps, lon_gps = loc['coords']['latitude'], loc['coords']['longitude']
     else:
-        st.session_state.gps_fallido = True; st.rerun()
+        # Si el GPS falla pero tenemos caché, lo usamos
+        if st.session_state.municipio_guardado:
+            st.session_state.gps_fallido = True
+        else:
+            st.session_state.gps_fallido = True; st.rerun()
 
-# --- PANTALLA 2: SELECCIÓN MANUAL ---
+# --- PANTALLA 2: SELECCIÓN MANUAL (Solo si no hay GPS ni Caché) ---
 if not lat_gps and not st.session_state.municipio_guardado:
     st.markdown("<div class='titulo-app'>gasolina<span>.eus</span></div>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align: center; color: #64748b;'>📍 Escribe tu municipio:</p>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: center; color: #64748b;'>📍 Selecciona tu municipio:</p>", unsafe_allow_html=True)
     
     muni_sel = st.selectbox("Municipio:", options=municipios_unicos, index=None, placeholder="Buscar...", label_visibility="collapsed")
     
@@ -178,6 +185,7 @@ if not lat_gps and not st.session_state.municipio_guardado:
     if st.button("✅ Confirmar selección", type="primary", use_container_width=True):
         if muni_sel:
             st.session_state.municipio_guardado = muni_sel
+            # Guardar en localStorage para la próxima visita
             streamlit_js_eval(js_expressions=f"parent.window.localStorage.setItem('muni_gasolineras', '{muni_sel}')")
             st.session_state.override_manual = True; st.rerun()
     st.stop()
@@ -185,6 +193,7 @@ if not lat_gps and not st.session_state.municipio_guardado:
 # --- PANTALLA 3: RESULTADOS ---
 st.markdown("<div class='titulo-app'>gasolina<span>.eus</span></div>", unsafe_allow_html=True)
 
+# Prioridad: GPS > Caché/Manual
 if lat_gps and not st.session_state.override_manual:
     lat_ref, lon_ref = lat_gps, lon_gps
     df["dist_temp"] = calcular_distancia(lat_ref, lon_ref, df["lat_num"], df["lon_num"])
@@ -215,19 +224,18 @@ with st.expander("⚙️ Ajustes de búsqueda", expanded=st.session_state.ajuste
         st.session_state.municipio_guardado = nuevo_muni
         st.session_state.radio_km = nuevo_radio
         st.session_state.tipo_combustible = nuevo_tipo
+        # Actualizamos caché al buscar manualmente
+        streamlit_js_eval(js_expressions=f"parent.window.localStorage.setItem('muni_gasolineras', '{nuevo_muni}')")
         st.session_state.override_manual = True
         st.session_state.ajustes_abiertos = False; st.rerun()
 
-# --- FILTRADO FLEXIBLE Y ORDENACIÓN ---
+# --- FILTRADO Y LISTADO ---
 col_orden = "Precio_Diesel" if st.session_state.tipo_combustible == "Diésel" else "Precio_G95"
 df["Distancia"] = calcular_distancia(lat_ref, lon_ref, df["lat_num"], df["lon_num"])
-
 res = df[df["Distancia"] <= st.session_state.radio_km].sort_values(col_orden, na_position='last')
 
-# Barra de resumen
 st.markdown(f"<div class='resumen-filtros'>📍 <b>{muni_ref}</b> | 🚗 <b>{st.session_state.radio_km} km</b> | ⛽ <b>{st.session_state.tipo_combustible}</b></div>", unsafe_allow_html=True)
 
-# Listado de tarjetas
 for _, g in res.head(20).iterrows():
     with st.container(border=True):
         c1, c2 = st.columns([2.5, 1.5], vertical_alignment="center")
@@ -238,5 +246,4 @@ for _, g in res.head(20).iterrows():
             st.write(f"⛽ **Diesel:** {p_diesel} | **G95:** {p_g95}")
             st.caption(f"📍 A {g['Distancia']:.2f} km")
         with c2:
-            # CAMBIO AQUÍ: Se ha quitado el icono 🗺️ del texto del botón
             st.link_button("Navegar", f"https://www.google.com/maps/dir/?api=1&destination={g['lat_num']},{g['lon_num']}", use_container_width=True)
