@@ -23,6 +23,7 @@ TRAD = {
         "radio": "Bilaketa-erradioa:",
         "ordenar": "Prezioaren arabera ordenatu:",
         "btn_buscar": "🔍 Bilatu",
+        "btn_cercanas": "📍 Bilatu nire inguruan",
         "error_con": "Konexio errorea.",
         "navegar": "Nabigatu",
         "distancia_fmt": "📍 {:.2f} km-ra",
@@ -41,6 +42,7 @@ TRAD = {
         "radio": "Radio de búsqueda:",
         "ordenar": "Ordenar por precio de:",
         "btn_buscar": "🔍 Buscar",
+        "btn_cercanas": "📍 Buscar cercanas a mí",
         "error_con": "Error de conexión.",
         "navegar": "Navegar",
         "distancia_fmt": "📍 A {:.2f} km",
@@ -130,11 +132,16 @@ st.markdown(f"""
         div[data-testid="stHorizontalBlock"] div[data-testid="stRadio"] > div {{ flex-direction: row !important; justify-content: space-between !important; gap: 2px !important; }}
         .resumen-filtros {{ text-align: center; font-size: 0.95rem; margin-bottom: 1.5rem; padding: 12px 20px; border-radius: 40px; border: 1px solid #e2e8f0; background-color: #ffffff; color: #334155; box-shadow: 0 2px 10px rgba(0,0,0,0.02); font-family: 'Poppins', sans-serif; font-weight: 500; }}
         div[data-testid="stVerticalBlockBorderWrapper"] > div {{ background-color: #ffffff !important; border: 1px solid #f1f5f9 !important; border-radius: 16px !important; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04) !important; padding: 0.8rem !important; margin-bottom: 0.5rem !important; }}
+        
         div[data-testid="stButton"] button[kind="primary"] {{ min-height: 100px !important; border-radius: 15px !important; font-weight: bold !important; width: 100% !important; display: flex !important; flex-direction: column !important; align-items: center !important; justify-content: center !important; box-shadow: 0 4px 14px rgba(239, 68, 68, 0.25) !important; }}
         div[data-testid="stButton"] button[kind="primary"] p {{ font-size: 1.4rem !important; margin: 0 !important; }}
         div[data-testid="stButton"] button[kind="primary"]::after {{ content: "{t['btn_inicio_sub']}"; font-size: 0.85rem !important; font-weight: normal !important; opacity: 0.9; display: block; margin-top: 8px; }}
+        
         details div[data-testid="stButton"] button[kind="primary"] {{ min-height: 48px !important; padding: 0.5rem 1rem !important; box-shadow: none !important; }}
         details div[data-testid="stButton"] button[kind="primary"]::after {{ content: none !important; }}
+        
+        /* Aseguramos que el botón secundario dentro de ajustes tenga la misma altura para no desentonar */
+        details div[data-testid="stButton"] button[kind="secondary"] {{ min-height: 48px !important; padding: 0.5rem 1rem !important; font-weight: bold !important; border-radius: 8px !important; }}
     </style>
 """, unsafe_allow_html=True)
 
@@ -170,8 +177,6 @@ if not (estado_permiso == "granted" or st.session_state.municipio_guardado) and 
 
 loc = None; lat_gps, lon_gps = None, None
 
-# ¡AQUÍ ESTÁ LA MAGIA! Hemos quitado "st.session_state.municipio_guardado" de la condición negativa.
-# Ahora, si el GPS está concedido, siempre va a intentar cargar la ubicación a menos que hayas buscado a mano en esta misma sesión.
 if (estado_permiso == "granted" or st.session_state.solicitar_gps) and not (st.session_state.gps_fallido or st.session_state.override_manual):
     loc = get_geolocation()
     if loc is None:
@@ -217,6 +222,15 @@ with st.expander(titulo_expander, expanded=False):
         st.session_state.override_manual = True
         st.session_state.exp_key = 1 - st.session_state.exp_key  # Cambia la clave invisible, forzando cierre
         st.rerun()
+        
+    # NUEVO BOTÓN: Aparece si hay permisos de GPS (independientemente de si estamos en modo manual o no)
+    if (estado_permiso == "granted" or st.session_state.solicitar_gps) and not st.session_state.gps_fallido:
+        if st.button(t['btn_cercanas'], use_container_width=True):
+            st.session_state.radio_km = nuevo_radio
+            st.session_state.tipo_combustible = nuevo_tipo
+            st.session_state.override_manual = False # Desactivamos el forzado manual, priorizando GPS
+            st.session_state.exp_key = 1 - st.session_state.exp_key  # Forzamos cierre del menú
+            st.rerun()
 
 col_orden = "Precio_Diesel" if st.session_state.tipo_combustible == "Diésel" else "Precio_G95"
 df["Distancia"] = calcular_distancia(lat_ref, lon_ref, df["lat_num"], df["lon_num"])
