@@ -113,8 +113,7 @@ if 'gps_fallido' not in st.session_state: st.session_state.gps_fallido = False
 if 'override_manual' not in st.session_state: st.session_state.override_manual = False
 if 'radio_km' not in st.session_state: st.session_state.radio_km = 5
 if 'tipo_combustible' not in st.session_state: st.session_state.tipo_combustible = "Diésel"
-# Cambiamos el nombre para evitar conflictos con el widget interno de Streamlit
-if 'expander_open' not in st.session_state: st.session_state.expander_open = False
+if 'expander_state' not in st.session_state: st.session_state.expander_state = False
 
 # Recuperar caché persistente
 muni_cache = streamlit_js_eval(js_expressions="parent.window.localStorage.getItem('muni_gasolineras')", key="get_muni_cache")
@@ -189,8 +188,7 @@ else:
     lat_ref, lon_ref = fila["lat_num"], fila["lon_num"]
 
 # AJUSTES DE BÚSQUEDA
-# Usamos una clave única 'expander_ajustes' para controlar el estado visual
-with st.expander("⚙️ Ajustes de búsqueda", expanded=st.session_state.expander_open):
+with st.expander("⚙️ Ajustes de búsqueda", expanded=st.session_state.expander_state):
     nuevo_muni = st.selectbox("Cambiar municipio:", options=municipios_unicos, index=municipios_unicos.index(muni_ref) if muni_ref in municipios_unicos else None)
     if nuevo_muni != muni_ref: cerrar_teclado_movil()
     nuevo_radio = st.radio("Radio de búsqueda:", [5, 10, 20], index=[5, 10, 20].index(st.session_state.radio_km), format_func=lambda x: f"{x} km", horizontal=True)
@@ -202,13 +200,11 @@ with st.expander("⚙️ Ajustes de búsqueda", expanded=st.session_state.expand
         st.session_state.radio_km = nuevo_radio
         st.session_state.tipo_combustible = nuevo_tipo
         st.session_state.override_manual = True
-        # Forzamos el estado a falso y recargamos para que el expander lea el valor cerrado
-        st.session_state.expander_open = False
+        st.session_state.expander_state = False # Cierra al pulsar
         st.rerun()
 
-# Si el usuario abre manualmente el expander, sincronizamos el estado para que no se "pegue"
-if not st.session_state.expander_open:
-    st.session_state.expander_open = None 
+# Si no ha pulsado buscar, permitimos que el expander se maneje solo sin romper tipos
+st.session_state.expander_state = False
 
 col_orden = "Precio_Diesel" if st.session_state.tipo_combustible == "Diésel" else "Precio_G95"
 df["Distancia"] = calcular_distancia(lat_ref, lon_ref, df["lat_num"], df["lon_num"])
