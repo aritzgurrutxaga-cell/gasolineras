@@ -81,7 +81,7 @@ if 'gps_fallido' not in st.session_state: st.session_state.gps_fallido = False
 if 'override_manual' not in st.session_state: st.session_state.override_manual = False
 if 'radio_km' not in st.session_state: st.session_state.radio_km = 5
 if 'tipo_combustible' not in st.session_state: st.session_state.tipo_combustible = "Diésel"
-if 'exp_key' not in st.session_state: st.session_state.exp_key = 0  # <--- Clave para forzar el cierre
+if 'exp_key' not in st.session_state: st.session_state.exp_key = 0
 
 # --- LECTURA DE MEMORIA ---
 muni_cache = streamlit_js_eval(js_expressions="parent.window.localStorage.getItem('muni_gasolineras')", key="get_muni_cache")
@@ -92,10 +92,9 @@ if muni_cache and muni_cache != "null" and not st.session_state.municipio_guarda
 if st.session_state.municipio_guardado:
     components.html(f"<script>window.parent.localStorage.setItem('muni_gasolineras', '{st.session_state.municipio_guardado}');</script>", height=0)
 
-# --- SELECTOR DE IDIOMA OPTIMIZADO (CALLBACK) ---
+# --- SELECTOR DE IDIOMA (FORZADO A TOPE PARA MÓVIL) ---
 def cambiar_idioma():
     st.session_state.lang = st.session_state.lang_selector.lower()
-    st.session_state.exp_key = 1 - st.session_state.exp_key  # Asegura que se cierre al cambiar de idioma
 
 st.radio("Idioma", ["EU", "ES"], 
          index=0 if st.session_state.lang == "eu" else 1, 
@@ -114,6 +113,9 @@ st.markdown(f"""
         header {{visibility: hidden !important;}}
         iframe {{ display: none !important; height: 0px !important; }}
         .element-container:has(iframe) {{ display: none !important; }}
+        
+        /* FORZADO A TOPE: Fulminamos el indicador de carga que hace parpadear la pantalla en el móvil */
+        [data-testid="stStatusWidget"] {{ display: none !important; opacity: 0 !important; pointer-events: none !important; }}
         
         .element-container:has(div[role="radiogroup"][aria-label="Idioma"]) {{
             position: absolute !important; top: 0px !important; left: 15px !important; z-index: 9999 !important; width: auto !important;
