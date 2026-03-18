@@ -17,7 +17,7 @@ TRAD = {
         "localizando": "⏳ Kokapena bilatzen...",
         "escribe_muni": "📍 Idatzi zure udalerria:",
         "placeholder": "Bilatu...",
-        "btn_confirmar": "🔍 Bilatu",
+        "btn_confirmar": "✅ Berretsi hautaketa",
         "ajustes_tit": "⚙️ Bilaketa ezarpenak",
         "cambiar_muni": "Aldatu udalerria:",
         "radio": "Bilaketa-erradioa:",
@@ -83,7 +83,9 @@ if 'gps_fallido' not in st.session_state: st.session_state.gps_fallido = False
 if 'override_manual' not in st.session_state: st.session_state.override_manual = False
 if 'radio_km' not in st.session_state: st.session_state.radio_km = 5
 if 'tipo_combustible' not in st.session_state: st.session_state.tipo_combustible = "Diésel"
-if 'exp_key' not in st.session_state: st.session_state.exp_key = 0  # <--- Clave para forzar el cierre
+if 'exp_key' not in st.session_state: st.session_state.exp_key = 0
+if 'lat_gps_cache' not in st.session_state: st.session_state.lat_gps_cache = None  # <--- Caché GPS
+if 'lon_gps_cache' not in st.session_state: st.session_state.lon_gps_cache = None  # <--- Caché GPS
 
 # --- LECTURA DE MEMORIA ---
 muni_cache = streamlit_js_eval(js_expressions="parent.window.localStorage.getItem('muni_gasolineras')", key="get_muni_cache")
@@ -98,7 +100,7 @@ if st.session_state.municipio_guardado:
 lang_sel = st.radio("Idioma", ["EU", "ES"], index=0 if st.session_state.lang == "eu" else 1, horizontal=True, label_visibility="collapsed")
 if lang_sel.lower() != st.session_state.lang:
     st.session_state.lang = lang_sel.lower()
-    st.session_state.exp_key = 1 - st.session_state.exp_key  # Asegura que se cierre al cambiar de idioma
+    st.session_state.exp_key = 1 - st.session_state.exp_key  
     st.rerun()
 
 t = TRAD[st.session_state.lang]
@@ -140,7 +142,6 @@ st.markdown(f"""
         details div[data-testid="stButton"] button[kind="primary"] {{ min-height: 48px !important; padding: 0.5rem 1rem !important; box-shadow: none !important; }}
         details div[data-testid="stButton"] button[kind="primary"]::after {{ content: none !important; }}
         
-        /* Aseguramos que el botón secundario dentro de ajustes tenga la misma altura para no desentonar */
         details div[data-testid="stButton"] button[kind="secondary"] {{ min-height: 48px !important; padding: 0.5rem 1rem !important; font-weight: bold !important; border-radius: 8px !important; }}
     </style>
 """, unsafe_allow_html=True)
@@ -167,7 +168,7 @@ municipios_unicos = sorted(list(set([str(g["Municipio"]) for g in datos])))
 js_permiso = "navigator.permissions ? navigator.permissions.query({name: 'geolocation'}).then(res => res.state) : 'prompt'"
 estado_permiso = streamlit_js_eval(js_expressions=js_permiso, key="permiso_gps")
 
-# --- NAVEGACIÓN ---
+# --- NAVEGACIÓN Y CACHÉ DE GPS ---
 if not (estado_permiso == "granted" or st.session_state.municipio_guardado) and not st.session_state.solicitar_gps:
     st.markdown("<div class='titulo-app'>gasolina<span>.eus</span></div>", unsafe_allow_html=True)
     st.markdown(f"<p class='subtitulo-app'>{t['subtitulo']}</p>", unsafe_allow_html=True)
@@ -178,12 +179,21 @@ if not (estado_permiso == "granted" or st.session_state.municipio_guardado) and 
 loc = None; lat_gps, lon_gps = None, None
 
 if (estado_permiso == "granted" or st.session_state.solicitar_gps) and not (st.session_state.gps_fallido or st.session_state.override_manual):
-    loc = get_geolocation()
-    if loc is None:
-        st.markdown("<div class='titulo-app'>gasolina<span>.eus</span></div>", unsafe_allow_html=True)
-        st.info(t['localizando']); st.stop()
-    elif 'coords' in loc: lat_gps, lon_gps = loc['coords']['latitude'], loc['coords']['longitude']
-    else: st.session_state.gps_fallido = True; st.rerun()
+    # Solo calculamos el GPS si no lo tenemos ya en caché
+    if st.session_state.lat_gps_cache is None or st.session_state.lon_gps_cache is None:
+        loc = get_geolocation()
+        if loc is None:
+            st.markdown("<div class='titulo-app'>gasolina<span>.eus</span></div>", unsafe_allow_html=True)
+            st.info(t['localizando']); st.stop()
+        elif 'coords' in loc: 
+            st.session_state.lat_gps_cache = loc['coords']['latitude']
+            st.session_state.lon_gps_cache = loc['coords']['longitude']
+            lat_gps, lon_gps = st.session_state.lat_gps_cache, st.session_state.lon_gps_cache
+        else: 
+            st.session_state.gps_fallido = True; st.rerun()
+    else:
+        # Usamos la caché instantánea
+        lat_gps, lon_gps = st.session_state.lat_gps_cache, st.session_state.lon_gps_cache
 
 if not lat_gps and not st.session_state.municipio_guardado:
     st.markdown("<div class='titulo-app'>gasolina<span>.eus</span></div>", unsafe_allow_html=True)
@@ -206,7 +216,6 @@ else:
     fila = df[df["Municipio"] == muni_ref].iloc[0]
     lat_ref, lon_ref = fila["lat_num"], fila["lon_num"]
 
-# Título con espacio de ancho cero para forzar a Streamlit a considerarlo un componente nuevo al pulsar buscar
 titulo_expander = t['ajustes_tit'] + ("\u200b" * st.session_state.exp_key)
 
 with st.expander(titulo_expander, expanded=False):
@@ -220,16 +229,17 @@ with st.expander(titulo_expander, expanded=False):
         st.session_state.radio_km = nuevo_radio
         st.session_state.tipo_combustible = nuevo_tipo
         st.session_state.override_manual = True
-        st.session_state.exp_key = 1 - st.session_state.exp_key  # Cambia la clave invisible, forzando cierre
+        st.session_state.exp_key = 1 - st.session_state.exp_key  
         st.rerun()
         
-    # NUEVO BOTÓN: Aparece si hay permisos de GPS (independientemente de si estamos en modo manual o no)
     if (estado_permiso == "granted" or st.session_state.solicitar_gps) and not st.session_state.gps_fallido:
         if st.button(t['btn_cercanas'], use_container_width=True):
             st.session_state.radio_km = nuevo_radio
             st.session_state.tipo_combustible = nuevo_tipo
-            st.session_state.override_manual = False # Desactivamos el forzado manual, priorizando GPS
-            st.session_state.exp_key = 1 - st.session_state.exp_key  # Forzamos cierre del menú
+            st.session_state.override_manual = False 
+            st.session_state.lat_gps_cache = None # <--- Borramos la caché para forzar recalcular ubicación real
+            st.session_state.lon_gps_cache = None
+            st.session_state.exp_key = 1 - st.session_state.exp_key  
             st.rerun()
 
 col_orden = "Precio_Diesel" if st.session_state.tipo_combustible == "Diésel" else "Precio_G95"
