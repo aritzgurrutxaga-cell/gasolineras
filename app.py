@@ -92,12 +92,17 @@ if muni_cache and muni_cache != "null" and not st.session_state.municipio_guarda
 if st.session_state.municipio_guardado:
     components.html(f"<script>window.parent.localStorage.setItem('muni_gasolineras', '{st.session_state.municipio_guardado}');</script>", height=0)
 
-# --- SELECTOR DE IDIOMA ---
-lang_sel = st.radio("Idioma", ["EU", "ES"], index=0 if st.session_state.lang == "eu" else 1, horizontal=True, label_visibility="collapsed")
-if lang_sel.lower() != st.session_state.lang:
-    st.session_state.lang = lang_sel.lower()
+# --- SELECTOR DE IDIOMA OPTIMIZADO (CALLBACK) ---
+def cambiar_idioma():
+    st.session_state.lang = st.session_state.lang_selector.lower()
     st.session_state.exp_key = 1 - st.session_state.exp_key  # Asegura que se cierre al cambiar de idioma
-    st.rerun()
+
+st.radio("Idioma", ["EU", "ES"], 
+         index=0 if st.session_state.lang == "eu" else 1, 
+         horizontal=True, 
+         label_visibility="collapsed",
+         key="lang_selector",
+         on_change=cambiar_idioma)
 
 t = TRAD[st.session_state.lang]
 
@@ -169,7 +174,8 @@ if not (estado_permiso == "granted" or st.session_state.municipio_guardado) and 
     st.stop()
 
 loc = None; lat_gps, lon_gps = None, None
-if (estado_permiso == "granted" or st.session_state.solicitar_gps) and not (st.session_state.gps_fallido or st.session_state.municipio_guardado or st.session_state.override_manual):
+
+if (estado_permiso == "granted" or st.session_state.solicitar_gps) and not (st.session_state.gps_fallido or st.session_state.override_manual):
     loc = get_geolocation()
     if loc is None:
         st.markdown("<div class='titulo-app'>gasolina<span>.eus</span></div>", unsafe_allow_html=True)
