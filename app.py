@@ -187,7 +187,7 @@ else:
     fila = df[df["Municipio"] == muni_ref].iloc[0]
     lat_ref, lon_ref = fila["lat_num"], fila["lon_num"]
 
-# AJUSTES CON CIERRE AUTOMÁTICO
+# AJUSTES DE BÚSQUEDA
 with st.expander("⚙️ Ajustes de búsqueda", expanded=st.session_state.ajustes_abiertos):
     nuevo_muni = st.selectbox("Cambiar municipio:", options=municipios_unicos, index=municipios_unicos.index(muni_ref) if muni_ref in municipios_unicos else None)
     if nuevo_muni != muni_ref: cerrar_teclado_movil()
@@ -200,7 +200,7 @@ with st.expander("⚙️ Ajustes de búsqueda", expanded=st.session_state.ajuste
         st.session_state.radio_km = nuevo_radio
         st.session_state.tipo_combustible = nuevo_tipo
         st.session_state.override_manual = True
-        st.session_state.ajustes_abiertos = False  # ESTO CIERRA EL RECUADRO
+        st.session_state.ajustes_abiertos = False # CERRAMOS EL EXPANDER
         st.rerun()
 
 col_orden = "Precio_Diesel" if st.session_state.tipo_combustible == "Diésel" else "Precio_G95"
