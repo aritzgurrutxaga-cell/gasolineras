@@ -82,17 +82,28 @@ if 'override_manual' not in st.session_state: st.session_state.override_manual =
 if 'radio_km' not in st.session_state: st.session_state.radio_km = 5
 if 'tipo_combustible' not in st.session_state: st.session_state.tipo_combustible = "Diésel"
 if 'exp_key' not in st.session_state: st.session_state.exp_key = 0
+if 'comb_cargado' not in st.session_state: st.session_state.comb_cargado = False  # Para controlar la carga inicial
 
 # --- LECTURA DE MEMORIA ---
 muni_cache = streamlit_js_eval(js_expressions="parent.window.localStorage.getItem('muni_gasolineras')", key="get_muni_cache")
 if muni_cache and muni_cache != "null" and not st.session_state.municipio_guardado:
     st.session_state.municipio_guardado = muni_cache
 
+comb_cache = streamlit_js_eval(js_expressions="parent.window.localStorage.getItem('comb_gasolineras')", key="get_comb_cache")
+if comb_cache is not None and not st.session_state.comb_cargado:
+    if comb_cache in ["Diésel", "G95"]:
+        st.session_state.tipo_combustible = comb_cache
+    st.session_state.comb_cargado = True
+
 # --- GUARDADO INFALIBLE ---
 if st.session_state.municipio_guardado:
-    components.html(f"<script>window.parent.localStorage.setItem('muni_gasolineras', '{st.session_state.municipio_guardado}');</script>", height=0)
+    js_save = f"""
+    window.parent.localStorage.setItem('muni_gasolineras', '{st.session_state.municipio_guardado}');
+    window.parent.localStorage.setItem('comb_gasolineras', '{st.session_state.tipo_combustible}');
+    """
+    components.html(f"<script>{js_save}</script>", height=0)
 
-# --- SELECTOR DE IDIOMA (FORZADO A TOPE PARA MÓVIL) ---
+# --- SELECTOR DE IDIOMA ---
 def cambiar_idioma():
     st.session_state.lang = st.session_state.lang_selector.lower()
 
@@ -114,7 +125,6 @@ st.markdown(f"""
         iframe {{ display: none !important; height: 0px !important; }}
         .element-container:has(iframe) {{ display: none !important; }}
         
-        /* FORZADO A TOPE: Fulminamos el indicador de carga que hace parpadear la pantalla en el móvil */
         [data-testid="stStatusWidget"] {{ display: none !important; opacity: 0 !important; pointer-events: none !important; }}
         
         .element-container:has(div[role="radiogroup"][aria-label="Idioma"]) {{
