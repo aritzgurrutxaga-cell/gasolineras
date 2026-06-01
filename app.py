@@ -85,7 +85,7 @@ if 'tipo_combustible' not in st.session_state: st.session_state.tipo_combustible
 if 'exp_key' not in st.session_state: st.session_state.exp_key = 0
 if 'browser_data_loaded' not in st.session_state: st.session_state.browser_data_loaded = False
 
-# --- LECTURA CENTRALIZADA DE MEMORIA Y PERMISOS (EVITA PARPADEOS) ---
+# --- LECTURA CENTRALIZADA DE MEMORIA Y PERMISOS ---
 js_init_data = """
 (function() {
     return {
@@ -96,7 +96,6 @@ js_init_data = """
 })()
 """
 
-# Agrupamos la consulta al navegador en un único componente intermedio
 if not st.session_state.browser_data_loaded:
     browser_cache = streamlit_js_eval(js_expressions=js_init_data, key="init_browser_cache")
     if browser_cache and browser_cache != "null":
@@ -107,7 +106,6 @@ if not st.session_state.browser_data_loaded:
                 st.session_state.tipo_combustible = browser_cache['comb']
         st.session_state.browser_data_loaded = True
 
-# Consulta de geolocalización nativa simplificada si el navegador lo permite
 estado_permiso = streamlit_js_eval(js_expressions="navigator.permissions ? navigator.permissions.query({name: 'geolocation'}).then(res => res.state) : 'prompt'", key="permiso_gps_unic")
 
 # --- GUARDADO EN MEMORIA ---
@@ -170,7 +168,7 @@ st.markdown(f"""
     </style>
 """, unsafe_allow_html=True)
 
-@st.cache_data(ttl=300)  # Bajado a 5 min para sincronizar mejor con GitHub Actions sin penalizar carga
+@st.cache_data(ttl=300)
 def cargar_datos():
     try:
         with open("precios_gasolineras.json", "r", encoding="utf-8") as f:
@@ -193,12 +191,28 @@ df["Precio_Diesel"] = pd.to_numeric(df["Precio Gasoleo A"].str.replace(",", ".")
 df["Precio_G95"] = pd.to_numeric(df["Precio Gasolina 95 E5"].str.replace(",", "."), errors='coerce')
 municipios_unicos = sorted(list(set([str(g["Municipio"]) for g in datos])))
 
+# --- CALLBACKS PARA ELIMINAR EL DOBLE CLIC ---
+def click_solicitar_gps():
+    st.session_state.solicitar_gps = True
+
+def click_confirmar_muni(muni):
+    if muni:
+        st.session_state.municipio_guardado = muni
+        st.session_state.override_manual = True
+
+def click_buscar_filtros(muni, radio, tipo):
+    st.session_state.municipio_guardado = muni
+    st.session_state.radio_km = radio
+    st.session_state.tipo_combustible = tipo
+    st.session_state.override_manual = True
+    st.session_state.exp_key = 1 - st.session_state.exp_key
+
 # --- NAVEGACIÓN (PANTALLA DE BIENVENIDA) ---
 if not (estado_permiso == "granted" or st.session_state.municipio_guardado) and not st.session_state.solicitar_gps:
     st.markdown("<div class='titulo-app'>gasolina<span>.eus</span></div>", unsafe_allow_html=True)
     st.markdown(f"<p class='subtitulo-app'>{t['subtitulo']}</p>", unsafe_allow_html=True)
-    if st.button(t['btn_inicio'], use_container_width=True, type="primary"):
-        st.session_state.solicitar_gps = True
+    # Cambiado a on_click con rerun inmediato forzado nativamente
+    st.button(t['btn_inicio'], use_container_width=True, type="primary", on_click=click_solicitar_gps)
     st.stop()
 
 loc = None
@@ -221,10 +235,8 @@ if not lat_gps and not st.session_state.municipio_guardado:
     muni_sel = st.selectbox(t['label_muni'], options=municipios_unicos, index=None, placeholder=t['placeholder'], label_visibility="collapsed")
     if muni_sel: 
         cerrar_teclado_movil()
-    if st.button(t['btn_confirmar'], type="primary", use_container_width=True):
-        if muni_sel: 
-            st.session_state.municipio_guardado = muni_sel
-            st.session_state.override_manual = True
+    # Cambiado a on_click pasando el argumento seleccionado
+    st.button(t['btn_confirmar'], type="primary", use_container_width=True, on_click=click_confirmar_muni, args=(muni_sel,))
     st.stop()
 
 # --- RESULTADOS PRINCIPALES ---
@@ -248,12 +260,8 @@ with st.expander(titulo_expander, expanded=False):
     nuevo_radio = st.radio(t['radio'], [5, 10, 20], index=[5, 10, 20].index(st.session_state.radio_km), horizontal=True)
     nuevo_tipo = st.radio(t['ordenar'], ["Diésel", "G95"], index=0 if st.session_state.tipo_combustible == "Diésel" else 1, horizontal=True)
     
-    if st.button(t['btn_buscar'], use_container_width=True, type="primary"):
-        st.session_state.municipio_guardado = nuevo_muni
-        st.session_state.radio_km = nuevo_radio
-        st.session_state.tipo_combustible = nuevo_tipo
-        st.session_state.override_manual = True
-        st.session_state.exp_key = 1 - st.session_state.exp_key
+    # Cambiado a on_click pasándole las tres variables elegidas en el formulario
+    st.button(t['btn_buscar'], use_container_width=True, type="primary", on_click=click_buscar_filtros, args=(nuevo_muni, nuevo_radio, nuevo_tipo))
 
 col_orden = "Precio_Diesel" if st.session_state.tipo_combustible == "Diésel" else "Precio_G95"
 df["Distancia"] = calcular_distancia(lat_ref, lon_ref, df["lat_num"], df["lon_num"])
@@ -271,5 +279,4 @@ for _, g in res.head(20).iterrows():
             st.write(f"⛽ **Diesel:** {p_diesel} | **G95:** {p_g95}")
             st.caption(t['distancia_fmt'].format(g['Distancia']))
         with c2:
-            # URL universal de Google Maps (Corrige la concatenación errónea con el '0')
             st.link_button(t['navegar'], f"https://www.google.com/maps/search/?api=1&query={g['lat_num']},{g['lon_num']}", use_container_width=True)
