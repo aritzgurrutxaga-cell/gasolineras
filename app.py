@@ -8,6 +8,10 @@ from streamlit_js_eval import get_geolocation, streamlit_js_eval
 from requests.adapters import HTTPAdapter
 from urllib3.util.ssl_ import create_urllib3_context
 import streamlit.components.v1 as components
+# --- ENLACE DIRECTO PARA EL ROBOT DE ADSENSE ---
+if "ads.txt" in st.query_params or (len(st.context.headers.get("user-agent", "")) > 0 and "ads.txt" in st.context.headers.get("referer", "")):
+    st.text("google.com, pub-4561237649685966, DIRECT, f08c47fec0942fa0")
+    st.stop()
 
 # --- DICCIONARIO DE TRADUCCIONES ---
 TRAD = {
