@@ -156,7 +156,7 @@ st.markdown(f"""
     </style>
 """, unsafe_allow_html=True)
 
-@st.cache_data(ttl=3600)
+@st.cache_data(ttl=300)
 
 def cargar_datos():
     try:
