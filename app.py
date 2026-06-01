@@ -83,20 +83,34 @@ if 'override_manual' not in st.session_state: st.session_state.override_manual =
 if 'radio_km' not in st.session_state: st.session_state.radio_km = 5
 if 'tipo_combustible' not in st.session_state: st.session_state.tipo_combustible = "Diésel"
 if 'exp_key' not in st.session_state: st.session_state.exp_key = 0
-if 'comb_cargado' not in st.session_state: st.session_state.comb_cargado = False  # Para controlar la carga inicial
+if 'browser_data_loaded' not in st.session_state: st.session_state.browser_data_loaded = False
 
-# --- LECTURA DE MEMORIA ---
-muni_cache = streamlit_js_eval(js_expressions="parent.window.localStorage.getItem('muni_gasolineras')", key="get_muni_cache")
-if muni_cache and muni_cache != "null" and not st.session_state.municipio_guardado:
-    st.session_state.municipio_guardado = muni_cache
+# --- LECTURA CENTRALIZADA DE MEMORIA Y PERMISOS (EVITA PARPADEOS) ---
+js_init_data = """
+(function() {
+    return {
+        muni: window.parent.localStorage.getItem('muni_gasolineras'),
+        comb: window.parent.localStorage.getItem('comb_gasolineras'),
+        permission: navigator.permissions ? null : 'unknown'
+    };
+})()
+"""
 
-comb_cache = streamlit_js_eval(js_expressions="parent.window.localStorage.getItem('comb_gasolineras')", key="get_comb_cache")
-if comb_cache is not None and not st.session_state.comb_cargado:
-    if comb_cache in ["Diésel", "G95"]:
-        st.session_state.tipo_combustible = comb_cache
-    st.session_state.comb_cargado = True
+# Agrupamos la consulta al navegador en un único componente intermedio
+if not st.session_state.browser_data_loaded:
+    browser_cache = streamlit_js_eval(js_expressions=js_init_data, key="init_browser_cache")
+    if browser_cache and browser_cache != "null":
+        if browser_cache.get('muni') and browser_cache['muni'] != "null":
+            st.session_state.municipio_guardado = browser_cache['muni']
+        if browser_cache.get('comb') and browser_cache['comb'] != "null":
+            if browser_cache['comb'] in ["Diésel", "G95"]:
+                st.session_state.tipo_combustible = browser_cache['comb']
+        st.session_state.browser_data_loaded = True
 
-# --- GUARDADO INFALIBLE ---
+# Consulta de geolocalización nativa simplificada si el navegador lo permite
+estado_permiso = streamlit_js_eval(js_expressions="navigator.permissions ? navigator.permissions.query({name: 'geolocation'}).then(res => res.state) : 'prompt'", key="permiso_gps_unic")
+
+# --- GUARDADO EN MEMORIA ---
 if st.session_state.municipio_guardado:
     js_save = f"""
     window.parent.localStorage.setItem('muni_gasolineras', '{st.session_state.municipio_guardado}');
@@ -156,33 +170,21 @@ st.markdown(f"""
     </style>
 """, unsafe_allow_html=True)
 
-@st.cache_data(ttl=300)
-
+@st.cache_data(ttl=300)  # Bajado a 5 min para sincronizar mejor con GitHub Actions sin penalizar carga
 def cargar_datos():
     try:
         with open("precios_gasolineras.json", "r", encoding="utf-8") as f:
             payload = json.load(f)
-
-        if "datos" not in payload:
-            st.error("El JSON no tiene la clave 'datos'")
+        if "datos" not in payload or "fecha_descarga" not in payload:
             return None, None
-
-        if "fecha_descarga" not in payload:
-            st.error("El JSON no tiene la clave 'fecha_descarga'")
-            return None, None
-
         return payload["datos"], datetime.datetime.fromisoformat(payload["fecha_descarga"])
-
-    except FileNotFoundError:
-        st.error("No existe precios_gasolineras.json en la raíz del repo")
-        return None, None
-
-    except Exception as e:
-        st.error(f"Error leyendo precios_gasolineras.json: {e}")
+    except Exception:
         return None, None
 
 datos, fecha_act = cargar_datos()
-if not datos: st.error(t['error_con']); st.stop()
+if not datos: 
+    st.error(t['error_con'])
+    st.stop()
 
 df = pd.DataFrame(datos)
 df["lat_num"] = pd.to_numeric(df["Latitud"].str.replace(",", "."), errors='coerce')
@@ -191,37 +193,41 @@ df["Precio_Diesel"] = pd.to_numeric(df["Precio Gasoleo A"].str.replace(",", ".")
 df["Precio_G95"] = pd.to_numeric(df["Precio Gasolina 95 E5"].str.replace(",", "."), errors='coerce')
 municipios_unicos = sorted(list(set([str(g["Municipio"]) for g in datos])))
 
-js_permiso = "navigator.permissions ? navigator.permissions.query({name: 'geolocation'}).then(res => res.state) : 'prompt'"
-estado_permiso = streamlit_js_eval(js_expressions=js_permiso, key="permiso_gps")
-
-# --- NAVEGACIÓN ---
+# --- NAVEGACIÓN (PANTALLA DE BIENVENIDA) ---
 if not (estado_permiso == "granted" or st.session_state.municipio_guardado) and not st.session_state.solicitar_gps:
     st.markdown("<div class='titulo-app'>gasolina<span>.eus</span></div>", unsafe_allow_html=True)
     st.markdown(f"<p class='subtitulo-app'>{t['subtitulo']}</p>", unsafe_allow_html=True)
     if st.button(t['btn_inicio'], use_container_width=True, type="primary"):
-        st.session_state.solicitar_gps = True; st.rerun()
+        st.session_state.solicitar_gps = True
     st.stop()
 
-loc = None; lat_gps, lon_gps = None, None
+loc = None
+lat_gps, lon_gps = None, None
 
 if (estado_permiso == "granted" or st.session_state.solicitar_gps) and not (st.session_state.gps_fallido or st.session_state.override_manual):
     loc = get_geolocation()
     if loc is None:
         st.markdown("<div class='titulo-app'>gasolina<span>.eus</span></div>", unsafe_allow_html=True)
-        st.info(t['localizando']); st.stop()
-    elif 'coords' in loc: lat_gps, lon_gps = loc['coords']['latitude'], loc['coords']['longitude']
-    else: st.session_state.gps_fallido = True; st.rerun()
+        st.info(t['localizando'])
+        st.stop()
+    elif 'coords' in loc: 
+        lat_gps, lon_gps = loc['coords']['latitude'], loc['coords']['longitude']
+    else: 
+        st.session_state.gps_fallido = True
 
 if not lat_gps and not st.session_state.municipio_guardado:
     st.markdown("<div class='titulo-app'>gasolina<span>.eus</span></div>", unsafe_allow_html=True)
     st.markdown(f"<p style='text-align: center; color: #64748b;'>{t['escribe_muni']}</p>", unsafe_allow_html=True)
     muni_sel = st.selectbox(t['label_muni'], options=municipios_unicos, index=None, placeholder=t['placeholder'], label_visibility="collapsed")
-    if muni_sel: cerrar_teclado_movil()
+    if muni_sel: 
+        cerrar_teclado_movil()
     if st.button(t['btn_confirmar'], type="primary", use_container_width=True):
-        if muni_sel: st.session_state.municipio_guardado = muni_sel; st.session_state.override_manual = True; st.rerun()
+        if muni_sel: 
+            st.session_state.municipio_guardado = muni_sel
+            st.session_state.override_manual = True
     st.stop()
 
-# --- RESULTADOS ---
+# --- RESULTADOS PRINCIPALES ---
 st.markdown("<div class='titulo-app'>gasolina<span>.eus</span></div>", unsafe_allow_html=True)
 
 if lat_gps and not st.session_state.override_manual:
@@ -233,12 +239,12 @@ else:
     fila = df[df["Municipio"] == muni_ref].iloc[0]
     lat_ref, lon_ref = fila["lat_num"], fila["lon_num"]
 
-# Título con espacio de ancho cero para forzar a Streamlit a considerarlo un componente nuevo al pulsar buscar
 titulo_expander = t['ajustes_tit'] + ("\u200b" * st.session_state.exp_key)
 
 with st.expander(titulo_expander, expanded=False):
     nuevo_muni = st.selectbox(t['cambiar_muni'], options=municipios_unicos, index=municipios_unicos.index(muni_ref) if muni_ref in municipios_unicos else None)
-    if nuevo_muni != muni_ref: cerrar_teclado_movil()
+    if nuevo_muni != muni_ref: 
+        cerrar_teclado_movil()
     nuevo_radio = st.radio(t['radio'], [5, 10, 20], index=[5, 10, 20].index(st.session_state.radio_km), horizontal=True)
     nuevo_tipo = st.radio(t['ordenar'], ["Diésel", "G95"], index=0 if st.session_state.tipo_combustible == "Diésel" else 1, horizontal=True)
     
@@ -247,8 +253,7 @@ with st.expander(titulo_expander, expanded=False):
         st.session_state.radio_km = nuevo_radio
         st.session_state.tipo_combustible = nuevo_tipo
         st.session_state.override_manual = True
-        st.session_state.exp_key = 1 - st.session_state.exp_key  # Cambia la clave invisible, forzando cierre
-        st.rerun()
+        st.session_state.exp_key = 1 - st.session_state.exp_key
 
 col_orden = "Precio_Diesel" if st.session_state.tipo_combustible == "Diésel" else "Precio_G95"
 df["Distancia"] = calcular_distancia(lat_ref, lon_ref, df["lat_num"], df["lon_num"])
@@ -266,4 +271,5 @@ for _, g in res.head(20).iterrows():
             st.write(f"⛽ **Diesel:** {p_diesel} | **G95:** {p_g95}")
             st.caption(t['distancia_fmt'].format(g['Distancia']))
         with c2:
-            st.link_button(t['navegar'], f"https://www.google.com/maps/dir/?api=1&destination={g['lat_num']},{g['lon_num']}", use_container_width=True)
+            # URL universal de Google Maps (Corrige la concatenación errónea con el '0')
+            st.link_button(t['navegar'], f"https://www.google.com/maps/search/?api=1&query={g['lat_num']},{g['lon_num']}", use_container_width=True)
