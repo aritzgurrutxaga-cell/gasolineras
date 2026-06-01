@@ -1,0 +1,19 @@
+name: Schedule probe
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - ".github/workflows/schedule_probe.yml"
+  schedule:
+    - cron: "*/5 * * * *"
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Mostrar evento
+        run: |
+          echo "EVENTO=${{ github.event_name }}"
+          date -u
