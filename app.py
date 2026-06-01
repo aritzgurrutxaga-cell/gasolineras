@@ -108,13 +108,20 @@ if not st.session_state.browser_data_loaded:
 
 estado_permiso = streamlit_js_eval(js_expressions="navigator.permissions ? navigator.permissions.query({name: 'geolocation'}).then(res => res.state) : 'prompt'", key="permiso_gps_unic")
 
-# --- GUARDADO EN MEMORIA ---
+# --- CONFIGURACIÓN DE ADSENSE Y GUARDADO EN MEMORIA ---
+js_save = ""
 if st.session_state.municipio_guardado:
     js_save = f"""
     window.parent.localStorage.setItem('muni_gasolineras', '{st.session_state.municipio_guardado}');
     window.parent.localStorage.setItem('comb_gasolineras', '{st.session_state.tipo_combustible}');
     """
-    components.html(f"<script>{js_save}</script>", height=0)
+
+# Inyectamos tu script de AdSense junto con el guardado de memoria en un único bloque invisible
+components.html(f"""
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4561237649685966" crossorigin="anonymous"></script>
+    <script>{js_save}</script>
+""", height=0)
+
 
 # --- SELECTOR DE IDIOMA ---
 def cambiar_idioma():
