@@ -24,6 +24,11 @@ jobs:
         uses: actions/checkout@v4
         with:
           persist-credentials: true
+          fetch-depth: 0
+
+      - name: Sincronizar rama
+        run: |
+          git pull --rebase origin main
 
       - name: Preparar Python
         uses: actions/setup-python@v5
@@ -53,6 +58,10 @@ jobs:
           git config user.email "github-actions@github.com"
           git status
           git add precios_gasolineras.json
-          git diff --cached --quiet && echo "Sin cambios para commitear" || git commit -m "Actualizar precios gasolineras"
+          if git diff --cached --quiet; then
+            echo "Sin cambios para commitear"
+            exit 0
+          fi
+          git commit -m "Actualizar precios gasolineras"
           git pull --rebase origin main
-          git push origin main
+          git push origin HEAD:main
