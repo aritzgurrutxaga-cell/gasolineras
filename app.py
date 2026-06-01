@@ -74,6 +74,12 @@ class SSLAdapter(HTTPAdapter):
 # 1. Configuración de la página
 st.set_page_config(page_title="gasolina.eus", page_icon="⛽", layout="centered")
 
+# --- ADDELEGACIÓN DE LA ETIQUETA META PARA VERIFICACIÓN DE ADSENSE ---
+st.markdown(
+    """<meta name="google-adsense-account" content="ca-pub-4561237649685966">""", 
+    unsafe_allow_html=True
+)
+
 # --- INICIALIZACIÓN ---
 if 'lang' not in st.session_state: st.session_state.lang = "eu"
 if 'solicitar_gps' not in st.session_state: st.session_state.solicitar_gps = False
@@ -108,19 +114,13 @@ if not st.session_state.browser_data_loaded:
 
 estado_permiso = streamlit_js_eval(js_expressions="navigator.permissions ? navigator.permissions.query({name: 'geolocation'}).then(res => res.state) : 'prompt'", key="permiso_gps_unic")
 
-# --- CONFIGURACIÓN DE ADSENSE Y GUARDADO EN MEMORIA ---
-js_save = ""
+# --- GUARDADO EN MEMORIA LIMPIO ---
 if st.session_state.municipio_guardado:
     js_save = f"""
     window.parent.localStorage.setItem('muni_gasolineras', '{st.session_state.municipio_guardado}');
     window.parent.localStorage.setItem('comb_gasolineras', '{st.session_state.tipo_combustible}');
     """
-
-# Inyectamos tu script de AdSense junto con el guardado de memoria en un único bloque invisible
-components.html(f"""
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4561237649685966" crossorigin="anonymous"></script>
-    <script>{js_save}</script>
-""", height=0)
+    components.html(f"<script>{js_save}</script>", height=0)
 
 
 # --- SELECTOR DE IDIOMA ---
@@ -142,8 +142,10 @@ st.markdown(f"""
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@500;800&display=swap');
         .block-container {{ padding-top: 1rem !important; padding-bottom: 25vh !important; }}
         header {{visibility: hidden !important;}}
-        iframe {{ display: none !important; height: 0px !important; }}
-        .element-container:has(iframe) {{ display: none !important; }}
+        
+        /* Oculta de forma selectiva solo el iframe de procesamiento, permitiendo AdSense */
+        iframe[title="streamlit_js_eval.streamlit_js_eval"] {{ display: none !important; height: 0px !important; }}
+        .element-container:has(iframe[title="streamlit_js_eval.streamlit_js_eval"]) {{ display: none !important; }}
         
         [data-testid="stStatusWidget"] {{ display: none !important; opacity: 0 !important; pointer-events: none !important; }}
         
@@ -218,7 +220,6 @@ def click_buscar_filtros(muni, radio, tipo):
 if not (estado_permiso == "granted" or st.session_state.municipio_guardado) and not st.session_state.solicitar_gps:
     st.markdown("<div class='titulo-app'>gasolina<span>.eus</span></div>", unsafe_allow_html=True)
     st.markdown(f"<p class='subtitulo-app'>{t['subtitulo']}</p>", unsafe_allow_html=True)
-    # Cambiado a on_click con rerun inmediato forzado nativamente
     st.button(t['btn_inicio'], use_container_width=True, type="primary", on_click=click_solicitar_gps)
     st.stop()
 
@@ -242,7 +243,6 @@ if not lat_gps and not st.session_state.municipio_guardado:
     muni_sel = st.selectbox(t['label_muni'], options=municipios_unicos, index=None, placeholder=t['placeholder'], label_visibility="collapsed")
     if muni_sel: 
         cerrar_teclado_movil()
-    # Cambiado a on_click pasando el argumento seleccionado
     st.button(t['btn_confirmar'], type="primary", use_container_width=True, on_click=click_confirmar_muni, args=(muni_sel,))
     st.stop()
 
@@ -267,7 +267,6 @@ with st.expander(titulo_expander, expanded=False):
     nuevo_radio = st.radio(t['radio'], [5, 10, 20], index=[5, 10, 20].index(st.session_state.radio_km), horizontal=True)
     nuevo_tipo = st.radio(t['ordenar'], ["Diésel", "G95"], index=0 if st.session_state.tipo_combustible == "Diésel" else 1, horizontal=True)
     
-    # Cambiado a on_click pasándole las tres variables elegidas en el formulario
     st.button(t['btn_buscar'], use_container_width=True, type="primary", on_click=click_buscar_filtros, args=(nuevo_muni, nuevo_radio, nuevo_tipo))
 
 col_orden = "Precio_Diesel" if st.session_state.tipo_combustible == "Diésel" else "Precio_G95"
