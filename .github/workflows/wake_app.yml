@@ -1,9 +1,10 @@
+
 name: Mantener app despierta
 
 on:
-  schedule:
-    - cron: "17 */4 * * *"
   workflow_dispatch:
+  schedule:
+    - cron: "0,5,10,15,20,25,30,35,40,45,50,55 * * * *"
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
@@ -30,3 +31,4 @@ jobs:
         env:
           STREAMLIT_APP_URL: "https://mis-gasolineras.streamlit.app/"
         run: python wake_app.py
+``
