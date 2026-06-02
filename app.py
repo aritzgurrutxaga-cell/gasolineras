@@ -80,22 +80,42 @@ class SSLAdapter(HTTPAdapter):
 st.set_page_config(page_title="gasolina.eus", page_icon="⛽", layout="centered")
 
 # --- INYECCIÓN REAL DE META EN <head> DEL DOCUMENTO PADRE PARA ADSENSE ---
+
 components.html(
     """
     <script>
     (function() {
-        try {
-            const doc = window.parent.document;
-            const existing = doc.querySelector('meta[name="google-adsense-account"]');
-            if (!existing) {
-                const meta = doc.createElement("meta");
-                meta.name = "google-adsense-account";
-                meta.content = "ca-pub-4561237649685966";
-                doc.head.appendChild(meta);
+        function injectMeta() {
+            try {
+                const doc = window.parent.document;
+                let meta = doc.querySelector('meta[name="google-adsense-account"]');
+
+                if (!meta) {
+                    meta = doc.createElement("meta");
+                    meta.name = "google-adsense-account";
+                    meta.content = "ca-pub-4561237649685966";
+                    doc.head.appendChild(meta);
+                    console.log("META ADSENSE INSERTADA");
+                } else {
+                    console.log("META ADSENSE YA EXISTÍA");
+                }
+
+                console.log("CHECK META:", doc.head.querySelector('meta[name="google-adsense-account"]'));
+                return true;
+            } catch (e) {
+                console.log("ERROR INYECTANDO META ADSENSE:", e);
+                return false;
             }
-        } catch (e) {
-            console.log("No se pudo inyectar la meta de AdSense:", e);
         }
+
+        let tries = 0;
+        const timer = setInterval(() => {
+            tries += 1;
+            const ok = injectMeta();
+            if (ok || tries >= 20) {
+                clearInterval(timer);
+            }
+        }, 500);
     })();
     </script>
     """,
