@@ -8,7 +8,6 @@ from streamlit_js_eval import get_geolocation, streamlit_js_eval
 from requests.adapters import HTTPAdapter
 from urllib3.util.ssl_ import create_urllib3_context
 import streamlit.components.v1 as components
-
 # --- ENLACE DIRECTO PARA EL ROBOT DE ADSENSE ---
 if "ads.txt" in st.query_params or (len(st.context.headers.get("user-agent", "")) > 0 and "ads.txt" in st.context.headers.get("referer", "")):
     st.text("google.com, pub-4561237649685966, DIRECT, f08c47fec0942fa0")
@@ -79,47 +78,10 @@ class SSLAdapter(HTTPAdapter):
 # 1. Configuración de la página
 st.set_page_config(page_title="gasolina.eus", page_icon="⛽", layout="centered")
 
-# --- INYECCIÓN REAL DE META EN <head> DEL DOCUMENTO PADRE PARA ADSENSE ---
-
-components.html(
-    """
-    <script>
-    (function() {
-        function injectMeta() {
-            try {
-                const doc = window.parent.document;
-                let meta = doc.querySelector('meta[name="google-adsense-account"]');
-
-                if (!meta) {
-                    meta = doc.createElement("meta");
-                    meta.name = "google-adsense-account";
-                    meta.content = "ca-pub-4561237649685966";
-                    doc.head.appendChild(meta);
-                    console.log("META ADSENSE INSERTADA");
-                } else {
-                    console.log("META ADSENSE YA EXISTÍA");
-                }
-
-                console.log("CHECK META:", doc.head.querySelector('meta[name="google-adsense-account"]'));
-                return true;
-            } catch (e) {
-                console.log("ERROR INYECTANDO META ADSENSE:", e);
-                return false;
-            }
-        }
-
-        let tries = 0;
-        const timer = setInterval(() => {
-            tries += 1;
-            const ok = injectMeta();
-            if (ok || tries >= 20) {
-                clearInterval(timer);
-            }
-        }, 500);
-    })();
-    </script>
-    """,
-    height=0
+# --- ADDELEGACIÓN DE LA ETIQUETA META PARA VERIFICACIÓN DE ADSENSE ---
+st.markdown(
+    """<meta name="google-adsense-account" content="ca-pub-4561237649685966">""", 
+    unsafe_allow_html=True
 )
 
 # --- INICIALIZACIÓN ---
@@ -164,13 +126,14 @@ if st.session_state.municipio_guardado:
     """
     components.html(f"<script>{js_save}</script>", height=0)
 
+
 # --- SELECTOR DE IDIOMA ---
 def cambiar_idioma():
     st.session_state.lang = st.session_state.lang_selector.lower()
 
-st.radio("Idioma", ["EU", "ES"],
-         index=0 if st.session_state.lang == "eu" else 1,
-         horizontal=True,
+st.radio("Idioma", ["EU", "ES"], 
+         index=0 if st.session_state.lang == "eu" else 1, 
+         horizontal=True, 
          label_visibility="collapsed",
          key="lang_selector",
          on_change=cambiar_idioma)
@@ -183,12 +146,13 @@ st.markdown(f"""
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@500;800&display=swap');
         .block-container {{ padding-top: 1rem !important; padding-bottom: 25vh !important; }}
         header {{visibility: hidden !important;}}
-
+        
+        /* Oculta de forma selectiva solo el iframe de procesamiento, permitiendo AdSense */
         iframe[title="streamlit_js_eval.streamlit_js_eval"] {{ display: none !important; height: 0px !important; }}
         .element-container:has(iframe[title="streamlit_js_eval.streamlit_js_eval"]) {{ display: none !important; }}
-
+        
         [data-testid="stStatusWidget"] {{ display: none !important; opacity: 0 !important; pointer-events: none !important; }}
-
+        
         .element-container:has(div[role="radiogroup"][aria-label="Idioma"]) {{
             position: absolute !important; top: 0px !important; left: 15px !important; z-index: 9999 !important; width: auto !important;
         }}
@@ -197,15 +161,15 @@ st.markdown(f"""
 
         div[data-baseweb="select"] > div {{
             padding: 4px 12px !important; min-height: 54px !important;
-            border-radius: 12px !important; font-size: 1.15rem !important;
+            border-radius: 12px !important; font-size: 1.15rem !important; 
             border: 1px solid #e2e8f0 !important; background-color: white !important;
             display: flex !important; align-items: center !important;
         }}
-
+        
         .titulo-app {{ text-align: center; font-family: 'Poppins', sans-serif; font-size: clamp(32px, 9vw, 46px); font-weight: 800; color: #1e293b; letter-spacing: -1.5px; margin-bottom: 0.5rem; }}
         .titulo-app span {{ color: #ef4444; }}
         .subtitulo-app {{ text-align: center; color: #64748b; font-size: 1.05rem; margin-bottom: 2rem; margin-top: -0.5rem; font-family: 'Poppins', sans-serif; font-weight: 500; }}
-
+        
         div[data-testid="stHorizontalBlock"] div[data-testid="stRadio"] > div {{ flex-direction: row !important; justify-content: space-between !important; gap: 2px !important; }}
         .resumen-filtros {{ text-align: center; font-size: 0.95rem; margin-bottom: 1.5rem; padding: 12px 20px; border-radius: 40px; border: 1px solid #e2e8f0; background-color: #ffffff; color: #334155; box-shadow: 0 2px 10px rgba(0,0,0,0.02); font-family: 'Poppins', sans-serif; font-weight: 500; }}
         div[data-testid="stVerticalBlockBorderWrapper"] > div {{ background-color: #ffffff !important; border: 1px solid #f1f5f9 !important; border-radius: 16px !important; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04) !important; padding: 0.8rem !important; margin-bottom: 0.5rem !important; }}
@@ -229,7 +193,7 @@ def cargar_datos():
         return None, None
 
 datos, fecha_act = cargar_datos()
-if not datos:
+if not datos: 
     st.error(t['error_con'])
     st.stop()
 
@@ -272,16 +236,16 @@ if (estado_permiso == "granted" or st.session_state.solicitar_gps) and not (st.s
         st.markdown("<div class='titulo-app'>gasolina<span>.eus</span></div>", unsafe_allow_html=True)
         st.info(t['localizando'])
         st.stop()
-    elif 'coords' in loc:
+    elif 'coords' in loc: 
         lat_gps, lon_gps = loc['coords']['latitude'], loc['coords']['longitude']
-    else:
+    else: 
         st.session_state.gps_fallido = True
 
 if not lat_gps and not st.session_state.municipio_guardado:
     st.markdown("<div class='titulo-app'>gasolina<span>.eus</span></div>", unsafe_allow_html=True)
     st.markdown(f"<p style='text-align: center; color: #64748b;'>{t['escribe_muni']}</p>", unsafe_allow_html=True)
     muni_sel = st.selectbox(t['label_muni'], options=municipios_unicos, index=None, placeholder=t['placeholder'], label_visibility="collapsed")
-    if muni_sel:
+    if muni_sel: 
         cerrar_teclado_movil()
     st.button(t['btn_confirmar'], type="primary", use_container_width=True, on_click=click_confirmar_muni, args=(muni_sel,))
     st.stop()
@@ -302,11 +266,11 @@ titulo_expander = t['ajustes_tit'] + ("\u200b" * st.session_state.exp_key)
 
 with st.expander(titulo_expander, expanded=False):
     nuevo_muni = st.selectbox(t['cambiar_muni'], options=municipios_unicos, index=municipios_unicos.index(muni_ref) if muni_ref in municipios_unicos else None)
-    if nuevo_muni != muni_ref:
+    if nuevo_muni != muni_ref: 
         cerrar_teclado_movil()
     nuevo_radio = st.radio(t['radio'], [5, 10, 20], index=[5, 10, 20].index(st.session_state.radio_km), horizontal=True)
     nuevo_tipo = st.radio(t['ordenar'], ["Diésel", "G95"], index=0 if st.session_state.tipo_combustible == "Diésel" else 1, horizontal=True)
-
+    
     st.button(t['btn_buscar'], use_container_width=True, type="primary", on_click=click_buscar_filtros, args=(nuevo_muni, nuevo_radio, nuevo_tipo))
 
 col_orden = "Precio_Diesel" if st.session_state.tipo_combustible == "Diésel" else "Precio_G95"
