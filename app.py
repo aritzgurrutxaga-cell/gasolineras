@@ -246,7 +246,7 @@ if (estado_permiso == "granted" or st.session_state.solicitar_gps) and not (st.s
 
     if loc is None:
         segundos_pasados = int(time.time() - st.session_state.gps_start_time)
-        segundos_restantes = max(10 - segundos_pasados, 0)
+        segundos_restantes = max(5 - segundos_pasados, 0)
 
         if segundos_restantes <= 0:
             st.session_state.gps_fallido = True
