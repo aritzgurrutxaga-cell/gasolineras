@@ -10,12 +10,38 @@ from requests.adapters import HTTPAdapter
 from urllib3.util.ssl_ import create_urllib3_context
 import streamlit.components.v1 as components
 
-# --- ENLACE DIRECTO PARA EL ROBOT DE ADSENSE ---
-if "ads.txt" in st.query_params or (len(st.context.headers.get("user-agent", "")) > 0 and "ads.txt" in st.context.headers.get("referer", "")):
+st.set_page_config(page_title="gasolina.eus", page_icon="⛽", layout="centered")
+
+def inyectar_meta_adsense():
+    components.html(
+        """
+        <script>
+        (function() {
+            const metaName = "google-adsense-account";
+            const metaContent = "ca-pub-4561237649685966";
+            const head = window.parent.document.head;
+
+            if (!head.querySelector('meta[name="' + metaName + '"]')) {
+                const meta = window.parent.document.createElement("meta");
+                meta.setAttribute("name", metaName);
+                meta.setAttribute("content", metaContent);
+                head.appendChild(meta);
+            }
+        })();
+        </script>
+        """,
+        height=0,
+    )
+
+inyectar_meta_adsense()
+
+user_agent = st.context.headers.get("user-agent", "") if hasattr(st, "context") else ""
+referer = st.context.headers.get("referer", "") if hasattr(st, "context") else ""
+
+if "ads.txt" in st.query_params or ("ads.txt" in referer):
     st.text("google.com, pub-4561237649685966, DIRECT, f08c47fec0942fa0")
     st.stop()
 
-# --- DICCIONARIO DE TRADUCCIONES ---
 TRAD = {
     "eu": {
         "subtitulo": "Konparatu prezioak eta aurreztu depositua betetzean.",
@@ -59,7 +85,6 @@ TRAD = {
     }
 }
 
-# --- FUNCIONES DE APOYO ---
 def calcular_distancia(lat1, lon1, lat2, lon2):
     R = 6371.0
     dlat, dlon = np.radians(lat2 - lat1), np.radians(lon2 - lon1)
@@ -72,7 +97,6 @@ def cerrar_teclado_movil():
         height=0,
     )
 
-# --- ADAPTADOR SSL ---
 class SSLAdapter(HTTPAdapter):
     def init_poolmanager(self, *args, **kwargs):
         context = create_urllib3_context()
@@ -81,16 +105,6 @@ class SSLAdapter(HTTPAdapter):
         kwargs['ssl_context'] = context
         return super(SSLAdapter, self).init_poolmanager(*args, **kwargs)
 
-# 1. Configuración de la página
-st.set_page_config(page_title="gasolina.eus", page_icon="⛽", layout="centered")
-
-# --- ADDELEGACIÓN DE LA ETIQUETA META PARA VERIFICACIÓN DE ADSENSE ---
-st.markdown(
-    """<meta name="google-adsense-account" content="ca-pub-4561237649685966">""",
-    unsafe_allow_html=True
-)
-
-# --- INICIALIZACIÓN ---
 if 'lang' not in st.session_state: st.session_state.lang = "eu"
 if 'solicitar_gps' not in st.session_state: st.session_state.solicitar_gps = False
 if 'municipio_guardado' not in st.session_state: st.session_state.municipio_guardado = None
@@ -102,7 +116,6 @@ if 'exp_key' not in st.session_state: st.session_state.exp_key = 0
 if 'browser_data_loaded' not in st.session_state: st.session_state.browser_data_loaded = False
 if 'gps_start_time' not in st.session_state: st.session_state.gps_start_time = None
 
-# --- LECTURA CENTRALIZADA DE MEMORIA Y PERMISOS ---
 js_init_data = """
 (function() {
     return {
@@ -123,9 +136,11 @@ if not st.session_state.browser_data_loaded:
                 st.session_state.tipo_combustible = browser_cache['comb']
         st.session_state.browser_data_loaded = True
 
-estado_permiso = streamlit_js_eval(js_expressions="navigator.permissions ? navigator.permissions.query({name: 'geolocation'}).then(res => res.state) : 'prompt'", key="permiso_gps_unic")
+estado_permiso = streamlit_js_eval(
+    js_expressions="navigator.permissions ? navigator.permissions.query({name: 'geolocation'}).then(res => res.state) : 'prompt'",
+    key="permiso_gps_unic"
+)
 
-# --- GUARDADO EN MEMORIA LIMPIO ---
 if st.session_state.municipio_guardado:
     js_save = f"""
     window.parent.localStorage.setItem('muni_gasolineras', '{st.session_state.municipio_guardado}');
@@ -133,20 +148,21 @@ if st.session_state.municipio_guardado:
     """
     components.html(f"<script>{js_save}</script>", height=0)
 
-# --- SELECTOR DE IDIOMA ---
 def cambiar_idioma():
     st.session_state.lang = st.session_state.lang_selector.lower()
 
-st.radio("Idioma", ["EU", "ES"],
-         index=0 if st.session_state.lang == "eu" else 1,
-         horizontal=True,
-         label_visibility="collapsed",
-         key="lang_selector",
-         on_change=cambiar_idioma)
+st.radio(
+    "Idioma",
+    ["EU", "ES"],
+    index=0 if st.session_state.lang == "eu" else 1,
+    horizontal=True,
+    label_visibility="collapsed",
+    key="lang_selector",
+    on_change=cambiar_idioma
+)
 
 t = TRAD[st.session_state.lang]
 
-# --- AJUSTES DE DISEÑO CSS ---
 st.markdown(f"""
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@500;800&display=swap');
@@ -209,7 +225,6 @@ df["Precio_Diesel"] = pd.to_numeric(df["Precio Gasoleo A"].str.replace(",", ".")
 df["Precio_G95"] = pd.to_numeric(df["Precio Gasolina 95 E5"].str.replace(",", "."), errors='coerce')
 municipios_unicos = sorted(list(set([str(g["Municipio"]) for g in datos])))
 
-# --- CALLBACKS PARA ELIMINAR EL DOBLE CLIC ---
 def click_solicitar_gps():
     st.session_state.solicitar_gps = True
     st.session_state.gps_start_time = time.time()
@@ -228,7 +243,6 @@ def click_buscar_filtros(muni, radio, tipo):
     st.session_state.exp_key = 1 - st.session_state.exp_key
     st.session_state.gps_start_time = None
 
-# --- NAVEGACIÓN (PANTALLA DE BIENVENIDA) ---
 if not (estado_permiso == "granted" or st.session_state.municipio_guardado) and not st.session_state.solicitar_gps:
     st.markdown("<div class='titulo-app'>gasolina<span>.eus</span></div>", unsafe_allow_html=True)
     st.markdown(f"<p class='subtitulo-app'>{t['subtitulo']}</p>", unsafe_allow_html=True)
@@ -281,7 +295,6 @@ if not lat_gps and not st.session_state.municipio_guardado:
     st.button(t['btn_confirmar'], type="primary", use_container_width=True, on_click=click_confirmar_muni, args=(muni_sel,))
     st.stop()
 
-# --- RESULTADOS PRINCIPALES ---
 st.markdown("<div class='titulo-app'>gasolina<span>.eus</span></div>", unsafe_allow_html=True)
 
 if lat_gps and not st.session_state.override_manual:
@@ -296,28 +309,59 @@ else:
 titulo_expander = t['ajustes_tit'] + ("\u200b" * st.session_state.exp_key)
 
 with st.expander(titulo_expander, expanded=False):
-    nuevo_muni = st.selectbox(t['cambiar_muni'], options=municipios_unicos, index=municipios_unicos.index(muni_ref) if muni_ref in municipios_unicos else None)
+    nuevo_muni = st.selectbox(
+        t['cambiar_muni'],
+        options=municipios_unicos,
+        index=municipios_unicos.index(muni_ref) if muni_ref in municipios_unicos else None
+    )
     if nuevo_muni != muni_ref:
         cerrar_teclado_movil()
-    nuevo_radio = st.radio(t['radio'], [5, 10, 20], index=[5, 10, 20].index(st.session_state.radio_km), horizontal=True)
-    nuevo_tipo = st.radio(t['ordenar'], ["Diésel", "G95"], index=0 if st.session_state.tipo_combustible == "Diésel" else 1, horizontal=True)
 
-    st.button(t['btn_buscar'], use_container_width=True, type="primary", on_click=click_buscar_filtros, args=(nuevo_muni, nuevo_radio, nuevo_tipo))
+    nuevo_radio = st.radio(
+        t['radio'],
+        [5, 10, 20],
+        index=[5, 10, 20].index(st.session_state.radio_km),
+        horizontal=True
+    )
+
+    nuevo_tipo = st.radio(
+        t['ordenar'],
+        ["Diésel", "G95"],
+        index=0 if st.session_state.tipo_combustible == "Diésel" else 1,
+        horizontal=True
+    )
+
+    st.button(
+        t['btn_buscar'],
+        use_container_width=True,
+        type="primary",
+        on_click=click_buscar_filtros,
+        args=(nuevo_muni, nuevo_radio, nuevo_tipo)
+    )
 
 col_orden = "Precio_Diesel" if st.session_state.tipo_combustible == "Diésel" else "Precio_G95"
 df["Distancia"] = calcular_distancia(lat_ref, lon_ref, df["lat_num"], df["lon_num"])
 res = df[df["Distancia"] <= st.session_state.radio_km].sort_values(col_orden, na_position='last')
 
-st.markdown(f"<div class='resumen-filtros'>📍 <b>{muni_ref}</b> | 🚗 <b>{st.session_state.radio_km} km</b> | ⛽ <b>{st.session_state.tipo_combustible}</b></div>", unsafe_allow_html=True)
+st.markdown(
+    f"<div class='resumen-filtros'>📍 <b>{muni_ref}</b> | 🚗 <b>{st.session_state.radio_km} km</b> | ⛽ <b>{st.session_state.tipo_combustible}</b></div>",
+    unsafe_allow_html=True
+)
 
 for _, g in res.head(20).iterrows():
     with st.container(border=True):
         c1, c2 = st.columns([2.5, 1.5], vertical_alignment="center")
+
         with c1:
             st.write(f"#### {g['Rótulo']} - {g['Municipio']}")
             p_diesel = f"{g['Precio Gasoleo A']}€" if pd.notnull(g['Precio_Diesel']) else "N/A"
             p_g95 = f"{g['Precio Gasolina 95 E5']}€" if pd.notnull(g['Precio_G95']) else "N/A"
             st.write(f"⛽ **Diesel:** {p_diesel} | **G95:** {p_g95}")
             st.caption(t['distancia_fmt'].format(g['Distancia']))
+
         with c2:
-            st.link_button(t['navegar'], f"https://www.google.com/maps/search/?api=1&query={g['lat_num']},{g['lon_num']}", use_container_width=True)
+            st.link_button(
+                t['navegar'],
+                f"https://www.google.com/maps/search/?api=1&query={g['lat_num']},{g['lon_num']}",
+                use_container_width=True
+            )
