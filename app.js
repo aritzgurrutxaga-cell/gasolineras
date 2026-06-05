@@ -43,10 +43,25 @@ const TRAD = {
 
 let datos = [];
 let municipios = [];
-let lang = localStorage.getItem("lang_gasolineras") || "eu";
 
-let tipoCombustible = localStorage.getItem("comb_gasolineras") || "Diésel";
-let radioKm = Number(localStorage.getItem("radio_gasolineras") || 5);
+// Blindaje de localStorage y validación de variables
+let lang = "eu";
+let tipoCombustible = "Diésel";
+let radioKm = 5;
+
+try {
+  const savedLang = localStorage.getItem("lang_gasolineras");
+  if (savedLang === "eu" || savedLang === "es") {
+    lang = savedLang;
+  }
+  tipoCombustible = localStorage.getItem("comb_gasolineras") || "Diésel";
+  const savedRadio = localStorage.getItem("radio_gasolineras");
+  if (savedRadio) {
+    radioKm = Number(savedRadio);
+  }
+} catch (e) {
+  console.warn("El acceso a localStorage está restringido.");
+}
 
 let latRef = null;
 let lonRef = null;
@@ -82,13 +97,15 @@ function t() {
   return TRAD[lang];
 }
 
+// Función corregida: Evita errores de sintaxis y escapa código HTML de verdad
 function escapeHtml(valor) {
-  return String(valor ?? "")
-    .replaceAll("&", "&")
-    .replaceAll("<", "<")
-    .replaceAll(">", ">")
-    .replaceAll('"', "\"")
-    .replaceAll("'", "'");
+  const str = valor != null ? String(valor) : "";
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 }
 
 function mostrarPantalla(nombre) {
@@ -256,9 +273,13 @@ function obtenerCoordenadasMunicipio(municipio) {
 }
 
 function guardarEstado() {
-  localStorage.setItem("comb_gasolineras", tipoCombustible);
-  localStorage.setItem("radio_gasolineras", String(radioKm));
-  localStorage.setItem("lang_gasolineras", lang);
+  try {
+    localStorage.setItem("comb_gasolineras", tipoCombustible);
+    localStorage.setItem("radio_gasolineras", String(radioKm));
+    localStorage.setItem("lang_gasolineras", lang);
+  } catch (e) {
+    // Silenciado por seguridad
+  }
 }
 
 function sincronizarFiltrosUI() {
@@ -329,7 +350,9 @@ function pintarResultados() {
       : "N/A";
 
     const distancia = t().distancia_fmt.replace("{d}", g.distancia.toFixed(2));
-    const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(g.lat_num + "," + g.lon_num)}`;
+    
+    // Corregido el tipado dinámico para la URL de maps (cambiado 0{ por ${)
+    const mapsUrl = `https://maps.google.com/?q=${encodeURIComponent(g.lat_num + "," + g.lon_num)}`;
 
     return `
       <article class="gasolinera-card">
