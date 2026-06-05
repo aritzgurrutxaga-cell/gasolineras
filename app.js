@@ -364,7 +364,9 @@ function pintarResultados() {
       : "N/A";
 
     const distancia = t().distancia_fmt.replace("{d}", g.distancia.toFixed(2));
-    const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(g.lat_num + "," + g.lon_num)}`;
+    
+    // CORRECCIÓN DEFINITIVA: Se añade la etiqueta de apertura <a> estructurada como un botón real con su clase asignada
+    const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(g.lat_num + ',' + g.lon_num)}`;
 
     return `
       <article class="gasolinera-card">
@@ -374,7 +376,7 @@ function pintarResultados() {
           <p class="distancia">${escapeHtml(distancia)}</p>
         </div>
         <div>
-          ${mapsUrl}${escapeHtml(t().navegar)}</a>
+          <a href="${mapsUrl}" target="_blank" class="btn-navegar">${escapeHtml(t().navegar)}</a>
         </div>
       </article>
     `;
