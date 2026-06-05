@@ -14,6 +14,7 @@ const TRAD = {
     radio: "Bilaketa-erradioa:",
     ordenar: "Prezioaren arabera ordenatu:",
     btn_buscar: "🔍 Bilatu",
+    resultados_tit: "Emaitzak",
     error_con: "Konexio errorea.",
     navegar: "Nabigatu",
     distancia_fmt: "📍 {d} km-ra",
@@ -37,6 +38,7 @@ const TRAD = {
     radio: "Radio de búsqueda:",
     ordenar: "Ordenar por precio de:",
     btn_buscar: "🔍 Buscar",
+    resultados_tit: "Resultados",
     error_con: "Error de conexión.",
     navegar: "Navegar",
     distancia_fmt: "📍 A {d} km",
@@ -90,6 +92,7 @@ const labelRadio = document.getElementById("label-radio");
 const labelCombustible = document.getElementById("label-combustible");
 const btnBuscarAjustes = document.getElementById("btn-buscar-ajustes");
 const resumenFiltros = document.getElementById("resumen-filtros");
+const tituloResultados = document.getElementById("titulo-resultados");
 const resultados = document.getElementById("resultados");
 
 function t() {
@@ -135,6 +138,7 @@ function aplicarIdioma() {
   labelRadio.textContent = t().radio;
   labelCombustible.textContent = t().ordenar;
   btnBuscarAjustes.textContent = t().btn_buscar;
+  tituloResultados.textContent = t().resultados_tit;
 
   if (!pantallaResultados.classList.contains("hidden") && latRef !== null && lonRef !== null) {
     pintarResultados();
