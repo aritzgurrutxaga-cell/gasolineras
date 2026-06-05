@@ -4,10 +4,12 @@ import pandas as pd
 import numpy as np
 import datetime
 import json
+import time
 from streamlit_js_eval import get_geolocation, streamlit_js_eval
 from requests.adapters import HTTPAdapter
 from urllib3.util.ssl_ import create_urllib3_context
 import streamlit.components.v1 as components
+
 # --- ENLACE DIRECTO PARA EL ROBOT DE ADSENSE ---
 if "ads.txt" in st.query_params or (len(st.context.headers.get("user-agent", "")) > 0 and "ads.txt" in st.context.headers.get("referer", "")):
     st.text("google.com, pub-4561237649685966, DIRECT, f08c47fec0942fa0")
@@ -20,6 +22,8 @@ TRAD = {
         "btn_inicio": "📍 Erakutsi gasolindegiak",
         "btn_inicio_sub": "Gomendagarria da kokapena onartzea bilatzeko",
         "localizando": "⏳ Kokapena bilatzen...",
+        "localizando_countdown": "⏳ Kokapena bilatzen... {} segundo",
+        "localizando_countdown_plural": "⏳ Kokapena bilatzen... {} segundo",
         "escribe_muni": "📍 Idatzi zure udalerria:",
         "placeholder": "Bilatu...",
         "btn_confirmar": "🔍 Bilatu",
@@ -38,6 +42,8 @@ TRAD = {
         "btn_inicio": "📍 Mostrar gasolineras",
         "btn_inicio_sub": "Es recomendable la ubicación para buscar",
         "localizando": "⏳ Localizando...",
+        "localizando_countdown": "⏳ Localizando... {} segundo",
+        "localizando_countdown_plural": "⏳ Localizando... {} segundos",
         "escribe_muni": "📍 Escribe tu municipio:",
         "placeholder": "Buscar...",
         "btn_confirmar": "✅ Confirmar selección",
@@ -80,7 +86,7 @@ st.set_page_config(page_title="gasolina.eus", page_icon="⛽", layout="centered"
 
 # --- ADDELEGACIÓN DE LA ETIQUETA META PARA VERIFICACIÓN DE ADSENSE ---
 st.markdown(
-    """<meta name="google-adsense-account" content="ca-pub-4561237649685966">""", 
+    """<meta name="google-adsense-account" content="ca-pub-4561237649685966">""",
     unsafe_allow_html=True
 )
 
@@ -94,6 +100,7 @@ if 'radio_km' not in st.session_state: st.session_state.radio_km = 5
 if 'tipo_combustible' not in st.session_state: st.session_state.tipo_combustible = "Diésel"
 if 'exp_key' not in st.session_state: st.session_state.exp_key = 0
 if 'browser_data_loaded' not in st.session_state: st.session_state.browser_data_loaded = False
+if 'gps_start_time' not in st.session_state: st.session_state.gps_start_time = None
 
 # --- LECTURA CENTRALIZADA DE MEMORIA Y PERMISOS ---
 js_init_data = """
@@ -126,14 +133,13 @@ if st.session_state.municipio_guardado:
     """
     components.html(f"<script>{js_save}</script>", height=0)
 
-
 # --- SELECTOR DE IDIOMA ---
 def cambiar_idioma():
     st.session_state.lang = st.session_state.lang_selector.lower()
 
-st.radio("Idioma", ["EU", "ES"], 
-         index=0 if st.session_state.lang == "eu" else 1, 
-         horizontal=True, 
+st.radio("Idioma", ["EU", "ES"],
+         index=0 if st.session_state.lang == "eu" else 1,
+         horizontal=True,
          label_visibility="collapsed",
          key="lang_selector",
          on_change=cambiar_idioma)
@@ -147,7 +153,6 @@ st.markdown(f"""
         .block-container {{ padding-top: 1rem !important; padding-bottom: 25vh !important; }}
         header {{visibility: hidden !important;}}
         
-        /* Oculta de forma selectiva solo el iframe de procesamiento, permitiendo AdSense */
         iframe[title="streamlit_js_eval.streamlit_js_eval"] {{ display: none !important; height: 0px !important; }}
         .element-container:has(iframe[title="streamlit_js_eval.streamlit_js_eval"]) {{ display: none !important; }}
         
@@ -193,7 +198,7 @@ def cargar_datos():
         return None, None
 
 datos, fecha_act = cargar_datos()
-if not datos: 
+if not datos:
     st.error(t['error_con'])
     st.stop()
 
@@ -207,11 +212,13 @@ municipios_unicos = sorted(list(set([str(g["Municipio"]) for g in datos])))
 # --- CALLBACKS PARA ELIMINAR EL DOBLE CLIC ---
 def click_solicitar_gps():
     st.session_state.solicitar_gps = True
+    st.session_state.gps_start_time = time.time()
 
 def click_confirmar_muni(muni):
     if muni:
         st.session_state.municipio_guardado = muni
         st.session_state.override_manual = True
+        st.session_state.gps_start_time = None
 
 def click_buscar_filtros(muni, radio, tipo):
     st.session_state.municipio_guardado = muni
@@ -219,6 +226,7 @@ def click_buscar_filtros(muni, radio, tipo):
     st.session_state.tipo_combustible = tipo
     st.session_state.override_manual = True
     st.session_state.exp_key = 1 - st.session_state.exp_key
+    st.session_state.gps_start_time = None
 
 # --- NAVEGACIÓN (PANTALLA DE BIENVENIDA) ---
 if not (estado_permiso == "granted" or st.session_state.municipio_guardado) and not st.session_state.solicitar_gps:
@@ -231,21 +239,44 @@ loc = None
 lat_gps, lon_gps = None, None
 
 if (estado_permiso == "granted" or st.session_state.solicitar_gps) and not (st.session_state.gps_fallido or st.session_state.override_manual):
+    if st.session_state.gps_start_time is None:
+        st.session_state.gps_start_time = time.time()
+
     loc = get_geolocation()
+
     if loc is None:
+        segundos_pasados = int(time.time() - st.session_state.gps_start_time)
+        segundos_restantes = max(10 - segundos_pasados, 0)
+
+        if segundos_restantes <= 0:
+            st.session_state.gps_fallido = True
+            st.session_state.gps_start_time = None
+            st.rerun()
+
         st.markdown("<div class='titulo-app'>gasolina<span>.eus</span></div>", unsafe_allow_html=True)
-        st.info(t['localizando'])
-        st.stop()
-    elif 'coords' in loc: 
+
+        texto_countdown = (
+            t["localizando_countdown"].format(segundos_restantes)
+            if segundos_restantes == 1
+            else t["localizando_countdown_plural"].format(segundos_restantes)
+        )
+
+        st.info(texto_countdown)
+        time.sleep(1)
+        st.rerun()
+
+    elif 'coords' in loc:
         lat_gps, lon_gps = loc['coords']['latitude'], loc['coords']['longitude']
-    else: 
+        st.session_state.gps_start_time = None
+    else:
         st.session_state.gps_fallido = True
+        st.session_state.gps_start_time = None
 
 if not lat_gps and not st.session_state.municipio_guardado:
     st.markdown("<div class='titulo-app'>gasolina<span>.eus</span></div>", unsafe_allow_html=True)
     st.markdown(f"<p style='text-align: center; color: #64748b;'>{t['escribe_muni']}</p>", unsafe_allow_html=True)
     muni_sel = st.selectbox(t['label_muni'], options=municipios_unicos, index=None, placeholder=t['placeholder'], label_visibility="collapsed")
-    if muni_sel: 
+    if muni_sel:
         cerrar_teclado_movil()
     st.button(t['btn_confirmar'], type="primary", use_container_width=True, on_click=click_confirmar_muni, args=(muni_sel,))
     st.stop()
@@ -266,11 +297,11 @@ titulo_expander = t['ajustes_tit'] + ("\u200b" * st.session_state.exp_key)
 
 with st.expander(titulo_expander, expanded=False):
     nuevo_muni = st.selectbox(t['cambiar_muni'], options=municipios_unicos, index=municipios_unicos.index(muni_ref) if muni_ref in municipios_unicos else None)
-    if nuevo_muni != muni_ref: 
+    if nuevo_muni != muni_ref:
         cerrar_teclado_movil()
     nuevo_radio = st.radio(t['radio'], [5, 10, 20], index=[5, 10, 20].index(st.session_state.radio_km), horizontal=True)
     nuevo_tipo = st.radio(t['ordenar'], ["Diésel", "G95"], index=0 if st.session_state.tipo_combustible == "Diésel" else 1, horizontal=True)
-    
+
     st.button(t['btn_buscar'], use_container_width=True, type="primary", on_click=click_buscar_filtros, args=(nuevo_muni, nuevo_radio, nuevo_tipo))
 
 col_orden = "Precio_Diesel" if st.session_state.tipo_combustible == "Diésel" else "Precio_G95"
