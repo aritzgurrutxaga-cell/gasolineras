@@ -141,8 +141,14 @@ function aplicarIdioma() {
   labelRadio.textContent = t().radio;
   labelCombustible.textContent = t().ordenar;
   btnBuscarAjustes.textContent = t().btn_buscar;
-  tituloBuscar.textContent = t().buscar_tit;
-  tituloResultados.textContent = t().resultados_tit;
+
+  if (tituloBuscar) {
+    tituloBuscar.textContent = t().buscar_tit;
+  }
+
+  if (tituloResultados) {
+    tituloResultados.textContent = t().resultados_tit;
+  }
 
   if (!pantallaResultados.classList.contains("hidden") && latRef !== null && lonRef !== null) {
     pintarResultados();
@@ -501,4 +507,184 @@ async function gestionarClickUbicacion() {
     return;
   }
 
-  if (navigator.permissions && navigator.permissions
+  if (navigator.permissions && navigator.permissions.query) {
+    try {
+      const permiso = await navigator.permissions.query({ name: "geolocation" });
+
+      if (permiso.state === "granted" || permiso.state === "prompt") {
+        iniciarGeolocalizacion();
+        return;
+      }
+
+      if (permiso.state === "denied") {
+        pararCuentaAtras();
+        mostrarPantalla("manual");
+        textoMunicipio.textContent = t().permiso_bloqueado;
+        inputMunicipio.focus();
+        return;
+      }
+    } catch (e) {
+      iniciarGeolocalizacion();
+      return;
+    }
+  }
+
+  iniciarGeolocalizacion();
+}
+
+async function iniciarSegunPermisoUbicacion() {
+  if (!navigator.geolocation) {
+    mostrarPantalla("inicio");
+    return;
+  }
+
+  if (!navigator.permissions || !navigator.permissions.query) {
+    mostrarPantalla("inicio");
+    return;
+  }
+
+  try {
+    const permiso = await navigator.permissions.query({ name: "geolocation" });
+
+    if (permiso.state === "granted") {
+      iniciarGeolocalizacion();
+    } else {
+      mostrarPantalla("inicio");
+    }
+  } catch (e) {
+    mostrarPantalla("inicio");
+  }
+}
+
+async function cargarDatos() {
+  try {
+    const res = await fetch("./precios_gasolineras.json?v=" + Date.now(), { cache: "no-store" });
+
+    if (!res.ok) {
+      throw new Error("No se encuentra precios_gasolineras.json");
+    }
+
+    const payload = await res.json();
+
+    let lista = [];
+
+    if (Array.isArray(payload)) {
+      lista = payload;
+    } else if (payload && Array.isArray(payload.datos)) {
+      lista = payload.datos;
+    } else if (payload && Array.isArray(payload.ListaEESSPrecio)) {
+      lista = payload.ListaEESSPrecio;
+    } else {
+      throw new Error("Formato JSON no reconocido");
+    }
+
+    datos = prepararDatos(lista);
+    prepararMunicipios();
+
+    if (!datos.length || !municipios.length) {
+      throw new Error("JSON sin datos válidos");
+    }
+
+    iniciarSegunPermisoUbicacion();
+  } catch (e) {
+    pantallaInicio.innerHTML = `
+      <h1 class="titulo">gasolina<span>.eus</span></h1>
+      <div class="mensaje">${escapeHtml(t().error_con)}</div>
+      <div class="mensaje">${escapeHtml(e.message)}</div>
+    `;
+    mostrarPantalla("inicio");
+  }
+}
+
+btnEu.addEventListener("click", () => {
+  lang = "eu";
+  aplicarIdioma();
+  guardarEstado();
+});
+
+btnEs.addEventListener("click", () => {
+  lang = "es";
+  aplicarIdioma();
+  guardarEstado();
+});
+
+btnUbicacion.addEventListener("click", gestionarClickUbicacion);
+
+inputMunicipio.addEventListener("input", () => {
+  textoMunicipio.textContent = t().escribe_muni;
+  pintarSugerencias(inputMunicipio, sugerenciasMunicipio);
+});
+
+inputMunicipioAjustes.addEventListener("input", () => {
+  municipioPendiente = inputMunicipioAjustes.value;
+  pintarSugerencias(inputMunicipioAjustes, sugerenciasMunicipioAjustes);
+});
+
+sugerenciasMunicipio.addEventListener("click", e => {
+  const item = e.target.closest(".sugerencia-item");
+  if (!item) return;
+
+  inputMunicipio.value = item.dataset.value;
+  buscarPorMunicipio(item.dataset.value);
+});
+
+sugerenciasMunicipioAjustes.addEventListener("click", e => {
+  const item = e.target.closest(".sugerencia-item");
+  if (!item) return;
+
+  inputMunicipioAjustes.value = item.dataset.value;
+  municipioPendiente = item.dataset.value;
+  ocultarSugerencias();
+});
+
+btnConfirmar.addEventListener("click", () => {
+  buscarPorMunicipio(inputMunicipio.value);
+});
+
+btnBuscarAjustes.addEventListener("click", () => {
+  aplicarFiltrosPendientes();
+});
+
+inputMunicipio.addEventListener("keydown", e => {
+  if (e.key === "Enter") {
+    e.preventDefault();
+    buscarPorMunicipio(inputMunicipio.value);
+  }
+});
+
+inputMunicipioAjustes.addEventListener("keydown", e => {
+  if (e.key === "Enter") {
+    e.preventDefault();
+    aplicarFiltrosPendientes();
+  }
+});
+
+document.querySelectorAll(".radio-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    radioKmPendiente = Number(btn.dataset.radio);
+    actualizarBotonesFiltrosAplicados();
+  });
+});
+
+document.querySelectorAll(".fuel-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    tipoCombustiblePendiente = btn.dataset.fuel;
+    actualizarBotonesFiltrosAplicados();
+  });
+});
+
+if (detallesAjustes) {
+  detallesAjustes.addEventListener("toggle", () => {
+    if (detallesAjustes.open) {
+      prepararPendientesDesdeAplicados();
+    }
+  });
+}
+
+document.addEventListener("click", e => {
+  if (!e.target.closest(".autocomplete")) {
+    ocultarSugerencias();
+  }
+});
+
+aplicarIdioma();
