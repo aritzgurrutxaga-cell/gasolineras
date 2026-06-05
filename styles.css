@@ -1,7 +1,7 @@
 /* ==========================================================================
    1. TIPOGRAFÍA Y BASE (Lettering moderno y minimalista)
    ========================================================================== */
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
 
 * {
   box-sizing: border-box;
@@ -43,7 +43,7 @@ body {
   background: transparent;
   color: #1e293b;
   font-size: 0.8rem;
-  font-weight: 600; /* Fino y minimalista */
+  font-weight: 600;
   cursor: pointer;
   padding: 8px 4px;
 }
@@ -57,12 +57,12 @@ body {
 }
 
 /* ==========================================================================
-   2. TEXTOS Y CABECERAS
+   2. TEXTOS Y CABECERAS (Bilatu y Emaitzak ajustados)
    ========================================================================== */
 .titulo {
   text-align: center;
   font-size: clamp(30px, 8.5vw, 42px);
-  font-weight: 600; /* Reducido para mayor elegancia */
+  font-weight: 600;
   color: #1e293b;
   letter-spacing: -0.8px;
   margin: 2.5rem 0 0.5rem 0;
@@ -94,13 +94,13 @@ body {
   padding: 1rem;
 }
 
-/* Cabeceras de secciones internas */
+/* Cabeceras de secciones internas - Puestas un poco más en negrita */
 .cabecera-buscar,
 .cabecera-resultados {
-  font-weight: 600;
+  font-weight: 700; /* Incrementado para resaltar de forma limpia */
   color: #1e293b;
-  font-size: 1.1rem;
-  margin: 1.5rem 0 0.8rem 0;
+  font-size: 1.15rem;
+  margin: 1.8rem 0 0.8rem 0;
 }
 
 /* ==========================================================================
@@ -274,9 +274,8 @@ body {
 }
 
 /* ==========================================================================
-   5. SISTEMA AUTOMÁTICO PARA LAS TARJETAS DE RESULTADOS (INYECTADAS POR JS)
+   5. SISTEMA AUTOMÁTICO PARA LAS TARJETAS DE RESULTADOS
    ========================================================================== */
-/* Forzamos que el contenedor de tarjetas maneje un diseño limpio */
 #resultados {
   display: flex;
   flex-direction: column;
@@ -284,7 +283,6 @@ body {
   width: 100%;
 }
 
-/* Captura la tarjeta inyectada dinámicamente */
 .gasolinera-card {
   background: #ffffff;
   border: 1px solid #d8e0ea;
@@ -292,19 +290,18 @@ body {
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
   padding: 1.1rem;
   margin: 0;
-  display: flex !important; /* Reemplaza por completo el viejo grid que rompía el layout */
+  display: flex !important;
   justify-content: space-between;
   align-items: center;
   gap: 1.2rem;
   width: 100%;
 }
 
-/* Contenedor interno para los textos de la gasolinera */
 .gasolinera-card div, 
 .gasolinera-card section,
 #resultados .gasolinera-card > *:first-child {
   flex: 1;
-  min-width: 0; /* Clave: impide desbordamientos por textos largos */
+  min-width: 0;
 }
 
 .gasolinera-card h3 {
@@ -325,8 +322,7 @@ body {
   font-size: 0.85rem;
 }
 
-/* SOLUCIÓN AL BOTÓN DE NAVEGACIÓN:
-   Buscamos cualquier enlace (a) o botón dentro de la tarjeta para forzar el diseño de botón real */
+/* SISTEMA ANTI-ERROR BOTÓN NAVIGATU */
 .btn-navegar,
 #resultados .gasolinera-card a,
 #resultados .gasolinera-card button:not(.fuel-btn):not(.radio-btn) {
@@ -343,13 +339,12 @@ body {
   text-decoration: none !important;
   font-weight: 600 !important;
   font-size: 0.88rem !important;
-  white-space: nowrap !important; /* Impide que el texto se parta en dos líneas */
-  flex-shrink: 0 !important; /* Impide que la tarjeta estruje el botón y lo haga desaparecer */
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
   transition: all 0.2s ease !important;
   cursor: pointer;
 }
 
-/* Efecto Hover elegante para el botón de navegación */
 .btn-navegar:hover,
 #resultados .gasolinera-card a:hover,
 #resultados .gasolinera-card button:not(.fuel-btn):not(.radio-btn):hover {
@@ -367,14 +362,12 @@ body {
     padding-right: 0.8rem;
   }
 
-  /* En móviles transformamos la tarjeta en vertical para mejor visualización */
   .gasolinera-card {
     flex-direction: column !important;
     align-items: stretch !important;
     gap: 1rem;
   }
 
-  /* El botón de navegación pasa a ocupar todo el ancho abajo del texto */
   .btn-navegar,
   #resultados .gasolinera-card a,
   #resultados .gasolinera-card button:not(.fuel-btn):not(.radio-btn) {
