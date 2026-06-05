@@ -1,5 +1,5 @@
 /* ==========================================================================
-   1. TIPOGRAFÍA (Lettering un poco más fino y minimalista)
+   1. TIPOGRAFÍA Y BASE (Lettering moderno y minimalista)
    ========================================================================== */
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
 
@@ -16,9 +16,6 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* ==========================================================================
-   2. ESTRUCTURA GENERAL Y COMPONENTES
-   ========================================================================== */
 .app {
   width: 100%;
   max-width: 760px;
@@ -31,6 +28,7 @@ body {
   display: none !important;
 }
 
+/* Selector de Idioma */
 .language-selector {
   position: absolute;
   top: 0;
@@ -45,7 +43,7 @@ body {
   background: transparent;
   color: #1e293b;
   font-size: 0.8rem;
-  font-weight: 600; /* Reducido de 800 a 600 */
+  font-weight: 600; /* Fino y minimalista */
   cursor: pointer;
   padding: 8px 4px;
 }
@@ -59,14 +57,14 @@ body {
 }
 
 /* ==========================================================================
-   3. TEXTOS Y CABECERAS (Estilo más limpio)
+   2. TEXTOS Y CABECERAS
    ========================================================================== */
 .titulo {
   text-align: center;
-  font-size: clamp(30px, 8.5vw, 42px); /* Ligeramente más estilizado */
-  font-weight: 600; /* Reducido de 800 a 600 */
+  font-size: clamp(30px, 8.5vw, 42px);
+  font-weight: 600; /* Reducido para mayor elegancia */
   color: #1e293b;
-  letter-spacing: -0.8px; /* Ajuste sutil para peso 600 */
+  letter-spacing: -0.8px;
   margin: 2.5rem 0 0.5rem 0;
 }
 
@@ -80,7 +78,7 @@ body {
   font-size: 1.05rem;
   margin-bottom: 2rem;
   margin-top: -0.5rem;
-  font-weight: 400; /* Reducido de 500 a 400 */
+  font-weight: 400;
 }
 
 .texto-centro {
@@ -90,8 +88,23 @@ body {
   margin-bottom: 1rem;
 }
 
+.mensaje {
+  text-align: center;
+  color: #64748b;
+  padding: 1rem;
+}
+
+/* Cabeceras de secciones internas */
+.cabecera-buscar,
+.cabecera-resultados {
+  font-weight: 600;
+  color: #1e293b;
+  font-size: 1.1rem;
+  margin: 1.5rem 0 0.8rem 0;
+}
+
 /* ==========================================================================
-   4. BOTONES Y SELECCIONES
+   3. BOTONES PRINCIPALES Y FORMULARIOS
    ========================================================================== */
 .btn-principal {
   width: 100%;
@@ -101,10 +114,10 @@ body {
   background: #ef4444;
   color: white;
   font-family: 'Poppins', sans-serif;
-  font-size: 1.3rem;
-  font-weight: 600; /* Reducido de 800 a 600 */
+  font-size: 1.25rem;
+  font-weight: 600;
   cursor: pointer;
-  box-shadow: 0 4px 14px rgba(239, 68, 68, 0.2);
+  box-shadow: 0 4px 14px rgba(239, 68, 68, 0.18);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -114,7 +127,7 @@ body {
 
 .btn-principal small {
   font-size: 0.85rem;
-  font-weight: 400; /* Reducido de 500 a 400 */
+  font-weight: 400;
   opacity: 0.85;
 }
 
@@ -135,12 +148,12 @@ body {
   color: #1e293b;
   padding: 0 14px;
   font-family: 'Poppins', sans-serif;
-  font-size: 1.02rem;
+  font-size: 1rem;
   line-height: 54px;
   outline: none;
 }
 
-/* Autocomplete y Sugerencias */
+/* Autocomplete / Sugerencias */
 .autocomplete {
   position: relative;
   width: 100%;
@@ -155,7 +168,7 @@ body {
   background: white;
   border: 1px solid #d8e0ea;
   border-radius: 14px;
-  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.1);
+  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.08);
   overflow: hidden;
   max-height: 280px;
   overflow-y: auto;
@@ -184,22 +197,23 @@ body {
 }
 
 /* ==========================================================================
-   5. FILTROS Y AJUSTES
+   4. FILTROS Y AJUSTES
    ========================================================================== */
 .ajustes {
   background: #ffffff;
   border: 1px solid #d8e0ea;
   border-radius: 16px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
   padding: 0.8rem;
   margin-bottom: 1rem;
 }
 
 .ajustes summary {
   cursor: pointer;
-  font-weight: 600; /* Reducido de 800 a 600 */
+  font-weight: 600;
   color: #1e293b;
   margin-bottom: 1rem;
+  outline: none;
 }
 
 .ajustes label,
@@ -207,7 +221,7 @@ body {
   display: block;
   color: #334155;
   font-size: 0.95rem;
-  font-weight: 600; /* Reducido de 800 a 600 */
+  font-weight: 600;
   margin: 1rem 0 0.5rem 0;
 }
 
@@ -226,9 +240,9 @@ body {
   background: #ffffff;
   color: #334155;
   font-family: 'Poppins', sans-serif;
-  font-weight: 600; /* Reducido de 800 a 600 */
+  font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+  transition: all 0.15s ease;
 }
 
 .radio-btn:hover,
@@ -243,7 +257,7 @@ body {
   background: #1e293b;
   border-color: #1e293b;
   color: #ffffff;
-  box-shadow: 0 3px 10px rgba(30, 41, 59, 0.12);
+  box-shadow: 0 3px 10px rgba(30, 41, 59, 0.1);
 }
 
 .resumen-filtros {
@@ -255,45 +269,55 @@ body {
   border: 1px solid #d8e0ea;
   background-color: #ffffff;
   color: #334155;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.025);
-  font-weight: 400; /* Reducido de 500 a 400 */
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
+  font-weight: 400;
 }
 
 /* ==========================================================================
-   6. GASOLINERA CARD Y BOTÓN "NAVIGATU" CORREGIDO
+   5. SISTEMA AUTOMÁTICO PARA LAS TARJETAS DE RESULTADOS (INYECTADAS POR JS)
    ========================================================================== */
+/* Forzamos que el contenedor de tarjetas maneje un diseño limpio */
+#resultados {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  width: 100%;
+}
+
+/* Captura la tarjeta inyectada dinámicamente */
 .gasolinera-card {
   background: #ffffff;
   border: 1px solid #d8e0ea;
   border-radius: 16px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
-  padding: 1rem;
-  margin-bottom: 0.8rem;
-  display: flex; /* Cambiado de grid a flex para un control espacial absoluto */
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
+  padding: 1.1rem;
+  margin: 0;
+  display: flex !important; /* Reemplaza por completo el viejo grid que rompía el layout */
   justify-content: space-between;
   align-items: center;
-  gap: 1.5rem;
+  gap: 1.2rem;
+  width: 100%;
 }
 
-.info-gasolinera {
-  flex: 1; /* Ocupa todo el espacio disponible de la izquierda */
-  min-width: 0; /* Evita que los textos largos rompan el flexbox */
+/* Contenedor interno para los textos de la gasolinera */
+.gasolinera-card div, 
+.gasolinera-card section,
+#resultados .gasolinera-card > *:first-child {
+  flex: 1;
+  min-width: 0; /* Clave: impide desbordamientos por textos largos */
 }
 
 .gasolinera-card h3 {
   margin: 0 0 0.4rem 0;
   color: #1e293b;
-  font-size: 1.1rem;
+  font-size: 1.05rem;
   font-weight: 600;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis; /* Si el nombre es larguísimo, añade "..." elegantemente */
 }
 
 .gasolinera-card p {
   margin: 0.25rem 0;
-  color: #334155;
-  font-size: 0.95rem;
+  color: #475569;
+  font-size: 0.92rem;
 }
 
 .gasolinera-card .distancia {
@@ -301,39 +325,41 @@ body {
   font-size: 0.85rem;
 }
 
-/* Corrección del Botón Navigatu */
-.btn-navegar {
-  display: inline-flex;
+/* SOLUCIÓN AL BOTÓN DE NAVEGACIÓN:
+   Buscamos cualquier enlace (a) o botón dentro de la tarjeta para forzar el diseño de botón real */
+.btn-navegar,
+#resultados .gasolinera-card a,
+#resultados .gasolinera-card button:not(.fuel-btn):not(.radio-btn) {
+  display: inline-flex !important;
   align-items: center;
   justify-content: center;
-  min-height: 42px;
-  padding: 0 16px; /* Espaciado interno horizontal fijo */
-  border-radius: 10px;
-  background: #f8fafc;
-  border: 1px solid #d8e0ea;
-  color: #1e293b;
-  text-decoration: none;
-  font-weight: 600; /* Reducido de 800 a 600 */
-  font-size: 0.9rem;
-  white-space: nowrap; /* CLAVE: Fuerza a que el texto NO se rompa ni actúe como un enlace simple */
-  flex-shrink: 0; /* CLAVE: Impide que el contenedor comprima el botón */
-  transition: background-color 0.2s ease, border-color 0.2s ease;
+  min-height: 40px;
+  height: 40px;
+  padding: 0 16px !important;
+  border-radius: 10px !important;
+  background: #f8fafc !important;
+  border: 1px solid #d8e0ea !important;
+  color: #1e293b !important;
+  text-decoration: none !important;
+  font-weight: 600 !important;
+  font-size: 0.88rem !important;
+  white-space: nowrap !important; /* Impide que el texto se parta en dos líneas */
+  flex-shrink: 0 !important; /* Impide que la tarjeta estruje el botón y lo haga desaparecer */
+  transition: all 0.2s ease !important;
+  cursor: pointer;
 }
 
-.btn-navegar:hover {
-  background: #1e293b;
-  color: #ffffff;
-  border-color: #1e293b;
-}
-
-.mensaje {
-  text-align: center;
-  color: #64748b;
-  padding: 1rem;
+/* Efecto Hover elegante para el botón de navegación */
+.btn-navegar:hover,
+#resultados .gasolinera-card a:hover,
+#resultados .gasolinera-card button:not(.fuel-btn):not(.radio-btn):hover {
+  background: #1e293b !important;
+  color: #ffffff !important;
+  border-color: #1e293b !important;
 }
 
 /* ==========================================================================
-   7. RESPONSIVE DESIGN
+   6. DISEÑO RESPONSIVO (Móviles)
    ========================================================================== */
 @media (max-width: 520px) {
   .app {
@@ -341,19 +367,20 @@ body {
     padding-right: 0.8rem;
   }
 
+  /* En móviles transformamos la tarjeta en vertical para mejor visualización */
   .gasolinera-card {
-    flex-direction: column; /* En móviles se apila verticalmente */
-    align-items: stretch;
+    flex-direction: column !important;
+    align-items: stretch !important;
     gap: 1rem;
   }
-  
-  .gasolinera-card h3 {
-    white-space: normal; /* Permite que el título use más líneas si lo necesita en móvil */
-  }
 
-  .btn-navegar {
-    min-height: 46px;
-    width: 100%; /* Botón completo para fácil pulsación en móviles */
+  /* El botón de navegación pasa a ocupar todo el ancho abajo del texto */
+  .btn-navegar,
+  #resultados .gasolinera-card a,
+  #resultados .gasolinera-card button:not(.fuel-btn):not(.radio-btn) {
+    width: 100% !important;
+    min-height: 44px;
+    height: 44px;
   }
 
   .sugerencias {
