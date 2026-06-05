@@ -1,11 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@500;800&display=swap');
 
-* {
-  box-sizing: border-box;
-}
-
-body {
-  margin: 0;
+ 0;* {
   background: #ffffff;
   color: #1e293b;
   font-family: 'Poppins', sans-serif;
@@ -183,8 +178,16 @@ body {
   color: #1e293b;
 }
 
-.ajustes {
+.zona-filtros {
   background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 20px;
+  padding: 0.8rem;
+  margin-bottom: 1.25rem;
+}
+
+.ajustes {
+  background: #ffffff;
   border: 1px solid #e2e8f0;
   border-radius: 16px;
   box-shadow: none;
@@ -246,20 +249,32 @@ body {
 .resumen-filtros {
   text-align: center;
   font-size: 0.92rem;
-  margin-bottom: 1.2rem;
   padding: 10px 18px;
   border-radius: 40px;
   border: 1px solid #e2e8f0;
-  background-color: #f8fafc;
+  background-color: #ffffff;
   color: #334155;
   box-shadow: none;
   font-weight: 500;
 }
 
-#resultados {
-  border-top: 1px solid #e2e8f0;
-  padding-top: 1.15rem;
-  margin-top: 0.25rem;
+.cabecera-resultados {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0.2rem 0 0.9rem 0;
+  color: #64748b;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.7px;
+  text-transform: uppercase;
+}
+
+.cabecera-resultados::after {
+  content: "";
+  height: 1px;
+  flex: 1;
+  background: #e2e8f0;
 }
 
 .gasolinera-card {
@@ -328,6 +343,11 @@ body {
     left: 13px;
   }
 
+  .zona-filtros {
+    padding: 0.7rem;
+    margin-bottom: 1.15rem;
+  }
+
   .gasolinera-card {
     grid-template-columns: 1fr;
   }
@@ -345,3 +365,8 @@ body {
     min-height: 50px;
     padding: 13px 14px;
   }
+
+  box-sizing: border-box;
+}
+
+body {
