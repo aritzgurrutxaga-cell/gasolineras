@@ -15,7 +15,7 @@ body {
   width: 100%;
   max-width: 760px;
   margin: 0 auto;
-  padding: 1rem 1rem 25vh 1rem;
+  padding: 0.6rem 1rem 25vh 1rem;
   position: relative;
 }
 
@@ -25,30 +25,40 @@ body {
 
 .language-selector {
   position: absolute;
-  top: 0;
+  top: 0.55rem;
   left: 15px;
   z-index: 10;
   display: flex;
-  gap: 8px;
+  gap: 12px;
+  align-items: center;
 }
 
 .lang {
-  border: 1px solid #d8e0ea;
-  background: #ffffff;
-  color: #334155;
-  font-size: 0.8rem;
+  border: none;
+  background: transparent;
+  color: #94a3b8;
+  font-size: 0.78rem;
   font-weight: 800;
   cursor: pointer;
-  padding: 7px 8px;
-  border-radius: 999px;
-  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05);
+  padding: 4px 0;
   line-height: 1;
+  letter-spacing: 0.3px;
+  position: relative;
 }
 
 .lang.active {
   color: #ef4444;
-  border-color: #ef4444;
-  background: #fff5f5;
+}
+
+.lang.active::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -4px;
+  height: 2px;
+  border-radius: 999px;
+  background: #ef4444;
 }
 
 .screen {
@@ -61,7 +71,7 @@ body {
   font-weight: 800;
   color: #1e293b;
   letter-spacing: -1.5px;
-  margin: 2.5rem 0 0.5rem 0;
+  margin: 1.6rem 0 0.5rem 0;
 }
 
 .titulo span {
@@ -301,6 +311,15 @@ body {
   .app {
     padding-left: 0.8rem;
     padding-right: 0.8rem;
+  }
+
+  .titulo {
+    margin-top: 1.45rem;
+  }
+
+  .language-selector {
+    top: 0.5rem;
+    left: 13px;
   }
 
   .gasolinera-card {
