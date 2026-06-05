@@ -8,33 +8,40 @@
 
   <link rel="stylesheet" href="styles.css">
 
-  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4561237649685966"
-     crossorigin="anonymous"></script>
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4561237649685966" crossorigin="anonymous"></script>
 </head>
+
 <body>
   <main class="app">
     <div class="language-selector">
-      <button id="btn-eu" class="lang active">EU</button>
-      <button id="btn-es" class="lang">ES</button>
+      <button id="btn-eu" class="lang active" type="button">EU</button>
+      <button id="btn-es" class="lang" type="button">ES</button>
     </div>
 
     <section id="pantalla-inicio" class="screen">
       <h1 class="titulo">gasolina<span>.eus</span></h1>
       <p id="subtitulo" class="subtitulo">Konparatu prezioak eta aurreztu depositua betetzean.</p>
 
-      <button id="btn-ubicacion" class="btn-principal">
-        📍 Erakutsi gasolindegiak
+      <button id="btn-ubicacion" class="btn-principal" type="button">
+        <span id="btn-ubicacion-text">📍 Erakutsi gasolindegiak</span>
         <small id="btn-ubicacion-sub">Gomendagarria da kokapena onartzea bilatzeko</small>
       </button>
+    </section>
+
+    <section id="pantalla-localizando" class="screen hidden">
+      <h1 class="titulo">gasolina<span>.eus</span></h1>
+      <p id="texto-localizando" class="mensaje">⏳ Kokapena bilatzen...</p>
     </section>
 
     <section id="pantalla-manual" class="screen hidden">
       <h1 class="titulo">gasolina<span>.eus</span></h1>
       <p id="texto-municipio" class="texto-centro">📍 Idatzi zure udalerria:</p>
 
-      <select id="select-municipio" class="select"></select>
+      <select id="select-municipio" class="select">
+        <option value="">Bilatu...</option>
+      </select>
 
-      <button id="btn-confirmar" class="btn-principal compacto">
+      <button id="btn-confirmar" class="btn-principal compacto" type="button">
         🔍 Bilatu
       </button>
     </section>
@@ -50,28 +57,26 @@
 
         <p id="label-radio" class="label">Bilaketa-erradioa:</p>
         <div class="radio-group">
-          <button class="radio-btn active" data-radio="5">5 km</button>
-          <button class="radio-btn" data-radio="10">10 km</button>
-          <button class="radio-btn" data-radio="20">20 km</button>
+          <button class="radio-btn active" type="button" data-radio="5">5 km</button>
+          <button class="radio-btn" type="button" data-radio="10">10 km</button>
+          <button class="radio-btn" type="button" data-radio="20">20 km</button>
         </div>
 
         <p id="label-combustible" class="label">Prezioaren arabera ordenatu:</p>
         <div class="radio-group">
-          <button class="fuel-btn active" data-fuel="Diésel">Diésel</button>
-          <button class="fuel-btn" data-fuel="G95">G95</button>
+          <button class="fuel-btn active" type="button" data-fuel="Diésel">Diésel</button>
+          <button class="fuel-btn" type="button" data-fuel="G95">G95</button>
         </div>
 
-        <button id="btn-buscar-ajustes" class="btn-principal compacto">
+        <button id="btn-buscar-ajustes" class="btn-principal compacto" type="button">
           🔍 Bilatu
         </button>
       </details>
 
       <div id="resumen-filtros" class="resumen-filtros"></div>
-
       <div id="resultados"></div>
     </section>
   </main>
 
   <script src="app.js"></script>
 </body>
-</html>
