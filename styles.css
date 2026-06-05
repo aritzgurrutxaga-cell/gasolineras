@@ -1,7 +1,8 @@
 /* ==========================================================================
    1. TIPOGRAFÍA Y BASE (Lettering moderno y minimalista)
    ========================================================================== */
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+/* Añadidos los pesos 300 (Light) y 800 (ExtraBold) para el logo */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;800&display=swap');
 
 * {
   box-sizing: border-box;
@@ -57,19 +58,22 @@ body {
 }
 
 /* ==========================================================================
-   2. TEXTOS Y CABECERAS
+   2. LOGOTIPO, TEXTOS Y CABECERAS (Estilo Premium)
    ========================================================================== */
 .titulo {
   text-align: center;
-  font-size: clamp(30px, 8.5vw, 42px);
-  font-weight: 600;
+  font-size: clamp(34px, 9.5vw, 46px); /* Ligeramente más grande para dar empaque de logo */
+  font-weight: 800; /* Extra bold para "gasolina" */
   color: #1e293b;
-  letter-spacing: -0.8px;
-  margin: 1.2rem 0 0.5rem 0; /* Más cerca del top */
+  letter-spacing: -1.5px; /* Letras más apretadas, típico en logos de apps modernas */
+  margin: 1.2rem 0 0.5rem 0;
+  line-height: 1; /* Mantiene la caja del texto limpia */
 }
 
 .titulo span {
+  font-weight: 300; /* Contraste total: muy fino para el ".eus" */
   color: #ef4444;
+  letter-spacing: -0.5px;
 }
 
 .subtitulo {
@@ -289,7 +293,7 @@ body {
 }
 
 /* ==========================================================================
-   6. TARJETAS DE RESULTADOS Y BOTÓN NAVIGATU (ESTRUCTURA BLINDADA)
+   6. TARJETAS DE RESULTADOS Y BOTÓN NAVIGATU
    ========================================================================== */
 #resultados {
   display: flex;
@@ -312,10 +316,9 @@ body {
   width: 100%;
 }
 
-/* Contenedor estricto para los textos, empuja el botón a la derecha */
 .info-gasolinera {
   flex: 1;
-  min-width: 0; /* Previene desbordamiento horizontal */
+  min-width: 0;
 }
 
 .info-gasolinera h3 {
@@ -336,62 +339,8 @@ body {
   font-size: 0.85rem;
 }
 
-/* BOTÓN DEFINITIVO */
 .btn-navegar {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   min-height: 42px;
-  padding: 0 16px;
-  border-radius: 10px;
-  background: #f8fafc;
-  border: 1px solid #d8e0ea;
-  color: #1e293b;
-  text-decoration: none;
-  font-family: 'Poppins', sans-serif;
-  font-weight: 600;
-  font-size: 0.88rem;
-  white-space: nowrap; /* Evita que se rompa en varias líneas */
-  flex-shrink: 0; /* EL SECRETO: Prohíbe tajantemente que la tarjeta lo aplaste */
-  transition: all 0.2s ease;
-  cursor: pointer;
-  box-sizing: border-box;
-}
-
-.btn-navegar:hover {
-  background: #1e293b;
-  color: #ffffff;
-  border-color: #1e293b;
-}
-
-/* ==========================================================================
-   7. DISEÑO RESPONSIVO (Móviles)
-   ========================================================================== */
-@media (max-width: 520px) {
-  .app {
-    padding-left: 0.8rem;
-    padding-right: 0.8rem;
-  }
-
-  .gasolinera-card {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 1rem;
-  }
-
-  .btn-navegar {
-    width: 100%;
-    min-height: 44px;
-    height: 44px;
-  }
-
-  .sugerencias {
-    bottom: calc(100% + 8px);
-    max-height: 260px;
-  }
-
-  .sugerencia-item {
-    min-height: 50px;
-    padding: 13px 14px;
-  }
-}
