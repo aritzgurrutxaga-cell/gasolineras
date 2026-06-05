@@ -1,14 +1,10 @@
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@500;800&display=swap');
+/* ==========================================================================
+   1. TIPOGRAFÍA (Lettering un poco más fino y minimalista)
+   ========================================================================== */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
 
 * {
   box-sizing: border-box;
-}
-
-html,
-body {
-  width: 100%;
-  max-width: 100%;
-  overflow-x: hidden;
 }
 
 body {
@@ -16,15 +12,19 @@ body {
   background: #ffffff;
   color: #1e293b;
   font-family: 'Poppins', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
+/* ==========================================================================
+   2. ESTRUCTURA GENERAL Y COMPONENTES
+   ========================================================================== */
 .app {
-  width: calc(100% - 1.6rem);
+  width: 100%;
   max-width: 760px;
   margin: 0 auto;
-  padding: 1rem 0 25vh 0;
+  padding: 1rem 1rem 25vh 1rem;
   position: relative;
-  overflow-x: hidden;
 }
 
 .hidden {
@@ -33,53 +33,40 @@ body {
 
 .language-selector {
   position: absolute;
-  top: 0.55rem;
+  top: 0;
   left: 15px;
   z-index: 10;
   display: flex;
-  gap: 12px;
-  align-items: center;
+  gap: 10px;
 }
 
 .lang {
   border: none;
   background: transparent;
-  color: #94a3b8;
-  font-size: 0.78rem;
-  font-weight: 800;
+  color: #1e293b;
+  font-size: 0.8rem;
+  font-weight: 600; /* Reducido de 800 a 600 */
   cursor: pointer;
-  padding: 4px 0;
-  line-height: 1;
-  letter-spacing: 0.3px;
-  position: relative;
+  padding: 8px 4px;
 }
 
 .lang.active {
   color: #ef4444;
 }
 
-.lang.active::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: -4px;
-  height: 2px;
-  border-radius: 999px;
-  background: #ef4444;
-}
-
 .screen {
   width: 100%;
-  max-width: 100%;
 }
 
+/* ==========================================================================
+   3. TEXTOS Y CABECERAS (Estilo más limpio)
+   ========================================================================== */
 .titulo {
   text-align: center;
-  font-size: clamp(32px, 9vw, 46px);
-  font-weight: 800;
+  font-size: clamp(30px, 8.5vw, 42px); /* Ligeramente más estilizado */
+  font-weight: 600; /* Reducido de 800 a 600 */
   color: #1e293b;
-  letter-spacing: -1.5px;
+  letter-spacing: -0.8px; /* Ajuste sutil para peso 600 */
   margin: 2.5rem 0 0.5rem 0;
 }
 
@@ -93,7 +80,7 @@ body {
   font-size: 1.05rem;
   margin-bottom: 2rem;
   margin-top: -0.5rem;
-  font-weight: 500;
+  font-weight: 400; /* Reducido de 500 a 400 */
 }
 
 .texto-centro {
@@ -103,29 +90,32 @@ body {
   margin-bottom: 1rem;
 }
 
+/* ==========================================================================
+   4. BOTONES Y SELECCIONES
+   ========================================================================== */
 .btn-principal {
   width: 100%;
-  min-height: 100px;
+  min-height: 90px;
   border: none;
-  border-radius: 15px;
+  border-radius: 14px;
   background: #ef4444;
   color: white;
   font-family: 'Poppins', sans-serif;
-  font-size: 1.4rem;
-  font-weight: 800;
+  font-size: 1.3rem;
+  font-weight: 600; /* Reducido de 800 a 600 */
   cursor: pointer;
-  box-shadow: 0 4px 14px rgba(239, 68, 68, 0.25);
+  box-shadow: 0 4px 14px rgba(239, 68, 68, 0.2);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 6px;
 }
 
 .btn-principal small {
   font-size: 0.85rem;
-  font-weight: 500;
-  opacity: 0.9;
+  font-weight: 400; /* Reducido de 500 a 400 */
+  opacity: 0.85;
 }
 
 .btn-principal.compacto {
@@ -137,7 +127,6 @@ body {
 
 .select {
   width: 100%;
-  max-width: 100%;
   min-height: 54px;
   height: 54px;
   border-radius: 12px;
@@ -146,15 +135,15 @@ body {
   color: #1e293b;
   padding: 0 14px;
   font-family: 'Poppins', sans-serif;
-  font-size: 1.05rem;
+  font-size: 1.02rem;
   line-height: 54px;
   outline: none;
 }
 
+/* Autocomplete y Sugerencias */
 .autocomplete {
   position: relative;
   width: 100%;
-  max-width: 100%;
 }
 
 .sugerencias {
@@ -166,7 +155,7 @@ body {
   background: white;
   border: 1px solid #d8e0ea;
   border-radius: 14px;
-  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.12);
+  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.1);
   overflow: hidden;
   max-height: 280px;
   overflow-y: auto;
@@ -194,32 +183,21 @@ body {
   color: #1e293b;
 }
 
-.zona-filtros {
-  width: 100%;
-  max-width: 100%;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 20px;
-  padding: 0.8rem;
-  margin-bottom: 1.25rem;
-  overflow-x: hidden;
-}
-
+/* ==========================================================================
+   5. FILTROS Y AJUSTES
+   ========================================================================== */
 .ajustes {
-  width: 100%;
-  max-width: 100%;
   background: #ffffff;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #d8e0ea;
   border-radius: 16px;
-  box-shadow: none;
-  padding: 0.85rem;
-  margin-bottom: 0.75rem;
-  overflow-x: hidden;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+  padding: 0.8rem;
+  margin-bottom: 1rem;
 }
 
 .ajustes summary {
   cursor: pointer;
-  font-weight: 800;
+  font-weight: 600; /* Reducido de 800 a 600 */
   color: #1e293b;
   margin-bottom: 1rem;
 }
@@ -229,7 +207,7 @@ body {
   display: block;
   color: #334155;
   font-size: 0.95rem;
-  font-weight: 800;
+  font-weight: 600; /* Reducido de 800 a 600 */
   margin: 1rem 0 0.5rem 0;
 }
 
@@ -237,20 +215,18 @@ body {
   display: flex;
   gap: 8px;
   width: 100%;
-  max-width: 100%;
 }
 
 .radio-btn,
 .fuel-btn {
-  flex: 1 1 0;
-  min-width: 0;
+  flex: 1;
   min-height: 44px;
   border: 1px solid #d8e0ea;
   border-radius: 12px;
   background: #ffffff;
   color: #334155;
   font-family: 'Poppins', sans-serif;
-  font-weight: 800;
+  font-weight: 600; /* Reducido de 800 a 600 */
   cursor: pointer;
   transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
 }
@@ -267,96 +243,57 @@ body {
   background: #1e293b;
   border-color: #1e293b;
   color: #ffffff;
-  box-shadow: 0 3px 10px rgba(30, 41, 59, 0.16);
+  box-shadow: 0 3px 10px rgba(30, 41, 59, 0.12);
 }
 
 .resumen-filtros {
-  width: 100%;
-  max-width: 100%;
   text-align: center;
-  font-size: 0.92rem;
-  padding: 10px 18px;
+  font-size: 0.95rem;
+  margin-bottom: 1.5rem;
+  padding: 12px 20px;
   border-radius: 40px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #d8e0ea;
   background-color: #ffffff;
   color: #334155;
-  box-shadow: none;
-  font-weight: 500;
-  overflow-wrap: anywhere;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.025);
+  font-weight: 400; /* Reducido de 500 a 400 */
 }
 
-.cabecera-buscar,
-.cabecera-resultados {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  width: 100%;
-  max-width: 100%;
-  overflow: hidden;
-  color: #64748b;
-  font-size: 0.78rem;
-  font-weight: 800;
-  letter-spacing: 0.7px;
-  text-transform: uppercase;
-}
-
-.cabecera-buscar {
-  margin: 0.2rem 0 0.65rem 0;
-}
-
-.cabecera-resultados {
-  margin: 0.2rem 0 0.9rem 0;
-}
-
-.cabecera-buscar span,
-.cabecera-resultados span {
-  flex: 0 0 auto;
-}
-
-.cabecera-buscar::after,
-.cabecera-resultados::after {
-  content: "";
-  height: 1px;
-  flex: 1 1 0;
-  min-width: 0;
-  max-width: 100%;
-  background: #e2e8f0;
-}
-
-#resultados {
-  width: 100%;
-  max-width: 100%;
-  overflow-x: hidden;
-}
-
+/* ==========================================================================
+   6. GASOLINERA CARD Y BOTÓN "NAVIGATU" CORREGIDO
+   ========================================================================== */
 .gasolinera-card {
-  width: 100%;
-  max-width: 100%;
   background: #ffffff;
   border: 1px solid #d8e0ea;
   border-radius: 16px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.045);
-  padding: 0.8rem;
-  margin-bottom: 0.7rem;
-  display: grid;
-  grid-template-columns: minmax(0, 2.5fr) minmax(0, 1.5fr);
-  gap: 1rem;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+  padding: 1rem;
+  margin-bottom: 0.8rem;
+  display: flex; /* Cambiado de grid a flex para un control espacial absoluto */
+  justify-content: space-between;
   align-items: center;
-  overflow-x: hidden;
+  gap: 1.5rem;
+}
+
+.info-gasolinera {
+  flex: 1; /* Ocupa todo el espacio disponible de la izquierda */
+  min-width: 0; /* Evita que los textos largos rompan el flexbox */
 }
 
 .gasolinera-card h3 {
   margin: 0 0 0.4rem 0;
   color: #1e293b;
   font-size: 1.1rem;
-  overflow-wrap: anywhere;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis; /* Si el nombre es larguísimo, añade "..." elegantemente */
 }
 
 .gasolinera-card p {
   margin: 0.25rem 0;
   color: #334155;
   font-size: 0.95rem;
-  overflow-wrap: anywhere;
 }
 
 .gasolinera-card .distancia {
@@ -364,20 +301,29 @@ body {
   font-size: 0.85rem;
 }
 
+/* Corrección del Botón Navigatu */
 .btn-navegar {
-  width: 100%;
-  max-width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   min-height: 42px;
+  padding: 0 16px; /* Espaciado interno horizontal fijo */
   border-radius: 10px;
   background: #f8fafc;
   border: 1px solid #d8e0ea;
   color: #1e293b;
   text-decoration: none;
-  font-weight: 800;
-  font-size: 0.95rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  font-weight: 600; /* Reducido de 800 a 600 */
+  font-size: 0.9rem;
+  white-space: nowrap; /* CLAVE: Fuerza a que el texto NO se rompa ni actúe como un enlace simple */
+  flex-shrink: 0; /* CLAVE: Impide que el contenedor comprima el botón */
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.btn-navegar:hover {
+  background: #1e293b;
+  color: #ffffff;
+  border-color: #1e293b;
 }
 
 .mensaje {
@@ -386,29 +332,28 @@ body {
   padding: 1rem;
 }
 
+/* ==========================================================================
+   7. RESPONSIVE DESIGN
+   ========================================================================== */
 @media (max-width: 520px) {
   .app {
-    width: calc(100% - 1.2rem);
-    padding-left: 0;
-    padding-right: 0;
-  }
-
-  .language-selector {
-    top: 0.5rem;
-    left: 13px;
-  }
-
-  .zona-filtros {
-    padding: 0.7rem;
-    margin-bottom: 1.15rem;
+    padding-left: 0.8rem;
+    padding-right: 0.8rem;
   }
 
   .gasolinera-card {
-    grid-template-columns: 1fr;
+    flex-direction: column; /* En móviles se apila verticalmente */
+    align-items: stretch;
+    gap: 1rem;
+  }
+  
+  .gasolinera-card h3 {
+    white-space: normal; /* Permite que el título use más líneas si lo necesita en móvil */
   }
 
   .btn-navegar {
     min-height: 46px;
+    width: 100%; /* Botón completo para fácil pulsación en móviles */
   }
 
   .sugerencias {
@@ -420,3 +365,4 @@ body {
     min-height: 50px;
     padding: 13px 14px;
   }
+}
