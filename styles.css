@@ -29,21 +29,26 @@ body {
   left: 15px;
   z-index: 10;
   display: flex;
-  gap: 10px;
+  gap: 8px;
 }
 
 .lang {
-  border: none;
-  background: transparent;
-  color: #1e293b;
+  border: 1px solid #d8e0ea;
+  background: #ffffff;
+  color: #334155;
   font-size: 0.8rem;
   font-weight: 800;
   cursor: pointer;
-  padding: 8px 4px;
+  padding: 7px 8px;
+  border-radius: 999px;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05);
+  line-height: 1;
 }
 
 .lang.active {
   color: #ef4444;
+  border-color: #ef4444;
+  background: #fff5f5;
 }
 
 .screen {
@@ -315,4 +320,3 @@ body {
     min-height: 50px;
     padding: 13px 14px;
   }
-}
