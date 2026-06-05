@@ -57,7 +57,7 @@ body {
 }
 
 /* ==========================================================================
-   2. TEXTOS Y CABECERAS (Bilatu y Emaitzak ajustados)
+   2. TEXTOS Y CABECERAS
    ========================================================================== */
 .titulo {
   text-align: center;
@@ -65,7 +65,8 @@ body {
   font-weight: 600;
   color: #1e293b;
   letter-spacing: -0.8px;
-  margin: 2.5rem 0 0.5rem 0;
+  /* CORRECCIÓN: Reducido de 2.5rem a 1.2rem para acercarlo a los selectores EU/ES */
+  margin: 1.2rem 0 0.5rem 0; 
 }
 
 .titulo span {
@@ -94,17 +95,36 @@ body {
   padding: 1rem;
 }
 
-/* Cabeceras de secciones internas - Puestas un poco más en negrita */
+/* Cabeceras de secciones internas (Bilatu y Emaitzak más en negrita) */
 .cabecera-buscar,
 .cabecera-resultados {
-  font-weight: 700; /* Incrementado para resaltar de forma limpia */
+  font-weight: 700;
   color: #1e293b;
   font-size: 1.15rem;
-  margin: 1.8rem 0 0.8rem 0;
+  margin: 1.5rem 0 0.8rem 0;
 }
 
 /* ==========================================================================
-   3. BOTONES PRINCIPALES Y FORMULARIOS
+   3. BLOQUES DE SEPARACIÓN (Contraste de búsqueda vs resultados)
+   ========================================================================== */
+/* CORRECCIÓN: Añadido el recuadro con fondo sutil y borde fino para la zona superior */
+.zona-filtros {
+  background: #f8fafc; /* Fondo ligeramente grisáceo/azul distinto */
+  border: 1px solid #e2e8f0; /* Línea fina de contención */
+  border-radius: 20px;
+  padding: 1.2rem;
+  margin-bottom: 2rem; /* Separación clara antes de "Emaitzak" */
+}
+
+/* Línea fina divisoria antes de los resultados */
+.cabecera-resultados {
+  border-top: 1px solid #cbd5e1;
+  padding-top: 1.5rem;
+  margin-top: 2rem;
+}
+
+/* ==========================================================================
+   4. BOTONES PRINCIPALES Y FORMULARIOS
    ========================================================================== */
 .btn-principal {
   width: 100%;
@@ -197,7 +217,7 @@ body {
 }
 
 /* ==========================================================================
-   4. FILTROS Y AJUSTES
+   5. FILTROS Y AJUSTES (Dentro del recuadro de búsqueda)
    ========================================================================== */
 .ajustes {
   background: #ffffff;
@@ -263,7 +283,7 @@ body {
 .resumen-filtros {
   text-align: center;
   font-size: 0.95rem;
-  margin-bottom: 1.5rem;
+  margin-bottom: 0; /* Ajustado por el padding de .zona-filtros */
   padding: 12px 20px;
   border-radius: 40px;
   border: 1px solid #d8e0ea;
@@ -274,7 +294,7 @@ body {
 }
 
 /* ==========================================================================
-   5. SISTEMA AUTOMÁTICO PARA LAS TARJETAS DE RESULTADOS
+   6. SISTEMA AUTOMÁTICO PARA LAS TARJETAS DE RESULTADOS
    ========================================================================== */
 #resultados {
   display: flex;
@@ -354,7 +374,7 @@ body {
 }
 
 /* ==========================================================================
-   6. DISEÑO RESPONSIVO (Móviles)
+   7. DISEÑO RESPONSIVO (Móviles)
    ========================================================================== */
 @media (max-width: 520px) {
   .app {
