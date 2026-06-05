@@ -37,9 +37,10 @@
       <h1 class="titulo">gasolina<span>.eus</span></h1>
       <p id="texto-municipio" class="texto-centro">📍 Idatzi zure udalerria:</p>
 
-      <select id="select-municipio" class="select">
-        <option value="">Bilatu...</option>
-      </select>
+      <div class="autocomplete">
+        <input id="input-municipio" class="select" autocomplete="off" placeholder="Bilatu...">
+        <div id="sugerencias-municipio" class="sugerencias hidden"></div>
+      </div>
 
       <button id="btn-confirmar" class="btn-principal compacto" type="button">
         🔍 Bilatu
@@ -52,8 +53,12 @@
       <details class="ajustes">
         <summary id="titulo-ajustes">⚙️ Bilaketa ezarpenak</summary>
 
-        <label id="label-cambiar-muni" for="select-municipio-ajustes">Aldatu udalerria:</label>
-        <select id="select-municipio-ajustes" class="select"></select>
+        <label id="label-cambiar-muni" for="input-municipio-ajustes">Aldatu udalerria:</label>
+
+        <div class="autocomplete">
+          <input id="input-municipio-ajustes" class="select" autocomplete="off">
+          <div id="sugerencias-municipio-ajustes" class="sugerencias hidden"></div>
+        </div>
 
         <p id="label-radio" class="label">Bilaketa-erradioa:</p>
         <div class="radio-group">
@@ -78,5 +83,6 @@
     </section>
   </main>
 
-  <script src="app.js"></script>
+  <script src="app.js?v=8"></script>
 </body>
+</html>
