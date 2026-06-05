@@ -108,7 +108,7 @@ function escapeHtml(valor) {
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
+    .replaceAll("'", "&#39;");
 }
 
 function mostrarPantalla(nombre) {
@@ -365,19 +365,17 @@ function pintarResultados() {
 
     const distancia = t().distancia_fmt.replace("{d}", g.distancia.toFixed(2));
     
-    // CORRECCIÓN DEFINITIVA: Se añade la etiqueta de apertura <a> estructurada como un botón real con su clase asignada
-    const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(g.lat_num + ',' + g.lon_num)}`;
+    /* ESTRUCTURA BLINDADA: Usamos la URL oficial de Google Maps y quitamos el div innecesario */
+    const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${g.lat_num},${g.lon_num}`;
 
     return `
       <article class="gasolinera-card">
-        <div>
+        <div class="info-gasolinera">
           <h3>${escapeHtml(g["Rótulo"] || "")} - ${escapeHtml(g["Municipio"] || "")}</h3>
           <p>⛽ <b>Diesel:</b> ${diesel} | <b>G95:</b> ${g95}</p>
           <p class="distancia">${escapeHtml(distancia)}</p>
         </div>
-        <div>
-          <a href="${mapsUrl}" target="_blank" class="btn-navegar">${escapeHtml(t().navegar)}</a>
-        </div>
+        <a href="${mapsUrl}" target="_blank" class="btn-navegar">${escapeHtml(t().navegar)}</a>
       </article>
     `;
   }).join("");
