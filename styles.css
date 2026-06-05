@@ -1,6 +1,18 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@500;800&display=swap');
 
- 0;* {
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+body {
+  margin: 0;
   background: #ffffff;
   color: #1e293b;
   font-family: 'Poppins', sans-serif;
@@ -10,8 +22,9 @@
   width: 100%;
   max-width: 760px;
   margin: 0 auto;
-  padding: 0.6rem 1rem 25vh 1rem;
+  padding: 1rem 1rem 25vh 1rem;
   position: relative;
+  overflow-x: hidden;
 }
 
 .hidden {
@@ -58,6 +71,7 @@
 
 .screen {
   width: 100%;
+  max-width: 100%;
 }
 
 .titulo {
@@ -66,7 +80,7 @@
   font-weight: 800;
   color: #1e293b;
   letter-spacing: -1.5px;
-  margin: 1.6rem 0 0.5rem 0;
+  margin: 2.5rem 0 0.5rem 0;
 }
 
 .titulo span {
@@ -123,6 +137,7 @@
 
 .select {
   width: 100%;
+  max-width: 100%;
   min-height: 54px;
   height: 54px;
   border-radius: 12px;
@@ -139,6 +154,7 @@
 .autocomplete {
   position: relative;
   width: 100%;
+  max-width: 100%;
 }
 
 .sugerencias {
@@ -179,20 +195,26 @@
 }
 
 .zona-filtros {
+  width: 100%;
+  max-width: 100%;
   background: #f8fafc;
   border: 1px solid #e2e8f0;
   border-radius: 20px;
   padding: 0.8rem;
   margin-bottom: 1.25rem;
+  overflow-x: hidden;
 }
 
 .ajustes {
+  width: 100%;
+  max-width: 100%;
   background: #ffffff;
   border: 1px solid #e2e8f0;
   border-radius: 16px;
   box-shadow: none;
   padding: 0.85rem;
   margin-bottom: 0.75rem;
+  overflow-x: hidden;
 }
 
 .ajustes summary {
@@ -215,11 +237,13 @@
   display: flex;
   gap: 8px;
   width: 100%;
+  max-width: 100%;
 }
 
 .radio-btn,
 .fuel-btn {
-  flex: 1;
+  flex: 1 1 0;
+  min-width: 0;
   min-height: 44px;
   border: 1px solid #d8e0ea;
   border-radius: 12px;
@@ -247,6 +271,8 @@
 }
 
 .resumen-filtros {
+  width: 100%;
+  max-width: 100%;
   text-align: center;
   font-size: 0.92rem;
   padding: 10px 18px;
@@ -256,12 +282,15 @@
   color: #334155;
   box-shadow: none;
   font-weight: 500;
+  overflow-wrap: anywhere;
 }
 
 .cabecera-resultados {
   display: flex;
   align-items: center;
   gap: 12px;
+  width: 100%;
+  max-width: 100%;
   margin: 0.2rem 0 0.9rem 0;
   color: #64748b;
   font-size: 0.78rem;
@@ -273,11 +302,20 @@
 .cabecera-resultados::after {
   content: "";
   height: 1px;
-  flex: 1;
+  flex: 1 1 auto;
+  min-width: 0;
   background: #e2e8f0;
 }
 
+#resultados {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
 .gasolinera-card {
+  width: 100%;
+  max-width: 100%;
   background: #ffffff;
   border: 1px solid #d8e0ea;
   border-radius: 16px;
@@ -285,21 +323,24 @@
   padding: 0.8rem;
   margin-bottom: 0.7rem;
   display: grid;
-  grid-template-columns: 2.5fr 1.5fr;
+  grid-template-columns: minmax(0, 2.5fr) minmax(0, 1.5fr);
   gap: 1rem;
   align-items: center;
+  overflow-x: hidden;
 }
 
 .gasolinera-card h3 {
   margin: 0 0 0.4rem 0;
   color: #1e293b;
   font-size: 1.1rem;
+  overflow-wrap: anywhere;
 }
 
 .gasolinera-card p {
   margin: 0.25rem 0;
   color: #334155;
   font-size: 0.95rem;
+  overflow-wrap: anywhere;
 }
 
 .gasolinera-card .distancia {
@@ -309,6 +350,7 @@
 
 .btn-navegar {
   width: 100%;
+  max-width: 100%;
   min-height: 42px;
   border-radius: 10px;
   background: #f8fafc;
@@ -332,10 +374,6 @@
   .app {
     padding-left: 0.8rem;
     padding-right: 0.8rem;
-  }
-
-  .titulo {
-    margin-top: 1.45rem;
   }
 
   .language-selector {
@@ -365,8 +403,3 @@
     min-height: 50px;
     padding: 13px 14px;
   }
-
-  box-sizing: border-box;
-}
-
-body {
