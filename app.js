@@ -374,7 +374,7 @@ function pintarResultados() {
           <p class="distancia">${escapeHtml(distancia)}</p>
         </div>
         <div>
-          <a class="btn-navegar" href="${mapsUrl}" target="_blank" rel="noopener noreferrer">${escapeHtml(t().navegar)}</a>
+          ${mapsUrl}${escapeHtml(t().navegar)}</a>
         </div>
       </article>
     `;
@@ -688,3 +688,4 @@ document.addEventListener("click", e => {
 });
 
 aplicarIdioma();
+cargarDatos();
