@@ -1,6 +1,3 @@
-/* ==========================================================================
-   1. TIPOGRAFÍA Y BASE (Minimalismo Profesional)
-   ========================================================================== */
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
 
 * {
@@ -9,11 +6,9 @@
 
 body {
   margin: 0;
-  background: #ffffff;
-  color: #0f172a; 
+  background: #f1f5f9;
+  color: #1e293b;
   font-family: 'Poppins', sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
 }
 
 .app {
@@ -28,7 +23,6 @@ body {
   display: none !important;
 }
 
-/* Selector de Idioma */
 .language-selector {
   position: absolute;
   top: 0;
@@ -41,12 +35,11 @@ body {
 .lang {
   border: none;
   background: transparent;
-  color: #334155;
+  color: #1e293b;
   font-size: 0.8rem;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
   padding: 8px 4px;
-  transition: color 0.2s ease;
 }
 
 .lang.active {
@@ -57,23 +50,23 @@ body {
   width: 100%;
 }
 
-/* ==========================================================================
-   2. LOGOTIPO, TEXTOS Y CABECERAS (Estilo Maduro y Limpio)
-   ========================================================================== */
+/* --- ESTILOS DEL LOGO TIPOGRÁFICO ELEGANTE --- */
 .titulo {
   text-align: center;
-  font-size: clamp(32px, 8.5vw, 42px); 
-  font-weight: 700; 
-  color: #1e293b;
-  letter-spacing: -1.2px; 
+  font-size: clamp(34px, 9vw, 46px);
+  font-weight: 700; /* Peso firme pero limpio para la palabra principal */
+  color: #0f172a; 
+  letter-spacing: -1.2px; /* Interletraje reducido para cohesión moderna */
   margin: 1.2rem 0 0.5rem 0;
   line-height: 1;
 }
 
 .titulo span {
-  font-weight: 700; 
   color: #ef4444;
+  font-weight: 400; /* Peso ligero para crear un contraste estilizado y premium */
+  letter-spacing: -0.5px;
 }
+/* --------------------------------------------- */
 
 .subtitulo {
   text-align: center;
@@ -81,7 +74,7 @@ body {
   font-size: 1.05rem;
   margin-bottom: 2rem;
   margin-top: -0.5rem;
-  font-weight: 400;
+  font-weight: 500;
 }
 
 .texto-centro {
@@ -91,69 +84,28 @@ body {
   margin-bottom: 1rem;
 }
 
-.mensaje {
-  text-align: center;
-  color: #64748b;
-  padding: 1rem;
-}
-
-/* CABECERAS UNIFICADAS: "Bilatu" y "Emaitzak" */
-.cabecera-buscar,
-.cabecera-resultados {
-  font-weight: 600;
-  color: #334155; 
-  font-size: 0.95rem;
-  margin: 1.2rem 0 0.8rem 0;
-}
-
-/* ==========================================================================
-   3. BLOQUES DE SEPARACIÓN VISUAL (Contraste Mejorado)
-   ========================================================================== */
-.zona-filtros {
-  background: #f1f5f9; /* Gris sutilmente más oscuro para diferenciar el panel */
-  border: 1px solid #cbd5e1; /* Borde ligeramente más definido */
-  border-radius: 16px;
-  padding: 1.2rem;
-  margin-bottom: 0.8rem; 
-}
-
-.cabecera-resultados {
-  border-top: 1px solid #e2e8f0; 
-  padding-top: 0.8rem; 
-  margin-top: 0.5rem; 
-}
-
-/* ==========================================================================
-   4. BOTONES PRINCIPALES Y FORMULARIOS
-   ========================================================================== */
 .btn-principal {
   width: 100%;
-  min-height: 80px; 
+  min-height: 100px;
   border: none;
-  border-radius: 14px;
+  border-radius: 15px;
   background: #ef4444;
   color: white;
   font-family: 'Poppins', sans-serif;
-  font-size: 1.2rem;
-  font-weight: 600;
+  font-size: 1.3rem;
+  font-weight: 700;
   cursor: pointer;
-  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.15);
+  box-shadow: 0 4px 14px rgba(239, 68, 68, 0.25);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  transition: transform 0.1s ease, box-shadow 0.2s ease;
-}
-
-.btn-principal:active {
-  transform: translateY(1px);
-  box-shadow: 0 2px 6px rgba(239, 68, 68, 0.15);
+  gap: 8px;
 }
 
 .btn-principal small {
   font-size: 0.85rem;
-  font-weight: 400;
+  font-weight: 500;
   opacity: 0.9;
 }
 
@@ -166,22 +118,26 @@ body {
 
 .select {
   width: 100%;
-  min-height: 54px;
-  height: 54px;
+  min-height: 50px;
+  height: 50px;
   border-radius: 12px;
-  border: 1px solid #cbd5e1; 
+  border: 1px solid #e2e8f0;
   background: white;
   color: #1e293b;
   padding: 0 14px;
   font-family: 'Poppins', sans-serif;
   font-size: 1rem;
-  line-height: 54px;
+  line-height: 50px;
   outline: none;
-  transition: border-color 0.2s ease;
 }
 
-.select:focus {
-  border-color: #94a3b8;
+.select-compacto {
+  min-height: 44px;
+  height: 44px;
+  line-height: 44px;
+  font-size: 0.95rem;
+  border-radius: 12px;
+  padding-right: 38px;
 }
 
 .autocomplete {
@@ -189,26 +145,48 @@ body {
   width: 100%;
 }
 
+.btn-clear {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  font-size: 1.25rem;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  transition: color 0.15s ease;
+  z-index: 5;
+}
+
+.btn-clear:hover {
+  color: #475569;
+}
+
 .sugerencias {
   position: absolute;
   z-index: 9999;
-  bottom: calc(100% + 6px);
+  top: calc(100% + 6px);
   left: 0;
   right: 0;
   background: white;
   border: 1px solid #e2e8f0;
   border-radius: 14px;
-  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
-  overflow: hidden;
-  max-height: 280px;
+  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.08);
+  max-height: 140px;
   overflow-y: auto;
 }
 
 .sugerencia-item {
-  min-height: 48px;
-  padding: 12px 14px;
+  min-height: 46px;
+  padding: 10px 14px;
   cursor: pointer;
-  font-size: 1rem;
+  font-size: 0.95rem;
   line-height: 1.35;
   color: #1e293b;
   border-bottom: 1px solid #f1f5f9;
@@ -223,187 +201,163 @@ body {
 .sugerencia-item:hover,
 .sugerencia-item.active {
   background: #f8fafc;
-  color: #0f172a;
-}
-
-/* ==========================================================================
-   5. FILTROS Y AJUSTES
-   ========================================================================== */
-.ajustes {
-  background: #ffffff; /* Al ser blanco, ahora destaca perfectamente sobre el fondo gris del panel */
-  border: 1px solid #e2e8f0;
-  border-radius: 14px;
-  padding: 0.8rem;
-  margin-bottom: 1rem;
-}
-
-.ajustes summary {
-  cursor: pointer;
-  font-weight: 600;
   color: #1e293b;
-  margin-bottom: 1rem;
-  outline: none;
 }
 
-.ajustes label,
-.label {
-  display: block;
-  color: #475569;
-  font-size: 0.92rem;
-  font-weight: 600;
-  margin: 1rem 0 0.5rem 0;
+.zona-filtros {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.04), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
+  padding: 0.8rem;
+  margin-bottom: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
-.radio-group {
+.filtros-grid {
   display: flex;
   gap: 8px;
   width: 100%;
 }
 
+.radio-group {
+  display: flex;
+  gap: 8px;
+  flex: 1;
+}
+
 .radio-btn,
 .fuel-btn {
   flex: 1;
-  min-height: 42px;
-  border: 1px solid #e2e8f0;
+  min-height: 38px;
+  border: 1px solid #cbd5e1;
   border-radius: 10px;
-  background: #ffffff;
+  background: #f1f5f9;
   color: #475569;
   font-family: 'Poppins', sans-serif;
-  font-weight: 500; 
-  font-size: 0.95rem;
+  font-weight: 600;
+  font-size: 0.85rem;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 
 .radio-btn:hover,
 .fuel-btn:hover {
-  background: #f8fafc;
-  border-color: #cbd5e1;
+  background: #e2e8f0;
   color: #1e293b;
 }
 
 .radio-btn.active,
 .fuel-btn.active {
-  background: #1e293b;
-  border-color: #1e293b;
-  color: #ffffff;
-  font-weight: 600;
+  background: rgba(239, 68, 68, 0.1);
+  border-color: #ef4444;
+  color: #ef4444;
+  box-shadow: none;
 }
 
-.resumen-filtros {
-  text-align: center;
-  font-size: 0.95rem;
-  margin-bottom: 0;
-  padding: 10px 18px;
-  border-radius: 30px;
-  border: 1px solid #e2e8f0;
-  background-color: #ffffff; /* Este blanco también contrasta genial ahora */
-  color: #334155;
-  font-weight: 400;
+.cabecera-buscar,
+.cabecera-resultados {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.5rem;
 }
 
-/* ==========================================================================
-   6. TARJETAS DE RESULTADOS Y BOTÓN NAVIGATU
-   ========================================================================== */
-#resultados {
-  display: flex;
-  flex-direction: column;
-  gap: 0.8rem;
-  width: 100%;
+.cabecera-resultados {
+  border-top: 1px solid #e2e8f0;
+  padding-top: 1.5rem;
+  margin-top: 1.5rem;
 }
 
 .gasolinera-card {
   background: #ffffff;
   border: 1px solid #e2e8f0;
-  border-radius: 14px;
-  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.03);
-  padding: 1.1rem;
-  margin: 0;
-  display: flex;
-  justify-content: space-between;
+  border-radius: 16px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.04), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
+  padding: 1rem;
+  margin-bottom: 0.75rem;
+  display: grid;
+  grid-template-columns: 2.5fr 1.5fr;
+  gap: 1rem;
   align-items: center;
-  gap: 1.2rem;
-  width: 100%;
 }
 
-.info-gasolinera {
-  flex: 1;
-  min-width: 0;
-}
-
-.info-gasolinera h3 {
+.gasolinera-card h3 {
   margin: 0 0 0.4rem 0;
-  color: #0f172a;
+  color: #1e293b;
   font-size: 1.05rem;
   font-weight: 600;
 }
 
-.info-gasolinera p {
+.gasolinera-card p {
   margin: 0.25rem 0;
-  color: #475569;
-  font-size: 0.92rem;
+  color: #334155;
+  font-size: 0.9rem;
 }
 
-.info-gasolinera .distancia {
+.gasolinera-card .distancia {
   color: #64748b;
   font-size: 0.85rem;
 }
 
 .btn-navegar {
-  display: inline-flex;
+  width: 100%;
+  min-height: 40px;
+  border-radius: 10px;
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  color: #1e293b;
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 0.9rem;
+  display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 40px;
-  padding: 0 16px;
-  border-radius: 10px;
-  background: #f8fafc;
-  border: 1px solid #cbd5e1;
-  color: #0f172a;
-  text-decoration: none;
-  font-family: 'Poppins', sans-serif;
-  font-weight: 600;
-  font-size: 0.88rem;
-  white-space: nowrap;
-  flex-shrink: 0;
-  transition: all 0.2s ease;
-  cursor: pointer;
-  box-sizing: border-box;
+  transition: background-color 0.15s ease;
 }
 
 .btn-navegar:hover {
-  background: #0f172a;
-  color: #ffffff;
-  border-color: #0f172a;
+  background: #e2e8f0;
 }
 
-/* ==========================================================================
-   7. DISEÑO RESPONSIVO (Móviles)
-   ========================================================================== */
+.mensaje {
+  text-align: center;
+  color: #64748b;
+  padding: 1rem;
+}
+
 @media (max-width: 520px) {
   .app {
     padding-left: 0.8rem;
     padding-right: 0.8rem;
   }
 
-  .gasolinera-card {
+  .filtros-grid {
     flex-direction: column;
-    align-items: stretch;
-    gap: 1rem;
+    gap: 6px;
+  }
+
+  .gasolinera-card {
+    grid-template-columns: 1fr;
+    gap: 0.8rem;
   }
 
   .btn-navegar {
-    width: 100%;
     min-height: 44px;
-    height: 44px;
   }
 
   .sugerencias {
-    bottom: calc(100% + 8px);
-    max-height: 260px;
+    top: calc(100% + 6px);
+    max-height: 140px;
   }
 
   .sugerencia-item {
-    min-height: 50px;
-    padding: 13px 14px;
+    min-height: 48px;
+    padding: 11px 14px;
   }
 }
