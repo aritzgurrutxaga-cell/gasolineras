@@ -1,7 +1,6 @@
 /* ==========================================================================
    1. TIPOGRAFÍA Y BASE (Lettering moderno y minimalista)
    ========================================================================== */
-/* Añadidos los pesos 300 (Light) y 800 (ExtraBold) para el logo */
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;800&display=swap');
 
 * {
@@ -62,16 +61,16 @@ body {
    ========================================================================== */
 .titulo {
   text-align: center;
-  font-size: clamp(34px, 9.5vw, 46px); /* Ligeramente más grande para dar empaque de logo */
-  font-weight: 800; /* Extra bold para "gasolina" */
+  font-size: clamp(34px, 9.5vw, 46px);
+  font-weight: 800;
   color: #1e293b;
-  letter-spacing: -1.5px; /* Letras más apretadas, típico en logos de apps modernas */
+  letter-spacing: -1.5px;
   margin: 1.2rem 0 0.5rem 0;
-  line-height: 1; /* Mantiene la caja del texto limpia */
+  line-height: 1;
 }
 
 .titulo span {
-  font-weight: 300; /* Contraste total: muy fino para el ".eus" */
+  font-weight: 300;
   color: #ef4444;
   letter-spacing: -0.5px;
 }
@@ -98,11 +97,14 @@ body {
   padding: 1rem;
 }
 
+/* CABECERAS UNIFICADAS: "Bilatu" y "Emaitzak" 
+   Ahora comparten el lettering de los filtros aplicados
+*/
 .cabecera-buscar,
 .cabecera-resultados {
-  font-weight: 700;
-  color: #1e293b;
-  font-size: 1.15rem;
+  font-weight: 600; /* Coincide con la negrita de los filtros */
+  color: #334155; /* Mismo tono gris azulado */
+  font-size: 0.95rem; /* Mismo tamaño contenido */
   margin: 1.5rem 0 0.8rem 0;
 }
 
@@ -344,3 +346,56 @@ body {
   align-items: center;
   justify-content: center;
   min-height: 42px;
+  padding: 0 16px;
+  border-radius: 10px;
+  background: #f8fafc;
+  border: 1px solid #d8e0ea;
+  color: #1e293b;
+  text-decoration: none;
+  font-family: 'Poppins', sans-serif;
+  font-weight: 600;
+  font-size: 0.88rem;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+.btn-navegar:hover {
+  background: #1e293b;
+  color: #ffffff;
+  border-color: #1e293b;
+}
+
+/* ==========================================================================
+   7. DISEÑO RESPONSIVO (Móviles)
+   ========================================================================== */
+@media (max-width: 520px) {
+  .app {
+    padding-left: 0.8rem;
+    padding-right: 0.8rem;
+  }
+
+  .gasolinera-card {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+  }
+
+  .btn-navegar {
+    width: 100%;
+    min-height: 44px;
+    height: 44px;
+  }
+
+  .sugerencias {
+    bottom: calc(100% + 8px);
+    max-height: 260px;
+  }
+
+  .sugerencia-item {
+    min-height: 50px;
+    padding: 13px 14px;
+  }
+}
