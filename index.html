@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>gasolina.eus</title>
 
-  <link rel="stylesheet" href="styles.css?v=5">
+  <link rel="stylesheet" href="styles.css?v=6">
 
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4561237649685966" crossorigin="anonymous"></script>
 </head>
@@ -50,39 +50,46 @@
     <section id="pantalla-resultados" class="screen hidden">
       <h1 class="titulo">gasolina<span>.eus</span></h1>
 
-      <details class="ajustes">
-        <summary id="titulo-ajustes">⚙️ Bilaketa ezarpenak</summary>
+      <div class="zona-filtros">
+        <details class="ajustes">
+          <summary id="titulo-ajustes">⚙️ Bilaketa ezarpenak</summary>
 
-        <label id="label-cambiar-muni" for="input-municipio-ajustes">Aldatu udalerria:</label>
+          <label id="label-cambiar-muni" for="input-municipio-ajustes">Aldatu udalerria:</label>
 
-        <div class="autocomplete">
-          <input id="input-municipio-ajustes" class="select" type="search" autocomplete="off">
-          <div id="sugerencias-municipio-ajustes" class="sugerencias hidden"></div>
-        </div>
+          <div class="autocomplete">
+            <input id="input-municipio-ajustes" class="select" type="search" autocomplete="off">
+            <div id="sugerencias-municipio-ajustes" class="sugerencias hidden"></div>
+          </div>
 
-        <p id="label-radio" class="label">Bilaketa-erradioa:</p>
-        <div class="radio-group">
-          <button class="radio-btn active" type="button" data-radio="5">5 km</button>
-          <button class="radio-btn" type="button" data-radio="10">10 km</button>
-          <button class="radio-btn" type="button" data-radio="20">20 km</button>
-        </div>
+          <p id="label-radio" class="label">Bilaketa-erradioa:</p>
+          <div class="radio-group">
+            <button class="radio-btn active" type="button" data-radio="5">5 km</button>
+            <button class="radio-btn" type="button" data-radio="10">10 km</button>
+            <button class="radio-btn" type="button" data-radio="20">20 km</button>
+          </div>
 
-        <p id="label-combustible" class="label">Prezioaren arabera ordenatu:</p>
-        <div class="radio-group">
-          <button class="fuel-btn active" type="button" data-fuel="Diésel">Diésel</button>
-          <button class="fuel-btn" type="button" data-fuel="G95">G95</button>
-        </div>
+          <p id="label-combustible" class="label">Prezioaren arabera ordenatu:</p>
+          <div class="radio-group">
+            <button class="fuel-btn active" type="button" data-fuel="Diésel">Diésel</button>
+            <button class="fuel-btn" type="button" data-fuel="G95">G95</button>
+          </div>
 
-        <button id="btn-buscar-ajustes" class="btn-principal compacto" type="button">
-          🔍 Bilatu
-        </button>
-      </details>
+          <button id="btn-buscar-ajustes" class="btn-principal compacto" type="button">
+            🔍 Bilatu
+          </button>
+        </details>
 
-      <div id="resumen-filtros" class="resumen-filtros"></div>
+        <div id="resumen-filtros" class="resumen-filtros"></div>
+      </div>
+
+      <div class="cabecera-resultados">
+        <span id="titulo-resultados">Emaitzak</span>
+      </div>
+
       <div id="resultados"></div>
     </section>
   </main>
 
-  <script src="app.js?v=9"></script>
+  <script src="app.js?v=10"></script>
 </body>
 </html>
