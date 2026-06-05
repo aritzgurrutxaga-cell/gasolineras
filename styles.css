@@ -65,8 +65,7 @@ body {
   font-weight: 600;
   color: #1e293b;
   letter-spacing: -0.8px;
-  /* CORRECCIÓN: Reducido de 2.5rem a 1.2rem para acercarlo a los selectores EU/ES */
-  margin: 1.2rem 0 0.5rem 0; 
+  margin: 1.2rem 0 0.5rem 0; /* Más cerca del top */
 }
 
 .titulo span {
@@ -95,7 +94,6 @@ body {
   padding: 1rem;
 }
 
-/* Cabeceras de secciones internas (Bilatu y Emaitzak más en negrita) */
 .cabecera-buscar,
 .cabecera-resultados {
   font-weight: 700;
@@ -105,18 +103,16 @@ body {
 }
 
 /* ==========================================================================
-   3. BLOQUES DE SEPARACIÓN (Contraste de búsqueda vs resultados)
+   3. BLOQUES DE SEPARACIÓN VISUAL
    ========================================================================== */
-/* CORRECCIÓN: Añadido el recuadro con fondo sutil y borde fino para la zona superior */
 .zona-filtros {
-  background: #f8fafc; /* Fondo ligeramente grisáceo/azul distinto */
-  border: 1px solid #e2e8f0; /* Línea fina de contención */
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
   border-radius: 20px;
   padding: 1.2rem;
-  margin-bottom: 2rem; /* Separación clara antes de "Emaitzak" */
+  margin-bottom: 2rem;
 }
 
-/* Línea fina divisoria antes de los resultados */
 .cabecera-resultados {
   border-top: 1px solid #cbd5e1;
   padding-top: 1.5rem;
@@ -173,7 +169,6 @@ body {
   outline: none;
 }
 
-/* Autocomplete / Sugerencias */
 .autocomplete {
   position: relative;
   width: 100%;
@@ -217,7 +212,7 @@ body {
 }
 
 /* ==========================================================================
-   5. FILTROS Y AJUSTES (Dentro del recuadro de búsqueda)
+   5. FILTROS Y AJUSTES
    ========================================================================== */
 .ajustes {
   background: #ffffff;
@@ -283,7 +278,7 @@ body {
 .resumen-filtros {
   text-align: center;
   font-size: 0.95rem;
-  margin-bottom: 0; /* Ajustado por el padding de .zona-filtros */
+  margin-bottom: 0;
   padding: 12px 20px;
   border-radius: 40px;
   border: 1px solid #d8e0ea;
@@ -294,7 +289,7 @@ body {
 }
 
 /* ==========================================================================
-   6. SISTEMA AUTOMÁTICO PARA LAS TARJETAS DE RESULTADOS
+   6. TARJETAS DE RESULTADOS Y BOTÓN NAVIGATU (ESTRUCTURA BLINDADA)
    ========================================================================== */
 #resultados {
   display: flex;
@@ -310,67 +305,63 @@ body {
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
   padding: 1.1rem;
   margin: 0;
-  display: flex !important;
+  display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 1.2rem;
   width: 100%;
 }
 
-.gasolinera-card div, 
-.gasolinera-card section,
-#resultados .gasolinera-card > *:first-child {
+/* Contenedor estricto para los textos, empuja el botón a la derecha */
+.info-gasolinera {
   flex: 1;
-  min-width: 0;
+  min-width: 0; /* Previene desbordamiento horizontal */
 }
 
-.gasolinera-card h3 {
+.info-gasolinera h3 {
   margin: 0 0 0.4rem 0;
   color: #1e293b;
   font-size: 1.05rem;
   font-weight: 600;
 }
 
-.gasolinera-card p {
+.info-gasolinera p {
   margin: 0.25rem 0;
   color: #475569;
   font-size: 0.92rem;
 }
 
-.gasolinera-card .distancia {
+.info-gasolinera .distancia {
   color: #64748b;
   font-size: 0.85rem;
 }
 
-/* SISTEMA ANTI-ERROR BOTÓN NAVIGATU */
-.btn-navegar,
-#resultados .gasolinera-card a,
-#resultados .gasolinera-card button:not(.fuel-btn):not(.radio-btn) {
-  display: inline-flex !important;
+/* BOTÓN DEFINITIVO */
+.btn-navegar {
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 40px;
-  height: 40px;
-  padding: 0 16px !important;
-  border-radius: 10px !important;
-  background: #f8fafc !important;
-  border: 1px solid #d8e0ea !important;
-  color: #1e293b !important;
-  text-decoration: none !important;
-  font-weight: 600 !important;
-  font-size: 0.88rem !important;
-  white-space: nowrap !important;
-  flex-shrink: 0 !important;
-  transition: all 0.2s ease !important;
+  min-height: 42px;
+  padding: 0 16px;
+  border-radius: 10px;
+  background: #f8fafc;
+  border: 1px solid #d8e0ea;
+  color: #1e293b;
+  text-decoration: none;
+  font-family: 'Poppins', sans-serif;
+  font-weight: 600;
+  font-size: 0.88rem;
+  white-space: nowrap; /* Evita que se rompa en varias líneas */
+  flex-shrink: 0; /* EL SECRETO: Prohíbe tajantemente que la tarjeta lo aplaste */
+  transition: all 0.2s ease;
   cursor: pointer;
+  box-sizing: border-box;
 }
 
-.btn-navegar:hover,
-#resultados .gasolinera-card a:hover,
-#resultados .gasolinera-card button:not(.fuel-btn):not(.radio-btn):hover {
-  background: #1e293b !important;
-  color: #ffffff !important;
-  border-color: #1e293b !important;
+.btn-navegar:hover {
+  background: #1e293b;
+  color: #ffffff;
+  border-color: #1e293b;
 }
 
 /* ==========================================================================
@@ -383,15 +374,13 @@ body {
   }
 
   .gasolinera-card {
-    flex-direction: column !important;
-    align-items: stretch !important;
+    flex-direction: column;
+    align-items: stretch;
     gap: 1rem;
   }
 
-  .btn-navegar,
-  #resultados .gasolinera-card a,
-  #resultados .gasolinera-card button:not(.fuel-btn):not(.radio-btn) {
-    width: 100% !important;
+  .btn-navegar {
+    width: 100%;
     min-height: 44px;
     height: 44px;
   }
