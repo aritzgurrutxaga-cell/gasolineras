@@ -285,6 +285,7 @@ body {
   overflow-wrap: anywhere;
 }
 
+.cabecera-buscar,
 .cabecera-resultados {
   display: flex;
   align-items: center;
@@ -292,7 +293,6 @@ body {
   width: 100%;
   max-width: 100%;
   overflow: hidden;
-  margin: 0.2rem 0 0.9rem 0;
   color: #64748b;
   font-size: 0.78rem;
   font-weight: 800;
@@ -300,10 +300,20 @@ body {
   text-transform: uppercase;
 }
 
+.cabecera-buscar {
+  margin: 0.2rem 0 0.65rem 0;
+}
+
+.cabecera-resultados {
+  margin: 0.2rem 0 0.9rem 0;
+}
+
+.cabecera-buscar span,
 .cabecera-resultados span {
   flex: 0 0 auto;
 }
 
+.cabecera-buscar::after,
 .cabecera-resultados::after {
   content: "";
   height: 1px;
@@ -410,4 +420,3 @@ body {
     min-height: 50px;
     padding: 13px 14px;
   }
-}
