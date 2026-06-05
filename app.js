@@ -19,7 +19,8 @@ const TRAD = {
     distancia_fmt: "📍 {d} km-ra",
     sin_resultados: "Ez da gasolindegirik aurkitu hautatutako erradioan.",
     municipio_no_valido: "Aukeratu zerrendako udalerri bat.",
-    ubicacion_no_disponible: "Ezin izan da kokapena lortu. Bilatu udalerria eskuz."
+    ubicacion_no_disponible: "Ezin izan da kokapena lortu. Bilatu udalerria eskuz.",
+    permiso_bloqueado: "Kokapena blokeatuta dago. Aktibatzeko: Chrome → Ezarpenak → Gunearen ezarpenak → Kokapena → gasolina.eus → Baimendu."
   },
   es: {
     subtitulo: "Compara precios en tiempo real y ahorra en cada repostaje.",
@@ -41,7 +42,8 @@ const TRAD = {
     distancia_fmt: "📍 A {d} km",
     sin_resultados: "No se han encontrado gasolineras en el radio seleccionado.",
     municipio_no_valido: "Selecciona un municipio de la lista.",
-    ubicacion_no_disponible: "No se ha podido obtener la ubicación. Busca el municipio manualmente."
+    ubicacion_no_disponible: "No se ha podido obtener la ubicación. Busca el municipio manualmente.",
+    permiso_bloqueado: "La ubicación está bloqueada. Actívala en Chrome: Configuración → Configuración de sitios → Ubicación → gasolina.eus → Permitir."
   }
 };
 
@@ -484,6 +486,38 @@ function iniciarGeolocalizacion() {
   }, 600);
 }
 
+async function gestionarClickUbicacion() {
+  if (!navigator.geolocation) {
+    textoMunicipio.textContent = t().ubicacion_no_disponible;
+    mostrarPantalla("manual");
+    return;
+  }
+
+  if (navigator.permissions && navigator.permissions.query) {
+    try {
+      const permiso = await navigator.permissions.query({ name: "geolocation" });
+
+      if (permiso.state === "granted" || permiso.state === "prompt") {
+        iniciarGeolocalizacion();
+        return;
+      }
+
+      if (permiso.state === "denied") {
+        pararCuentaAtras();
+        mostrarPantalla("manual");
+        textoMunicipio.textContent = t().permiso_bloqueado;
+        inputMunicipio.focus();
+        return;
+      }
+    } catch (e) {
+      iniciarGeolocalizacion();
+      return;
+    }
+  }
+
+  iniciarGeolocalizacion();
+}
+
 async function iniciarSegunPermisoUbicacion() {
   if (!navigator.geolocation) {
     mostrarPantalla("inicio");
@@ -560,7 +594,7 @@ btnEs.addEventListener("click", () => {
   guardarEstado();
 });
 
-btnUbicacion.addEventListener("click", iniciarGeolocalizacion);
+btnUbicacion.addEventListener("click", gestionarClickUbicacion);
 
 inputMunicipio.addEventListener("input", () => {
   textoMunicipio.textContent = t().escribe_muni;
