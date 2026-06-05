@@ -1,7 +1,7 @@
 /* ==========================================================================
-   1. TIPOGRAFÍA Y BASE (Lettering moderno y minimalista)
+   1. TIPOGRAFÍA Y BASE (Minimalismo Profesional)
    ========================================================================== */
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
 
 * {
   box-sizing: border-box;
@@ -10,7 +10,7 @@
 body {
   margin: 0;
   background: #ffffff;
-  color: #1e293b;
+  color: #0f172a; /* Ligeramente más oscuro para mejor contraste y profesionalidad */
   font-family: 'Poppins', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -41,11 +41,12 @@ body {
 .lang {
   border: none;
   background: transparent;
-  color: #1e293b;
+  color: #334155;
   font-size: 0.8rem;
   font-weight: 600;
   cursor: pointer;
   padding: 8px 4px;
+  transition: color 0.2s ease;
 }
 
 .lang.active {
@@ -57,22 +58,21 @@ body {
 }
 
 /* ==========================================================================
-   2. LOGOTIPO, TEXTOS Y CABECERAS (Estilo Premium)
+   2. LOGOTIPO, TEXTOS Y CABECERAS (Estilo Maduro y Limpio)
    ========================================================================== */
 .titulo {
   text-align: center;
-  font-size: clamp(34px, 9.5vw, 46px);
-  font-weight: 800;
+  font-size: clamp(32px, 8.5vw, 42px); 
+  font-weight: 700; /* Peso unificado y sólido */
   color: #1e293b;
-  letter-spacing: -1.5px;
+  letter-spacing: -1.2px; /* Trazos más compactos */
   margin: 1.2rem 0 0.5rem 0;
   line-height: 1;
 }
 
 .titulo span {
-  font-weight: 300;
+  font-weight: 700; /* Mismo peso, solo cambia el color para diferenciar */
   color: #ef4444;
-  letter-spacing: -0.5px;
 }
 
 .subtitulo {
@@ -97,32 +97,32 @@ body {
   padding: 1rem;
 }
 
-/* CABECERAS UNIFICADAS: "Bilatu" y "Emaitzak" 
-   Ahora comparten el lettering de los filtros aplicados
-*/
+/* CABECERAS UNIFICADAS: "Bilatu" y "Emaitzak" */
 .cabecera-buscar,
 .cabecera-resultados {
-  font-weight: 600; /* Coincide con la negrita de los filtros */
-  color: #334155; /* Mismo tono gris azulado */
-  font-size: 0.95rem; /* Mismo tamaño contenido */
-  margin: 1.5rem 0 0.8rem 0;
+  font-weight: 600;
+  color: #334155; 
+  font-size: 0.95rem;
+  margin: 1.2rem 0 0.8rem 0;
 }
 
 /* ==========================================================================
-   3. BLOQUES DE SEPARACIÓN VISUAL
+   3. BLOQUES DE SEPARACIÓN VISUAL (Márgenes Reducidos)
    ========================================================================== */
 .zona-filtros {
   background: #f8fafc;
   border: 1px solid #e2e8f0;
-  border-radius: 20px;
+  border-radius: 16px;
   padding: 1.2rem;
-  margin-bottom: 2rem;
+  /* MARGEN INFERIOR REDUCIDO: Para acercar el recuadro a la línea de Emaitzak */
+  margin-bottom: 0.8rem; 
 }
 
 .cabecera-resultados {
-  border-top: 1px solid #cbd5e1;
-  padding-top: 1.5rem;
-  margin-top: 2rem;
+  border-top: 1px solid #e2e8f0; /* Línea más sutil */
+  /* PADDING Y MARGIN REDUCIDOS: Menos espacio hueco alrededor de la línea */
+  padding-top: 0.8rem; 
+  margin-top: 0.5rem; 
 }
 
 /* ==========================================================================
@@ -130,27 +130,34 @@ body {
    ========================================================================== */
 .btn-principal {
   width: 100%;
-  min-height: 90px;
+  min-height: 80px; /* Ligeramente más compacto */
   border: none;
   border-radius: 14px;
   background: #ef4444;
   color: white;
   font-family: 'Poppins', sans-serif;
-  font-size: 1.25rem;
+  font-size: 1.2rem;
   font-weight: 600;
   cursor: pointer;
-  box-shadow: 0 4px 14px rgba(239, 68, 68, 0.18);
+  /* Sombra más elegante y difuminada */
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.15);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 6px;
+  transition: transform 0.1s ease, box-shadow 0.2s ease;
+}
+
+.btn-principal:active {
+  transform: translateY(1px);
+  box-shadow: 0 2px 6px rgba(239, 68, 68, 0.15);
 }
 
 .btn-principal small {
   font-size: 0.85rem;
   font-weight: 400;
-  opacity: 0.85;
+  opacity: 0.9;
 }
 
 .btn-principal.compacto {
@@ -165,7 +172,7 @@ body {
   min-height: 54px;
   height: 54px;
   border-radius: 12px;
-  border: 1px solid #d8e0ea;
+  border: 1px solid #cbd5e1; /* Borde sutilmente más definido */
   background: white;
   color: #1e293b;
   padding: 0 14px;
@@ -173,6 +180,11 @@ body {
   font-size: 1rem;
   line-height: 54px;
   outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.select:focus {
+  border-color: #94a3b8;
 }
 
 .autocomplete {
@@ -187,9 +199,9 @@ body {
   left: 0;
   right: 0;
   background: white;
-  border: 1px solid #d8e0ea;
+  border: 1px solid #e2e8f0;
   border-radius: 14px;
-  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.08);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
   overflow: hidden;
   max-height: 280px;
   overflow-y: auto;
@@ -202,7 +214,7 @@ body {
   font-size: 1rem;
   line-height: 1.35;
   color: #1e293b;
-  border-bottom: 1px solid #eef2f6;
+  border-bottom: 1px solid #f1f5f9;
   display: flex;
   align-items: center;
 }
@@ -214,7 +226,7 @@ body {
 .sugerencia-item:hover,
 .sugerencia-item.active {
   background: #f8fafc;
-  color: #1e293b;
+  color: #0f172a;
 }
 
 /* ==========================================================================
@@ -222,9 +234,8 @@ body {
    ========================================================================== */
 .ajustes {
   background: #ffffff;
-  border: 1px solid #d8e0ea;
-  border-radius: 16px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
   padding: 0.8rem;
   margin-bottom: 1rem;
 }
@@ -240,8 +251,8 @@ body {
 .ajustes label,
 .label {
   display: block;
-  color: #334155;
-  font-size: 0.95rem;
+  color: #475569;
+  font-size: 0.92rem;
   font-weight: 600;
   margin: 1rem 0 0.5rem 0;
 }
@@ -255,13 +266,14 @@ body {
 .radio-btn,
 .fuel-btn {
   flex: 1;
-  min-height: 44px;
-  border: 1px solid #d8e0ea;
-  border-radius: 12px;
+  min-height: 42px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
   background: #ffffff;
-  color: #334155;
+  color: #475569;
   font-family: 'Poppins', sans-serif;
-  font-weight: 600;
+  font-weight: 500; /* Reducido para no competir con los títulos */
+  font-size: 0.95rem;
   cursor: pointer;
   transition: all 0.15s ease;
 }
@@ -278,19 +290,18 @@ body {
   background: #1e293b;
   border-color: #1e293b;
   color: #ffffff;
-  box-shadow: 0 3px 10px rgba(30, 41, 59, 0.1);
+  font-weight: 600;
 }
 
 .resumen-filtros {
   text-align: center;
   font-size: 0.95rem;
   margin-bottom: 0;
-  padding: 12px 20px;
-  border-radius: 40px;
-  border: 1px solid #d8e0ea;
+  padding: 10px 18px;
+  border-radius: 30px;
+  border: 1px solid #e2e8f0;
   background-color: #ffffff;
   color: #334155;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
   font-weight: 400;
 }
 
@@ -306,9 +317,10 @@ body {
 
 .gasolinera-card {
   background: #ffffff;
-  border: 1px solid #d8e0ea;
-  border-radius: 16px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  /* Sombra más profesional y menos invasiva */
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.03);
   padding: 1.1rem;
   margin: 0;
   display: flex;
@@ -325,7 +337,7 @@ body {
 
 .info-gasolinera h3 {
   margin: 0 0 0.4rem 0;
-  color: #1e293b;
+  color: #0f172a;
   font-size: 1.05rem;
   font-weight: 600;
 }
@@ -345,12 +357,12 @@ body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 42px;
+  min-height: 40px;
   padding: 0 16px;
   border-radius: 10px;
   background: #f8fafc;
-  border: 1px solid #d8e0ea;
-  color: #1e293b;
+  border: 1px solid #cbd5e1;
+  color: #0f172a;
   text-decoration: none;
   font-family: 'Poppins', sans-serif;
   font-weight: 600;
@@ -363,9 +375,9 @@ body {
 }
 
 .btn-navegar:hover {
-  background: #1e293b;
+  background: #0f172a;
   color: #ffffff;
-  border-color: #1e293b;
+  border-color: #0f172a;
 }
 
 /* ==========================================================================
