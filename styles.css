@@ -19,10 +19,10 @@ body {
 }
 
 .app {
-  width: 100%;
+  width: calc(100% - 1.6rem);
   max-width: 760px;
   margin: 0 auto;
-  padding: 1rem 1rem 25vh 1rem;
+  padding: 1rem 0 25vh 0;
   position: relative;
   overflow-x: hidden;
 }
@@ -288,9 +288,10 @@ body {
 .cabecera-resultados {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   width: 100%;
   max-width: 100%;
+  overflow: hidden;
   margin: 0.2rem 0 0.9rem 0;
   color: #64748b;
   font-size: 0.78rem;
@@ -299,11 +300,16 @@ body {
   text-transform: uppercase;
 }
 
+.cabecera-resultados span {
+  flex: 0 0 auto;
+}
+
 .cabecera-resultados::after {
   content: "";
   height: 1px;
-  flex: 1 1 auto;
+  flex: 1 1 0;
   min-width: 0;
+  max-width: 100%;
   background: #e2e8f0;
 }
 
@@ -372,8 +378,9 @@ body {
 
 @media (max-width: 520px) {
   .app {
-    padding-left: 0.8rem;
-    padding-right: 0.8rem;
+    width: calc(100% - 1.2rem);
+    padding-left: 0;
+    padding-right: 0;
   }
 
   .language-selector {
@@ -403,3 +410,4 @@ body {
     min-height: 50px;
     padding: 13px 14px;
   }
+}
