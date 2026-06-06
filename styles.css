@@ -50,23 +50,21 @@ body {
   width: 100%;
 }
 
-/* --- ESTILOS DEL LOGO TIPOGRÁFICO ELEGANTE --- */
 .titulo {
   text-align: center;
   font-size: clamp(34px, 9vw, 46px);
-  font-weight: 700; /* Peso firme pero limpio para la palabra principal */
+  font-weight: 700;
   color: #0f172a; 
-  letter-spacing: -1.2px; /* Interletraje reducido para cohesión moderna */
+  letter-spacing: -1.2px;
   margin: 1.2rem 0 0.5rem 0;
   line-height: 1;
 }
 
 .titulo span {
   color: #ef4444;
-  font-weight: 400; /* Peso ligero para crear un contraste estilizado y premium */
+  font-weight: 400;
   letter-spacing: -0.5px;
 }
-/* --------------------------------------------- */
 
 .subtitulo {
   text-align: center;
@@ -114,6 +112,30 @@ body {
   font-size: 1rem;
   margin-top: 1rem;
   box-shadow: none;
+}
+
+.btn-secundario {
+  width: 100%;
+  min-height: 50px;
+  margin-top: 1.2rem;
+  border: 2px solid #ef4444;
+  border-radius: 12px;
+  background: transparent;
+  color: #ef4444;
+  font-family: 'Poppins', sans-serif;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.btn-secundario:hover {
+  background: #ef4444;
+  color: white;
 }
 
 .select {
