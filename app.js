@@ -97,7 +97,7 @@ function t() {
   return TRAD[lang];
 }
 
-// Función corregida: Evita errores de sintaxis y escapa código HTML de verdad
+// Función corregida: Evita errores de sintaxis y usa entidades HTML válidas
 function escapeHtml(valor) {
   const str = valor != null ? String(valor) : "";
   return str
@@ -107,7 +107,6 @@ function escapeHtml(valor) {
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;");
 }
-
 
 function mostrarPantalla(nombre) {
   pantallaInicio.classList.add("hidden");
@@ -352,7 +351,7 @@ function pintarResultados() {
 
     const distancia = t().distancia_fmt.replace("{d}", g.distancia.toFixed(2));
     
-    // CORREGIDO: Sintaxis correcta de interpolación para la URL
+    // Sintaxis arreglada de template literal y URL estándar de Google Maps
     const mapsUrl = `https://maps.google.com/?q=${encodeURIComponent(g.lat_num + "," + g.lon_num)}`;
 
     return `
