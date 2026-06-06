@@ -44,7 +44,6 @@ const TRAD = {
 let datos = [];
 let municipios = [];
 
-// Blindaje de localStorage y validación de variables
 let lang = "es";
 let tipoCombustible = "Diésel";
 let radioKm = 5;
@@ -97,7 +96,6 @@ function t() {
   return TRAD[lang];
 }
 
-// Función corregida y validada para escapar HTML
 function escapeHtml(valor) {
   const str = valor != null ? String(valor) : "";
   return str
@@ -640,7 +638,38 @@ document.addEventListener("click", e => {
   }
 });
 
-// NUEVO: Registro del Service Worker para convertir la web en PWA
+// Controladores para la instalación nativa de la PWA
+let deferredPrompt = null;
+const btnInstalarApp = document.getElementById("btn-instalar-app");
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  if (btnInstalarApp) {
+    btnInstalarApp.classList.remove("hidden");
+  }
+});
+
+if (btnInstalarApp) {
+  btnInstalarApp.addEventListener('click', async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    console.log(`Instalación: ${outcome}`);
+    deferredPrompt = null;
+    btnInstalarApp.classList.add("hidden");
+  });
+}
+
+window.addEventListener('appinstalled', () => {
+  console.log('PWA instalada.');
+  deferredPrompt = null;
+  if (btnInstalarApp) {
+    btnInstalarApp.classList.add("hidden");
+  }
+});
+
+// Registro del Service Worker
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js')
