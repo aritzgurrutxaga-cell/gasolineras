@@ -101,12 +101,13 @@ function t() {
 function escapeHtml(valor) {
   const str = valor != null ? String(valor) : "";
   return str
-    .replace(/&/g, "&")
-    .replace(/</g, "<")
-    .replace(/>/g, ">")
-    .replace(/"/g, """)
-    .replace(/'/g, "'");
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 }
+
 
 function mostrarPantalla(nombre) {
   pantallaInicio.classList.add("hidden");
