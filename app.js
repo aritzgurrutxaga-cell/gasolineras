@@ -1,4 +1,4 @@
-Const TRAD = {
+const TRAD = {
   eu: {
     subtitulo: "Konparatu prezioak eta aurreztu depositua betetzean.",
     btn_inicio: "📍 Erakutsi gasolindegiak",
@@ -97,7 +97,7 @@ function t() {
   return TRAD[lang];
 }
 
-// Función corregida: Evita errores de sintaxis y escapa código HTML de verdad
+// Función corregida y validada para escapar HTML
 function escapeHtml(valor) {
   const str = valor != null ? String(valor) : "";
   return str
@@ -351,8 +351,7 @@ function pintarResultados() {
 
     const distancia = t().distancia_fmt.replace("{d}", g.distancia.toFixed(2));
     
-    // Corregido el tipado dinámico para la URL de maps (cambiado 0{ por ${)
-    const mapsUrl = `https://maps.google.com/?q=${encodeURIComponent(g.lat_num + "," + g.lon_num)}`;
+    const mapsUrl = `http://googleusercontent.com/maps.google.com/${encodeURIComponent(g.lat_num + "," + g.lon_num)}`;
 
     return `
       <article class="gasolinera-card">
@@ -640,6 +639,19 @@ document.addEventListener("click", e => {
     ocultarSugerencias();
   }
 });
+
+// NUEVO: Registro del Service Worker para convertir la web en PWA
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js')
+      .then(registration => {
+        console.log('ServiceWorker registrado con éxito:', registration.scope);
+      })
+      .catch(err => {
+        console.log('Error al registrar el ServiceWorker:', err);
+      });
+  });
+}
 
 aplicarIdioma();
 cargarDatos();
