@@ -101,11 +101,11 @@ function t() {
 function escapeHtml(valor) {
   const str = valor != null ? String(valor) : "";
   return str
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
+    .replace(/&/g, "&")
+    .replace(/</g, "<")
+    .replace(/>/g, ">")
+    .replace(/"/g, """)
+    .replace(/'/g, "'");
 }
 
 function mostrarPantalla(nombre) {
@@ -351,7 +351,7 @@ function pintarResultados() {
 
     const distancia = t().distancia_fmt.replace("{d}", g.distancia.toFixed(2));
     
-    // Corregido el tipado dinámico para la URL de maps (cambiado 0{ por ${)
+    // CORREGIDO: Sintaxis correcta de interpolación para la URL
     const mapsUrl = `https://maps.google.com/?q=${encodeURIComponent(g.lat_num + "," + g.lon_num)}`;
 
     return `
@@ -640,6 +640,19 @@ document.addEventListener("click", e => {
     ocultarSugerencias();
   }
 });
+
+// NUEVO: Registro del Service Worker para convertir la web en PWA
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js')
+      .then(registration => {
+        console.log('ServiceWorker registrado con éxito:', registration.scope);
+      })
+      .catch(err => {
+        console.log('Error al registrar el ServiceWorker:', err);
+      });
+  });
+}
 
 aplicarIdioma();
 cargarDatos();
