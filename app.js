@@ -45,7 +45,7 @@ let datos = [];
 let municipios = [];
 
 // Blindaje de localStorage y validación de variables
-let lang = "eu";
+let lang = "es";
 let tipoCombustible = "Diésel";
 let radioKm = 5;
 
