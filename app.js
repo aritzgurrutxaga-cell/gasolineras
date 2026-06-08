@@ -44,7 +44,7 @@ const TRAD = {
 let datos = [];
 let municipios = [];
 
-let lang = "es";
+let lang = "eu";
 let tipoCombustible = "Diésel";
 let radioKm = 5;
 
