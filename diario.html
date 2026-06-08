@@ -2,24 +2,23 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Generador de Tweets - Gasolina.eus</title>
+    <title>Generador de Posts - Gasolina.eus</title>
     <style>
-        body { font-family: sans-serif; max-width: 800px; margin: 20px auto; padding: 20px; background: #f4f7f6; }
-        .tweet-box { margin-bottom: 30px; background: #fff; padding: 15px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        textarea { width: 100%; height: 150px; display: block; margin: 10px 0; border: 1px solid #ccc; padding: 10px; border-radius: 5px; }
-        .botones { display: flex; gap: 10px; }
-        button { padding: 10px; cursor: pointer; flex: 1; font-weight: bold; border-radius: 5px; border: none; }
+        body { font-family: sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; text-align: center; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 30px; }
+        button { padding: 20px; font-size: 16px; cursor: pointer; border: none; border-radius: 8px; background: #1da1f2; color: white; font-weight: bold; }
+        button:hover { background: #0c85d0; }
     </style>
 </head>
 <body>
 
-    <h1>Tweets por Provincia</h1>
-    <div id="contenedor-tweets">Cargando datos...</div>
+    <h1>Publicar en Twitter</h1>
+    <div id="contenedor" class="grid">Cargando...</div>
 
     <script>
-        function toBold(text) {
-            const map = {'0':'𝟎','1':'𝟏','2':'𝟐','3':'𝟑','4':'𝟒','5':'𝟓','6':'𝟔','7':'𝟕','8':'𝟖','9':'𝟗','a':'𝐚','b':'𝐛','c':'𝐜','d':'𝐝','e':'𝐞','f':'𝐟','g':'𝐠','h':'𝐡','i':'𝐢','j':'𝐣','k':'𝐤','l':'𝐥','m':'𝐦','n':'𝐧','o':'𝐨','p':'𝐩','q':'𝐪','r':'𝐫','s':'𝐬','t':'𝐭','u':'𝐮','v':'𝐯','w':'𝐰','x':'𝐱','y':'𝐲','z':'𝐳','A':'𝐀','B':'𝐁','C':'𝐂','D':'𝐃','E':'𝐄','F':'𝐅','G':'𝐆','H':'𝐇','I':'𝐈','J':'𝐉','K':'𝐊','L':'𝐋','M':'𝐌','N':'𝐍','O':'𝐎','P':'𝐏','Q':'𝐐','R':'𝐑','S':'𝐒','T':'𝐓','U':'𝐔','V':'𝐕','W':'𝐖','X':'𝐗','Y':'𝐘','Z':'𝐙',' ':' ','é':'é','í':'í',':':':','€':'€','(':'(',')':')','-':'-','&':'&','/':'/','.':'.','!':'!','?':'?'};
-            return text.split('').map(char => map[char] || char).join('');
+        function toBold(t) {
+            const m = {'a':'𝐚','b':'𝐛','c':'𝐜','d':'𝐝','e':'𝐞','f':'𝐟','g':'𝐠','h':'𝐡','i':'𝐢','j':'𝐣','k':'𝐤','l':'𝐥','m':'𝐦','n':'𝐧','o':'𝐨','p':'𝐩','q':'𝐪','r':'𝐫','s':'𝐬','t':'𝐭','u':'𝐮','v':'𝐯','w':'𝐰','x':'𝐱','y':'𝐲','z':'𝐳','A':'𝐀','B':'𝐁','C':'𝐂','D':'𝐃','E':'𝐄','F':'𝐅','G':'𝐆','H':'𝐇','I':'𝐈','J':'𝐉','K':'𝐊','L':'𝐋','M':'𝐌','N':'𝐍','O':'𝐎','P':'𝐏','Q':'𝐐','R':'𝐑','S':'𝐒','T':'𝐓','U':'𝐔','V':'𝐕','W':'𝐖','X':'𝐗','Y':'𝐘','Z':'𝐙','0':'𝟎','1':'𝟏','2':'𝟐','3':'𝟑','4':'𝟒','5':'𝟓','6':'𝟔','7':'𝟕','8':'𝟖','9':'𝟗',' ':' ','é':'é','í':'í',':':':','€':'€','(':'(',')':')','-':'-','&':'&','/':'/','.':'.'};
+            return t.split('').map(c => m[c] || c).join('');
         }
 
         async function init() {
@@ -27,42 +26,37 @@
                 const res = await fetch(`./precios_gasolineras.json?t=${Date.now()}`);
                 const data = await res.json();
                 const prods = ["GIPUZKOA", "ÁLAVA", "NAVARRA", "BIZKAIA"];
-                let html = "";
+                let posts = [];
 
-                prods.forEach((p, index) => {
+                prods.forEach(p => {
                     const ests = data.datos.filter(e => e.Provincia.toUpperCase().includes(p) || (p === "ÁLAVA" && e.Provincia.toUpperCase().includes("ARABA")));
                     const g95 = ests.filter(e => e["Precio Gasolina 95 E5"]).sort((a,b) => parseFloat(a["Precio Gasolina 95 E5"].replace(',','.')) - parseFloat(b["Precio Gasolina 95 E5"].replace(',','.')))[0];
                     const gA = ests.filter(e => e["Precio Gasoleo A"]).sort((a,b) => parseFloat(a["Precio Gasoleo A"].replace(',','.')) - parseFloat(b["Precio Gasoleo A"].replace(',','.')))[0];
-                    const url = (e) => `https://www.google.com/search?q=http://maps.google.com/%3Fq%3D42.842778,-2.686667{e.Latitud.replace(',','.')},${e["Longitud (WGS84)"].replace(',','.')}`;
+                    const url = (e) => `https://www.google.com/search?q=http://maps.google.com/%3Fq%3D42.046389,-1.616389{e.Latitud.replace(',','.')},${e["Longitud (WGS84)"].replace(',','.')}`;
                     
-                    // Título en negrita + Provincia
-                    let titulo = toBold("Gasolineras mas baratas " + p);
-                    let contenido = `${titulo}\n`;
-                    
-                    if(g95) contenido += `${g95.Rótulo} (${g95.Localidad}) - ${toBold("Gasolina 95: " + g95["Precio Gasolina 95 E5"] + "€")} - ${url(g95)}\n`;
-                    if(gA) contenido += `${gA.Rótulo} (${gA.Localidad}) - ${toBold("Diesel: " + gA["Precio Gasoleo A"] + "€")} - ${url(gA)}`;
-                    
-                    html += `<div class="tweet-box">
-                        <textarea id="tw-${index}" readonly>${contenido}</textarea>
-                        <div class="botones">
-                            <button onclick="copiar('tw-${index}')">Copiar</button>
-                            <button onclick="twittear('tw-${index}')" style="background:#1da1f2; color:white;">Postear</button>
-                        </div>
-                    </div>`;
+                    // Castellano
+                    let es = `${toBold("Gasolineras mas baratas " + p)}\n`;
+                    if(g95) es += `${g95.Rótulo} (${g95.Localidad}) - ${toBold("Gasolina 95: " + g95["Precio Gasolina 95 E5"] + "€")} - ${url(g95)}\n`;
+                    if(gA) es += `${gA.Rótulo} (${gA.Localidad}) - ${toBold("Diesel: " + gA["Precio Gasoleo A"] + "€")} - ${url(gA)}`;
+                    posts.push({ lang: "ES", text: es });
+
+                    // Euskera
+                    let eu = `${toBold("Gasolindegi merkeenak " + p)}\n`;
+                    if(g95) eu += `${g95.Rótulo} (${g95.Localidad}) - ${toBold("95 Gasolina: " + g95["Precio Gasolina 95 E5"] + "€")} - ${url(g95)}\n`;
+                    if(gA) eu += `${gA.Rótulo} (${gA.Localidad}) - ${toBold("Diesel: " + gA["Precio Gasoleo A"] + "€")} - ${url(gA)}`;
+                    posts.push({ lang: "EU", text: eu });
                 });
-                document.getElementById("contenedor-tweets").innerHTML = html;
-            } catch(e) { document.getElementById("contenedor-tweets").innerHTML = "Error al cargar datos."; }
+
+                let html = "";
+                posts.forEach((post, i) => {
+                    html += `<button onclick="postear(\`${post.text.replace(/`/g, '\\`')}\`)">Post ${i+1} (${post.lang})</button>`;
+                });
+                document.getElementById("contenedor").innerHTML = html;
+            } catch(e) { document.getElementById("contenedor").innerHTML = "Error cargando datos."; }
         }
 
-        function copiar(id) {
-            document.getElementById(id).select();
-            document.execCommand("copy");
-            alert("¡Copiado!");
-        }
-
-        function twittear(id) {
-            const t = document.getElementById(id).value;
-            window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(t)}`, '_blank');
+        function postear(texto) {
+            window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(texto)}`, '_blank');
         }
 
         init();
