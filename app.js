@@ -349,7 +349,8 @@ function pintarResultados() {
 
     const distancia = t().distancia_fmt.replace("{d}", g.distancia.toFixed(2));
     
-    const mapsUrl = `http://googleusercontent.com/maps.google.com/${encodeURIComponent(g.lat_num + "," + g.lon_num)}`;
+    // Aquí está el cambio específico que soluciona la navegación
+    const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${g.lat_num},${g.lon_num}`;
 
     return `
       <article class="gasolinera-card">
