@@ -34,7 +34,7 @@
                 const prods = ["GIPUZKOA", "ÁLAVA", "NAVARRA", "BIZKAIA"];
                 const fecha = "08/06/2026";
                 
-                let hilo = `🧵 HILO: GASOLINERAS MÁS BARATAS DE EUSKADI Y NAVARRA (${fecha})\n¿Quieres dejar de pagar de más al repostar? Si buscas la gasolinera más barata cerca de ti, accede a https://gasolina.eus. 👇 #AhorroCombustible #Euskadi #Navarra\n\n`;
+                let hilo = `${toBold("🧵 HILO: GASOLINERAS MÁS BARATAS DE EUSKADI Y NAVARRA (" + fecha + ")")}\n¿Quieres dejar de pagar de más al repostar? Si buscas la gasolinera más barata cerca de ti, accede a https://gasolina.eus. 👇 #AhorroCombustible #Euskadi #Navarra\n\n`;
 
                 prods.forEach(p => {
                     const ests = data.datos.filter(e => e.Provincia.toUpperCase().includes(p) || (p === "ÁLAVA" && e.Provincia.toUpperCase().includes("ARABA")));
