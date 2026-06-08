@@ -26,19 +26,18 @@
                 const res = await fetch(`./precios_gasolineras.json?t=${Date.now()}`);
                 const data = await res.json();
                 const prods = ["GIPUZKOA", "ÁLAVA", "NAVARRA", "BIZKAIA"];
-                const fecha = "08/06/2026"; // Fecha fija según tu ejemplo
+                const fecha = "08/06/2026"; 
                 
                 let hilo = `🧵 HILO: GASOLINERAS MÁS BARATAS DE EUSKADI Y NAVARRA (${fecha})\n¿Quieres dejar de pagar de más al repostar? Si buscas la gasolinera más barata cerca de ti, accede a https://gasolina.eus. 👇 #AhorroCombustible #Euskadi #Navarra\n\n`;
 
                 prods.forEach(p => {
-                    // Filtrar por provincia
                     const ests = data.datos.filter(e => e.Provincia.toUpperCase().includes(p) || (p === "ÁLAVA" && e.Provincia.toUpperCase().includes("ARABA")));
                     
-                    // Buscar más baratas
                     const g95 = ests.filter(e => e["Precio Gasolina 95 E5"]).sort((a,b) => parseFloat(a["Precio Gasolina 95 E5"].replace(',','.')) - parseFloat(b["Precio Gasolina 95 E5"].replace(',','.')))[0];
                     const gA = ests.filter(e => e["Precio Gasoleo A"]).sort((a,b) => parseFloat(a["Precio Gasoleo A"].replace(',','.')) - parseFloat(b["Precio Gasoleo A"].replace(',','.')))[0];
 
-                    const genUrl = (e) => `http://googleusercontent.com/maps.google.com/${e.Latitud.replace(',','.')},${e["Longitud (WGS84)"].replace(',','.')}`;
+                    // URL oficial de Google Maps
+                    const genUrl = (e) => `https://www.google.com/maps/search/?api=1&query=${e.Latitud.replace(',','.')},${e["Longitud (WGS84)"].replace(',','.')}`;
 
                     hilo += `📍 ${p} (${fecha}):\n`;
                     if(g95) hilo += `1️⃣ ${g95.Rótulo} (${g95.Localidad}, ${g95.Dirección}): G95 ${g95["Precio Gasolina 95 E5"]}€ ${genUrl(g95)}\n`;
@@ -51,7 +50,7 @@
                     <textarea id="texto-hilo" readonly>${hilo}</textarea>
                 `;
             } catch (e) {
-                document.getElementById('contenedor-gasolineras').innerHTML = "Error al procesar el JSON.";
+                document.getElementById('contenedor-gasolineras').innerHTML = "Error al procesar el JSON. Asegúrate de que el archivo existe.";
             }
         }
 
