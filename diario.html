@@ -32,31 +32,35 @@
                     const ests = data.datos.filter(e => e.Provincia.toUpperCase().includes(p) || (p === "ÁLAVA" && e.Provincia.toUpperCase().includes("ARABA")));
                     const g95 = ests.filter(e => e["Precio Gasolina 95 E5"]).sort((a,b) => parseFloat(a["Precio Gasolina 95 E5"].replace(',','.')) - parseFloat(b["Precio Gasolina 95 E5"].replace(',','.')))[0];
                     const gA = ests.filter(e => e["Precio Gasoleo A"]).sort((a,b) => parseFloat(a["Precio Gasoleo A"].replace(',','.')) - parseFloat(b["Precio Gasoleo A"].replace(',','.')))[0];
-                    const url = (e) => `https://www.google.com/search?q=http://maps.google.com/%3Fq%3D42.046389,-1.616389{e.Latitud.replace(',','.')},${e["Longitud (WGS84)"].replace(',','.')}`;
+                    
+                    // Función para generar la URL sin cortes
+                    const getUrl = (e) => {
+                        const lat = e.Latitud.replace(',', '.');
+                        const lon = e["Longitud (WGS84)"].replace(',', '.');
+                        return `https://www.google.com/maps/search/?api=1&query=${lat},${lon}`;
+                    };
                     
                     // Castellano
                     let es = `${toBold("Gasolineras mas baratas " + p)}\n`;
-                    if(g95) es += `${g95.Rótulo} (${g95.Localidad}) - ${toBold("Gasolina 95: " + g95["Precio Gasolina 95 E5"] + "€")} - ${url(g95)}\n`;
-                    if(gA) es += `${gA.Rótulo} (${gA.Localidad}) - ${toBold("Diesel: " + gA["Precio Gasoleo A"] + "€")} - ${url(gA)}`;
+                    if(g95) es += `${g95.Rótulo} (${g95.Localidad}) - ${toBold("Gasolina 95: " + g95["Precio Gasolina 95 E5"] + "€")} - ${getUrl(g95)}\n`;
+                    if(gA) es += `${gA.Rótulo} (${gA.Localidad}) - ${toBold("Diesel: " + gA["Precio Gasoleo A"] + "€")} - ${getUrl(gA)}`;
                     posts.push({ lang: "ES", text: es });
 
                     // Euskera
                     let eu = `${toBold("Gasolindegi merkeenak " + p)}\n`;
-                    if(g95) eu += `${g95.Rótulo} (${g95.Localidad}) - ${toBold("95 Gasolina: " + g95["Precio Gasolina 95 E5"] + "€")} - ${url(g95)}\n`;
-                    if(gA) eu += `${gA.Rótulo} (${gA.Localidad}) - ${toBold("Diesel: " + gA["Precio Gasoleo A"] + "€")} - ${url(gA)}`;
+                    if(g95) eu += `${g95.Rótulo} (${g95.Localidad}) - ${toBold("95 Gasolina: " + g95["Precio Gasolina 95 E5"] + "€")} - ${getUrl(g95)}\n`;
+                    if(gA) eu += `${gA.Rótulo} (${gA.Localidad}) - ${toBold("Diesel: " + gA["Precio Gasoleo A"] + "€")} - ${getUrl(gA)}`;
                     posts.push({ lang: "EU", text: eu });
                 });
 
                 let html = "";
                 posts.forEach((post, i) => {
-                    html += `<button onclick="postear(\`${post.text.replace(/`/g, '\\`')}\`)">Post ${i+1} (${post.lang})</button>`;
+                    // Usamos encodeURIComponent directamente en el onclick para evitar problemas de caracteres
+                    const text = encodeURIComponent(post.text);
+                    html += `<button onclick="window.open('https://twitter.com/intent/tweet?text=${text}', '_blank')">Post ${i+1} (${post.lang})</button>`;
                 });
                 document.getElementById("contenedor").innerHTML = html;
             } catch(e) { document.getElementById("contenedor").innerHTML = "Error cargando datos."; }
-        }
-
-        function postear(texto) {
-            window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(texto)}`, '_blank');
         }
 
         init();
