@@ -10,6 +10,7 @@
         #contenedor-gasolineras { background: #fff; padding: 20px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         textarea { width: 100%; height: 500px; margin-top: 15px; font-family: sans-serif; padding: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
         button { background: #007bff; color: white; border: none; padding: 15px 20px; border-radius: 5px; cursor: pointer; font-size: 16px; width: 100%; font-weight: bold; }
+        button:hover { background: #0056b3; }
     </style>
 </head>
 <body>
@@ -18,19 +19,9 @@
     <main id="contenedor-gasolineras">Procesando datos...</main>
 
     <script>
-        // Función para convertir texto normal a Unicode negrita
-        function toBold(text) {
-            const boldMap = {
-                'a':'𝐚','b':'𝐛','c':'𝐜','d':'𝐝','e':'𝐞','f':'𝐟','g':'𝐠','h':'𝐡','i':'𝐢','j':'𝐣','k':'𝐤','l':'𝐥','m':'𝐦','n':'𝐧','o':'𝐨','p':'𝐩','q':'𝐪','r':'𝐫','s':'𝐬','t':'𝐭','u':'𝐮','v':'𝐯','w':'𝐰','x':'𝐱','y':'𝐲','z':'𝐳',
-                'A':'𝐀','B':'𝐁','C':'𝐂','D':'𝐃','E':'𝐄','F':'𝐅','G':'𝐆','H':'𝐇','I':'𝐈','J':'𝐉','K':'𝐊','L':'𝐋','M':'𝐌','N':'𝐍','O':'𝐎','P':'𝐏','Q':'𝐐','R':'𝐑','S':'𝐒','T':'𝐓','U':'𝐔','V':'𝐕','W':'𝐖','X':'𝐗','Y':'𝐘','Z':'𝐙',
-                '0':'𝟎','1':'𝟏','2':'𝟐','3':'𝟑','4':'𝟒','5':'𝟓','6':'𝟔','7':'𝟕','8':'𝟖','9':'𝟗',
-                ':':':', ' ': ' '
-            };
-            return text.split('').map(char => boldMap[char] || char).join('');
-        }
-
         async function generarTodo() {
             try {
+                // Fetch del archivo JSON en la raíz del repo
                 const res = await fetch(`./precios_gasolineras.json?t=${Date.now()}`);
                 const data = await res.json();
                 const prods = ["GIPUZKOA", "ÁLAVA", "NAVARRA", "BIZKAIA"];
@@ -39,16 +30,19 @@
                 let hilo = `🧵 HILO: GASOLINERAS MÁS BARATAS DE EUSKADI Y NAVARRA (${fecha})\n¿Quieres dejar de pagar de más al repostar? Si buscas la gasolinera más barata cerca de ti, accede a https://gasolina.eus. 👇 #AhorroCombustible #Euskadi #Navarra\n\n`;
 
                 prods.forEach(p => {
+                    // Filtrar estaciones por provincia
                     const ests = data.datos.filter(e => e.Provincia.toUpperCase().includes(p) || (p === "ÁLAVA" && e.Provincia.toUpperCase().includes("ARABA")));
                     
+                    // Buscar la más barata para cada tipo
                     const g95 = ests.filter(e => e["Precio Gasolina 95 E5"]).sort((a,b) => parseFloat(a["Precio Gasolina 95 E5"].replace(',','.')) - parseFloat(b["Precio Gasolina 95 E5"].replace(',','.')))[0];
                     const gA = ests.filter(e => e["Precio Gasoleo A"]).sort((a,b) => parseFloat(a["Precio Gasoleo A"].replace(',','.')) - parseFloat(b["Precio Gasoleo A"].replace(',','.')))[0];
 
+                    // Formato de enlace a Google Maps estándar
                     const genUrl = (e) => `https://www.google.com/maps/search/?api=1&query=${e.Latitud.replace(',','.')},${e["Longitud (WGS84)"].replace(',','.')}`;
 
                     hilo += `📍 ${p} (${fecha}):\n`;
-                    if(g95) hilo += `${toBold("Gasolina 95: " + g95["Precio Gasolina 95 E5"] + "€")}\n${g95.Rótulo} (${g95.Localidad}, ${g95.Dirección})\n${genUrl(g95)}\n\n`;
-                    if(gA) hilo += `${toBold("Diesel: " + gA["Precio Gasoleo A"] + "€")}\n${gA.Rólulo || gA.Rótulo} (${gA.Localidad}, ${gA.Dirección})\n${genUrl(gA)}\n\n`;
+                    if(g95) hilo += `Gasolina 95: ${g95.Rótulo} (${g95.Localidad}, ${g95.Dirección}): ${g95["Precio Gasolina 95 E5"]}€\n${genUrl(g95)}\n`;
+                    if(gA) hilo += `Diesel: ${gA.Rótulo} (${gA.Localidad}, ${gA.Dirección}): ${gA["Precio Gasoleo A"]}€\n${genUrl(gA)}\n\n`;
                 });
 
                 document.getElementById('contenedor-gasolineras').innerHTML = `
@@ -56,7 +50,7 @@
                     <textarea id="texto-hilo" readonly>${hilo}</textarea>
                 `;
             } catch (e) {
-                document.getElementById('contenedor-gasolineras').innerHTML = "Error al procesar el JSON.";
+                document.getElementById('contenedor-gasolineras').innerHTML = "Error al procesar el JSON. Asegúrate de que existe en la raíz.";
             }
         }
 
@@ -64,7 +58,7 @@
             const copyText = document.getElementById("texto-hilo");
             copyText.select();
             document.execCommand("copy");
-            alert("¡Hilo copiado!");
+            alert("¡Hilo copiado al portapapeles!");
         }
 
         generarTodo();
