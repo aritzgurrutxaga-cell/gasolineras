@@ -5,6 +5,8 @@ async function cargarPrecios() {
         const response = await fetch(`./precios_gasolineras.json?t=${Date.now()}`);
         const data = await response.json();
         const provinciasInteres = ["GIPUZKOA", "ÁLAVA", "NAVARRA", "BIZKAIA"];
+        
+        // Estructura: resultados[provincia][tipoCombustible] = {datos_gasolinera}
         const resultados = {};
 
         data.datos.forEach(estacion => {
@@ -14,11 +16,12 @@ async function cargarPrecios() {
             if (target) {
                 if (!resultados[target]) resultados[target] = {};
 
+                // Buscamos todas las claves que empiezan por "Precio"
                 Object.keys(estacion).forEach(key => {
-                    // Filtramos solo columnas que empiezan por "Precio" para comparar
                     if (key.startsWith("Precio") && estacion[key] !== "") {
                         const precioActual = parseFloat(estacion[key].replace(',', '.'));
                         
+                        // Si no existe este tipo de combustible o el nuevo es más barato, guardamos
                         if (!resultados[target][key] || precioActual < resultados[target][key].precioNum) {
                             resultados[target][key] = {
                                 ...estacion,
@@ -31,27 +34,22 @@ async function cargarPrecios() {
             }
         });
 
+        // Renderizado
         let html = "";
-        provinciasInteres.forEach(prov => {
+        for (const prov of provinciasInteres) {
             html += `<section class="card-provincia"><h1>${prov}</h1>`;
             const combustibles = resultados[prov] || {};
             
             Object.values(combustibles).forEach(g => {
-                html += `<div class="estacion-card" style="border:1px solid #333; margin:15px 0; padding:15px; border-radius:8px; background:#fff;">
-                            <h2 style="color:#007bff;">${g.nombreCombustible}: ${g.precioNum.toFixed(3)}€</h2>
-                            <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 0.9em;">`;
-                
-                // AQUÍ: Recorremos TODAS las columnas del JSON para este objeto
-                Object.entries(g).forEach(([key, value]) => {
-                    if (key !== "precioNum" && value !== "") {
-                        html += `<div><strong>${key}:</strong> ${value}</div>`;
-                    }
-                });
-                
-                html += `</div></div>`;
+                html += `<div class="estacion-card" style="border:1px solid #007bff; margin:10px 0; padding:15px; border-radius:8px;">
+                            <h3 style="margin-top:0;">${g.nombreCombustible}: ${g.precioNum.toFixed(3)}€</h3>
+                            <p><strong>Rótulo:</strong> ${g.Rótulo}<br>
+                            <strong>Localidad:</strong> ${g.Localidad}<br>
+                            <strong>Dirección:</strong> ${g.Dirección}</p>
+                        </div>`;
             });
             html += `</section>`;
-        });
+        }
         
         contenedor.innerHTML = html;
 
