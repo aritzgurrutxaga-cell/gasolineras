@@ -7,52 +7,55 @@
     <style>
         body { font-family: sans-serif; max-width: 800px; margin: 20px auto; padding: 20px; background: #f4f7f6; }
         .provincia-card { background: #fff; padding: 20px; border-radius: 10px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .item { border-bottom: 1px solid #eee; padding: 10px 0; }
-        h1 { color: #007bff; }
-        h2 { margin-bottom: 5px; }
+        .item { border-bottom: 1px solid #eee; padding: 15px 0; }
+        h1 { color: #007bff; border-bottom: 2px solid #007bff; padding-bottom: 10px; }
+        .url-link { font-size: 0.8em; word-break: break-all; color: #666; }
     </style>
 </head>
 <body>
 
     <header><h1>Precios de hoy</h1></header>
-    <main id="contenedor-gasolineras">Cargando...</main>
+    <main id="contenedor-gasolineras">Cargando datos...</main>
 
     <script>
         async function cargarPrecios() {
             const contenedor = document.getElementById('contenedor-gasolineras');
-            const res = await fetch(`./precios_gasolineras.json?t=${Date.now()}`);
-            const data = await res.json();
-            const prods = ["GIPUZKOA", "ÁLAVA", "NAVARRA", "BIZKAIA"];
-            let html = "";
+            try {
+                const res = await fetch(`./precios_gasolineras.json?t=${Date.now()}`);
+                const data = await res.json();
+                const prods = ["GIPUZKOA", "ÁLAVA", "NAVARRA", "BIZKAIA"];
+                let html = "";
 
-            prods.forEach(p => {
-                html += `<section class="provincia-card"><h1>${p}</h1>`;
-                
-                // Filtramos estaciones de la provincia
-                const estaciones = data.datos.filter(e => e.Provincia.toUpperCase().includes(p) || (p === "ÁLAVA" && e.Provincia.toUpperCase().includes("ARABA")));
-                
-                // Buscamos la más barata (Gasolina 95 E5 y Gasóleo A)
-                const g95 = estaciones.filter(e => e["Precio Gasolina 95 E5"]).sort((a,b) => parseFloat(a["Precio Gasolina 95 E5"].replace(',','.')) - parseFloat(b["Precio Gasolina 95 E5"].replace(',','.')))[0];
-                const gA = estaciones.filter(e => e["Precio Gasoleo A"]).sort((a,b) => parseFloat(a["Precio Gasoleo A"].replace(',','.')) - parseFloat(b["Precio Gasoleo A"].replace(',','.')))[0];
+                prods.forEach(p => {
+                    html += `<section class="provincia-card"><h1>${p}</h1>`;
+                    const ests = data.datos.filter(e => e.Provincia.toUpperCase().includes(p) || (p === "ÁLAVA" && e.Provincia.toUpperCase().includes("ARABA")));
+                    
+                    const g95 = ests.filter(e => e["Precio Gasolina 95 E5"]).sort((a,b) => parseFloat(a["Precio Gasolina 95 E5"].replace(',','.')) - parseFloat(b["Precio Gasolina 95 E5"].replace(',','.')))[0];
+                    const gA = ests.filter(e => e["Precio Gasoleo A"]).sort((a,b) => parseFloat(a["Precio Gasoleo A"].replace(',','.')) - parseFloat(b["Precio Gasoleo A"].replace(',','.')))[0];
 
-                const mostrar = (est, tipo, precioKey) => {
-                    if (!est) return "";
-                    const lat = est.Latitud.replace(',', '.');
-                    const lon = est["Longitud (WGS84)"].replace(',', '.');
-                    const url = `https://www.google.com/maps/search/?api=1&query=${lat},${lon}`;
-                    return `<div class="item">
-                        <h2>${est.Rótulo} (${tipo})</h2>
-                        <p>📍 ${est.Localidad}, ${est.Dirección}<br>
-                        💰 Precio: ${est[precioKey]}€<br>
-                        🗺️ <a href="${url}" target="_blank">Ver en Google Maps</a></p>
-                    </div>`;
-                };
+                    const mostrar = (est, tipo, precioKey) => {
+                        if (!est) return "";
+                        const lat = est.Latitud.replace(',', '.');
+                        const lon = est["Longitud (WGS84)"].replace(',', '.');
+                        const url = `https://www.google.com/maps/search/?api=1&query=${lat},${lon}`;
+                        return `<div class="item">
+                            <h2>${est.Rótulo} (${tipo})</h2>
+                            <p><strong>Localidad:</strong> ${est.Localidad}<br>
+                            <strong>Dirección:</strong> ${est.Dirección}<br>
+                            <strong>Precio:</strong> ${est[precioKey]}€<br>
+                            <strong>Google Maps:</strong><br>
+                            <a href="${url}" target="_blank" class="url-link">${url}</a></p>
+                        </div>`;
+                    };
 
-                html += mostrar(g95, "Gasolina 95", "Precio Gasolina 95 E5");
-                html += mostrar(gA, "Gasóleo A", "Precio Gasoleo A");
-                html += `</section>`;
-            });
-            contenedor.innerHTML = html;
+                    html += mostrar(g95, "Gasolina 95", "Precio Gasolina 95 E5");
+                    html += mostrar(gA, "Gasóleo A", "Precio Gasoleo A");
+                    html += `</section>`;
+                });
+                contenedor.innerHTML = html;
+            } catch (e) {
+                contenedor.innerHTML = "Error al cargar los datos.";
+            }
         }
         cargarPrecios();
     </script>
