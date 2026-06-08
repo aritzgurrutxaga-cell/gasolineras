@@ -2,32 +2,19 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Generador de Hilo - Gasolina.eus</title>
+    <title>Generador de Tweets Independientes - Gasolina.eus</title>
     <style>
         body { font-family: sans-serif; max-width: 800px; margin: 20px auto; padding: 20px; background: #f4f7f6; }
-        textarea { width: 100%; height: 250px; display: block; margin: 10px 0; border: 1px solid #ccc; padding: 10px; border-radius: 5px; }
-        .botones { display: flex; gap: 10px; margin-bottom: 20px; }
-        button { padding: 12px; cursor: pointer; flex: 1; font-weight: bold; border-radius: 5px; border: none; }
+        .tweet-box { margin-bottom: 30px; background: #fff; padding: 15px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        textarea { width: 100%; height: 180px; display: block; margin: 10px 0; border: 1px solid #ccc; padding: 10px; border-radius: 5px; }
+        .botones { display: flex; gap: 10px; }
+        button { padding: 10px; cursor: pointer; flex: 1; font-weight: bold; border-radius: 5px; border: none; }
     </style>
 </head>
 <body>
 
-    <h1>Generador de Hilo Twitter</h1>
-    <div id="contenedor-hilos">
-        <h3>Versión Castellano</h3>
-        <textarea id="hilo-es" readonly></textarea>
-        <div class="botones">
-            <button onclick="copiar('hilo-es')">Copiar ES</button>
-            <button onclick="twittear('hilo-es')" style="background:#1da1f2; color:white;">Publicar ES</button>
-        </div>
-
-        <h3>Euskarazko bertsioa</h3>
-        <textarea id="hilo-eu" readonly></textarea>
-        <div class="botones">
-            <button onclick="copiar('hilo-eu')">Kopiatu EU</button>
-            <button onclick="twittear('hilo-eu')" style="background:#1da1f2; color:white;">Argitaratu EU</button>
-        </div>
-    </div>
+    <h1>Generador de Tweets Independientes</h1>
+    <div id="contenedor-tweets">Cargando datos...</div>
 
     <script>
         function toBold(text) {
@@ -41,41 +28,35 @@
                 const data = await res.json();
                 const prods = ["GIPUZKOA", "ÁLAVA", "NAVARRA", "BIZKAIA"];
                 const fecha = "08/06/2026";
-                
-                let hiloEs = `${toBold("🧵 HILO: GASOLINERAS MÁS BARATAS DE EUSKADI Y NAVARRA (" + fecha + ")")}\n¿Quieres dejar de pagar de más al repostar? Si buscas la gasolinera más barata cerca de ti, accede a https://gasolina.eus. 👇 #AhorroCombustible #Euskadi #Navarra\n\n`;
-                let hiloEu = `${toBold("🧵 HARIA: EUSKADI ETA NAFARROAKO GASOLINDEGI MERKEENAK (" + fecha + ")")}\nGehiago ordaintzeari utzi nahi diozu? Zure inguruko gasolindegi merkeenaren bila bazabiltza, sartu https://gasolina.eus atarian. 👇 #ErregaiAurrezpena #Euskadi #Nafarroa\n\n`;
+                const titulo = toBold("🧵 GASOLINERAS MÁS BARATAS (" + fecha + ")");
+                let html = "";
 
-                prods.forEach(p => {
+                prods.forEach((p, index) => {
                     const ests = data.datos.filter(e => e.Provincia.toUpperCase().includes(p) || (p === "ÁLAVA" && e.Provincia.toUpperCase().includes("ARABA")));
                     const g95 = ests.filter(e => e["Precio Gasolina 95 E5"]).sort((a,b) => parseFloat(a["Precio Gasolina 95 E5"].replace(',','.')) - parseFloat(b["Precio Gasolina 95 E5"].replace(',','.')))[0];
                     const gA = ests.filter(e => e["Precio Gasoleo A"]).sort((a,b) => parseFloat(a["Precio Gasoleo A"].replace(',','.')) - parseFloat(b["Precio Gasoleo A"].replace(',','.')))[0];
+                    const url = (e) => `https://www.google.com/search?q=http://maps.google.com/%3Fq%3D43.176472,-2.316861{e.Latitud.replace(',','.')},${e["Longitud (WGS84)"].replace(',','.')}`;
                     
-                    const url = (e) => `https://www.google.com/search?q=http://maps.google.com/%3Fq%3D43.167222,-2.632222{e.Latitud.replace(',','.')},${e["Longitud (WGS84)"].replace(',','.')}`;
-
-                    hiloEs += `📍 ${p} (${fecha}):\n`;
-                    hiloEu += `📍 ${p} (${fecha}):\n`;
+                    let contenido = `${titulo}\n📍 ${p}:\n`;
+                    if(g95) contenido += `${g95.Rótulo} (${g95.Localidad})\n${toBold("Gasolina 95: " + g95["Precio Gasolina 95 E5"] + "€")}\n${url(g95)}\n`;
+                    if(gA) contenido += `${gA.Rótulo} (${gA.Localidad})\n${toBold("Diesel: " + gA["Precio Gasoleo A"] + "€")}\n${url(gA)}\n`;
                     
-                    if(g95) {
-                        hiloEs += `${g95.Rótulo} (${g95.Localidad})\n${toBold("Gasolina 95: " + g95["Precio Gasolina 95 E5"] + "€")}\n${url(g95)}\n\n`;
-                        hiloEu += `${g95.Rótulo} (${g95.Localidad})\n${toBold("95 Gasolina: " + g95["Precio Gasolina 95 E5"] + "€")}\n${url(g95)}\n\n`;
-                    }
-                    if(gA) {
-                        hiloEs += `${gA.Rótulo} (${gA.Localidad})\n${toBold("Diesel: " + gA["Precio Gasoleo A"] + "€")}\n${url(gA)}\n\n`;
-                        hiloEu += `${gA.Rótulo} (${gA.Localidad})\n${toBold("Diesel: " + gA["Precio Gasoleo A"] + "€")}\n${url(gA)}\n\n`;
-                    }
+                    html += `<div class="tweet-box">
+                        <textarea id="tw-${index}" readonly>${contenido}</textarea>
+                        <div class="botones">
+                            <button onclick="copiar('tw-${index}')">Copiar</button>
+                            <button onclick="twittear('tw-${index}')" style="background:#1da1f2; color:white;">Postear</button>
+                        </div>
+                    </div>`;
                 });
-                document.getElementById("hilo-es").value = hiloEs;
-                document.getElementById("hilo-eu").value = hiloEu;
-            } catch(e) { 
-                document.getElementById("hilo-es").value = "Error."; 
-                document.getElementById("hilo-eu").value = "Error.";
-            }
+                document.getElementById("contenedor-tweets").innerHTML = html;
+            } catch(e) { document.getElementById("contenedor-tweets").innerHTML = "Error al cargar datos."; }
         }
 
         function copiar(id) {
             document.getElementById(id).select();
             document.execCommand("copy");
-            alert("Kopiatuta!");
+            alert("Copiado!");
         }
 
         function twittear(id) {
