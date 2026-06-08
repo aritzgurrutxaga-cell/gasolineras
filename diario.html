@@ -5,77 +5,95 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Precios Diario - Gasolina.eus</title>
     <style>
-        /* CSS Integrado para que no tengas que crear archivos extra */
-        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 900px; margin: 0 auto; padding: 20px; background-color: #f4f7f6; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; line-height: 1.5; color: #333; max-width: 1000px; margin: 0 auto; padding: 20px; background-color: #f4f7f6; }
         header { text-align: center; margin-bottom: 30px; }
-        .card-provincia { background: #fff; border-radius: 10px; padding: 20px; margin-bottom: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .grid-precios { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        .columna-tipo h4 { color: #007bff; border-bottom: 2px solid #007bff; padding-bottom: 5px; margin-bottom: 10px; }
-        ul { list-style: none; padding: 0; }
-        li { padding: 8px 0; border-bottom: 1px solid #eee; font-size: 0.9em; }
-        .loader { text-align: center; font-weight: bold; padding: 50px; }
-        @media (max-width: 600px) { .grid-precios { grid-template-columns: 1fr; } }
+        .card-provincia { background: #fff; border-radius: 12px; padding: 20px; margin-bottom: 30px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        h1 { color: #2c3e50; border-bottom: 3px solid #007bff; padding-bottom: 10px; }
+        .estacion-card { border: 1px solid #ddd !important; margin: 15px 0; padding: 15px; border-radius: 8px; background: #fafafa; }
+        .datos-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 10px; font-size: 0.85em; }
+        .loader { text-align: center; font-size: 1.2em; padding: 50px; }
+        strong { color: #555; }
     </style>
 </head>
 <body>
 
     <header>
-        <h1>Precios de hoy</h1>
+        <h1>Precios Diario</h1>
         <p>Las gasolineras más baratas de Gipuzkoa, Álava, Navarra y Bizkaia</p>
     </header>
 
     <main id="contenedor-gasolineras">
-        <div class="loader">Cargando los datos más recientes...</div>
+        <div class="loader">Procesando datos y buscando las más baratas...</div>
     </main>
 
     <script>
         async function cargarPrecios() {
             const contenedor = document.getElementById('contenedor-gasolineras');
+            
             try {
-                // Fetch con timestamp para evitar caché
+                // Timestamp evita que el navegador use datos antiguos cacheados
                 const response = await fetch(`./precios_gasolineras.json?t=${Date.now()}`);
                 const data = await response.json();
-                
                 const provinciasInteres = ["GIPUZKOA", "ÁLAVA", "NAVARRA", "BIZKAIA"];
                 const resultados = {};
-                provinciasInteres.forEach(p => resultados[p] = { "Gasolina 95 E5": [], "Gasoleo A": [] });
 
                 data.datos.forEach(estacion => {
-                    const prov = estacion.Provincia.toUpperCase();
-                    let target = null;
-                    if (prov.includes("GIPUZKOA")) target = "GIPUZKOA";
-                    else if (prov.includes("ÁLAVA") || prov.includes("ARABA")) target = "ÁLAVA";
-                    else if (prov.includes("NAVARRA")) target = "NAVARRA";
-                    else if (prov.includes("BIZKAIA")) target = "BIZKAIA";
+                    const prov = estacion.Provincia ? estacion.Provincia.toUpperCase() : "";
+                    const target = provinciasInteres.find(p => prov.includes(p) || (p === "ÁLAVA" && prov.includes("ARABA")));
 
                     if (target) {
-                        const precio = (campo) => estacion[campo] ? parseFloat(estacion[campo].replace(',', '.')) : null;
-                        const pGas95 = precio("Precio Gasolina 95 E5");
-                        const pDiesel = precio("Precio Gasoleo A");
-                        if (pGas95) resultados[target]["Gasolina 95 E5"].push({ ...estacion, precioNum: pGas95 });
-                        if (pDiesel) resultados[target]["Gasoleo A"].push({ ...estacion, precioNum: pDiesel });
+                        if (!resultados[target]) resultados[target] = {};
+
+                        Object.keys(estacion).forEach(key => {
+                            if (key.startsWith("Precio") && estacion[key] !== "") {
+                                const precioActual = parseFloat(estacion[key].replace(',', '.'));
+                                if (!isNaN(precioActual)) {
+                                    if (!resultados[target][key] || precioActual < resultados[target][key].precioNum) {
+                                        resultados[target][key] = {
+                                            ...estacion,
+                                            precioNum: precioActual,
+                                            nombreCombustible: key
+                                        };
+                                    }
+                                }
+                            }
+                        });
                     }
                 });
 
                 let html = "";
                 provinciasInteres.forEach(prov => {
-                    html += `<section class="card-provincia"><h2>${prov}</h2><div class="grid-precios">`;
-                    ["Gasolina 95 E5", "Gasoleo A"].forEach(tipo => {
-                        const top3 = resultados[prov][tipo].sort((a, b) => a.precioNum - b.precioNum).slice(0, 3);
-                        html += `<div class="columna-tipo"><h4>${tipo}</h4><ul>`;
-                        top3.forEach(g => {
-                            html += `<li><strong>${g.Rótulo}</strong><br>${g.Localidad} - ${g.precioNum.toFixed(3)}€</li>`;
+                    html += `<section class="card-provincia"><h1>${prov}</h1>`;
+                    const combustibles = resultados[prov] || {};
+                    
+                    if (Object.keys(combustibles).length === 0) {
+                        html += `<p>No hay datos disponibles para esta provincia.</p>`;
+                    } else {
+                        Object.values(combustibles).forEach(g => {
+                            html += `<div class="estacion-card">
+                                        <h2 style="color:#007bff; margin-top:0;">${g.nombreCombustible}: ${g.precioNum.toFixed(3)}€</h2>
+                                        <div class="datos-grid">`;
+                            
+                            Object.entries(g).forEach(([key, value]) => {
+                                if (key !== "precioNum" && value !== "") {
+                                    html += `<div><strong>${key}:</strong> ${value}</div>`;
+                                }
+                            });
+                            html += `</div></div>`;
                         });
-                        html += `</ul></div>`;
-                    });
-                    html += `</div></section>`;
+                    }
+                    html += `</section>`;
                 });
+                
                 contenedor.innerHTML = html;
+
             } catch (error) {
-                contenedor.innerHTML = "<p style='text-align:center; color:red;'>Error al cargar los datos. Verifica el archivo JSON.</p>";
+                contenedor.innerHTML = `<p style="color:red; text-align:center;">Error al procesar: ${error.message}</p>`;
+                console.error(error);
             }
         }
-        cargarPrecios();
+
+        document.addEventListener('DOMContentLoaded', cargarPrecios);
     </script>
 </body>
 </html>
