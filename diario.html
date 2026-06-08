@@ -42,8 +42,8 @@
                     const gA = ests.filter(e => e["Precio Gasoleo A"]).sort((a,b) => parseFloat(a["Precio Gasoleo A"].replace(',','.')) - parseFloat(b["Precio Gasoleo A"].replace(',','.')))[0];
                     
                     hilo += `📍 ${p} (${fecha}):\n`;
-                    if(g95) hilo += `${g95.Rótulo} (${g95.Localidad})\n${toBold("Gasolina 95: " + g95["Precio Gasolina 95 E5"] + "€")}\nhttps://www.google.com/maps/search/?api=1&query=${g95.Latitud.replace(',','.')},${g95["Longitud (WGS84)"].replace(',','.')}\n\n`;
-                    if(gA) hilo += `${gA.Rótulo} (${gA.Localidad})\n${toBold("Diesel: " + gA["Precio Gasoleo A"] + "€")}\nhttps://www.google.com/maps/search/?api=1&query=${gA.Latitud.replace(',','.')},${gA["Longitud (WGS84)"].replace(',','.')}\n\n`;
+                    if(g95) hilo += `${toBold("Gasolina 95: " + g95["Precio Gasolina 95 E5"] + "€")}\n${g95.Rótulo} (${g95.Localidad})\nhttps://www.google.com/maps/search/?api=1&query=${g95.Latitud.replace(',','.')},${g95["Longitud (WGS84)"].replace(',','.')}\n\n`;
+                    if(gA) hilo += `${toBold("Diesel: " + gA["Precio Gasoleo A"] + "€")}\n${gA.Rótulo} (${gA.Localidad})\nhttps://www.google.com/maps/search/?api=1&query=${gA.Latitud.replace(',','.')},${gA["Longitud (WGS84)"].replace(',','.')}\n\n`;
                 });
                 document.getElementById("texto-hilo").value = hilo;
             } catch(e) { document.getElementById("texto-hilo").value = "Error al cargar JSON."; }
