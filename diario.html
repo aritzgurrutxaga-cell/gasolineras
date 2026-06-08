@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Precios Diario - Gasolina.eus</title>
+    <style>
+        /* CSS Integrado para que no tengas que crear archivos extra */
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 900px; margin: 0 auto; padding: 20px; background-color: #f4f7f6; }
+        header { text-align: center; margin-bottom: 30px; }
+        .card-provincia { background: #fff; border-radius: 10px; padding: 20px; margin-bottom: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .grid-precios { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .columna-tipo h4 { color: #007bff; border-bottom: 2px solid #007bff; padding-bottom: 5px; margin-bottom: 10px; }
+        ul { list-style: none; padding: 0; }
+        li { padding: 8px 0; border-bottom: 1px solid #eee; font-size: 0.9em; }
+        .loader { text-align: center; font-weight: bold; padding: 50px; }
+        @media (max-width: 600px) { .grid-precios { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Precios de hoy</h1>
+        <p>Las gasolineras más baratas de Gipuzkoa, Álava, Navarra y Bizkaia</p>
+    </header>
+
+    <main id="contenedor-gasolineras">
+        <div class="loader">Cargando los datos más recientes...</div>
+    </main>
+
+    <script>
+        async function cargarPrecios() {
+            const contenedor = document.getElementById('contenedor-gasolineras');
+            try {
+                // Fetch con timestamp para evitar caché
+                const response = await fetch(`./precios_gasolineras.json?t=${Date.now()}`);
+                const data = await response.json();
+                
+                const provinciasInteres = ["GIPUZKOA", "ÁLAVA", "NAVARRA", "BIZKAIA"];
+                const resultados = {};
+                provinciasInteres.forEach(p => resultados[p] = { "Gasolina 95 E5": [], "Gasoleo A": [] });
+
+                data.datos.forEach(estacion => {
+                    const prov = estacion.Provincia.toUpperCase();
+                    let target = null;
+                    if (prov.includes("GIPUZKOA")) target = "GIPUZKOA";
+                    else if (prov.includes("ÁLAVA") || prov.includes("ARABA")) target = "ÁLAVA";
+                    else if (prov.includes("NAVARRA")) target = "NAVARRA";
+                    else if (prov.includes("BIZKAIA")) target = "BIZKAIA";
+
+                    if (target) {
+                        const precio = (campo) => estacion[campo] ? parseFloat(estacion[campo].replace(',', '.')) : null;
+                        const pGas95 = precio("Precio Gasolina 95 E5");
+                        const pDiesel = precio("Precio Gasoleo A");
+                        if (pGas95) resultados[target]["Gasolina 95 E5"].push({ ...estacion, precioNum: pGas95 });
+                        if (pDiesel) resultados[target]["Gasoleo A"].push({ ...estacion, precioNum: pDiesel });
+                    }
+                });
+
+                let html = "";
+                provinciasInteres.forEach(prov => {
+                    html += `<section class="card-provincia"><h2>${prov}</h2><div class="grid-precios">`;
+                    ["Gasolina 95 E5", "Gasoleo A"].forEach(tipo => {
+                        const top3 = resultados[prov][tipo].sort((a, b) => a.precioNum - b.precioNum).slice(0, 3);
+                        html += `<div class="columna-tipo"><h4>${tipo}</h4><ul>`;
+                        top3.forEach(g => {
+                            html += `<li><strong>${g.Rótulo}</strong><br>${g.Localidad} - ${g.precioNum.toFixed(3)}€</li>`;
+                        });
+                        html += `</ul></div>`;
+                    });
+                    html += `</div></section>`;
+                });
+                contenedor.innerHTML = html;
+            } catch (error) {
+                contenedor.innerHTML = "<p style='text-align:center; color:red;'>Error al cargar los datos. Verifica el archivo JSON.</p>";
+            }
+        }
+        cargarPrecios();
+    </script>
+</body>
+</html>
