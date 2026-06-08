@@ -10,15 +10,12 @@
         #contenedor-gasolineras { background: #fff; padding: 20px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         textarea { width: 100%; height: 500px; margin-top: 15px; font-family: monospace; padding: 10px; border: 1px solid #ccc; border-radius: 5px; }
         button { background: #007bff; color: white; border: none; padding: 15px 20px; border-radius: 5px; cursor: pointer; font-size: 16px; width: 100%; }
-        button:hover { background: #0056b3; }
     </style>
 </head>
 <body>
 
     <h1>Generador de Hilo Twitter</h1>
-    <main id="contenedor-gasolineras">
-        <p>Procesando datos del JSON...</p>
-    </main>
+    <main id="contenedor-gasolineras">Procesando datos...</main>
 
     <script>
         async function generarTodo() {
@@ -26,7 +23,7 @@
                 const res = await fetch(`./precios_gasolineras.json?t=${Date.now()}`);
                 const data = await res.json();
                 const prods = ["GIPUZKOA", "ÁLAVA", "NAVARRA", "BIZKAIA"];
-                const fecha = "08/06/2026"; 
+                const fecha = "08/06/2026";
                 
                 let hilo = `🧵 HILO: GASOLINERAS MÁS BARATAS DE EUSKADI Y NAVARRA (${fecha})\n¿Quieres dejar de pagar de más al repostar? Si buscas la gasolinera más barata cerca de ti, accede a https://gasolina.eus. 👇 #AhorroCombustible #Euskadi #Navarra\n\n`;
 
@@ -36,21 +33,19 @@
                     const g95 = ests.filter(e => e["Precio Gasolina 95 E5"]).sort((a,b) => parseFloat(a["Precio Gasolina 95 E5"].replace(',','.')) - parseFloat(b["Precio Gasolina 95 E5"].replace(',','.')))[0];
                     const gA = ests.filter(e => e["Precio Gasoleo A"]).sort((a,b) => parseFloat(a["Precio Gasoleo A"].replace(',','.')) - parseFloat(b["Precio Gasoleo A"].replace(',','.')))[0];
 
-                    // URL oficial de Google Maps
                     const genUrl = (e) => `https://www.google.com/maps/search/?api=1&query=${e.Latitud.replace(',','.')},${e["Longitud (WGS84)"].replace(',','.')}`;
 
                     hilo += `📍 ${p} (${fecha}):\n`;
-                    if(g95) hilo += `1️⃣ ${g95.Rótulo} (${g95.Localidad}, ${g95.Dirección}): G95 ${g95["Precio Gasolina 95 E5"]}€ ${genUrl(g95)}\n`;
-                    if(gA) hilo += `2️⃣ ${gA.Rótulo} (${gA.Localidad}, ${gA.Dirección}): Diésel ${gA["Precio Gasoleo A"]}€ ${genUrl(gA)}\n\n`;
+                    if(g95) hilo += `**Gasolina 95**: ${g95.Rótulo} (${g95.Localidad}, ${g95.Dirección}): ${g95["Precio Gasolina 95 E5"]}€ ${genUrl(g95)}\n`;
+                    if(gA) hilo += `**Diesel**: ${gA.Rótulo} (${gA.Localidad}, ${gA.Dirección}): ${gA["Precio Gasoleo A"]}€ ${genUrl(gA)}\n\n`;
                 });
 
-                const contenedor = document.getElementById('contenedor-gasolineras');
-                contenedor.innerHTML = `
+                document.getElementById('contenedor-gasolineras').innerHTML = `
                     <button onclick="copiarTexto()">Copiar Hilo para Twitter</button>
                     <textarea id="texto-hilo" readonly>${hilo}</textarea>
                 `;
             } catch (e) {
-                document.getElementById('contenedor-gasolineras').innerHTML = "Error al procesar el JSON. Asegúrate de que el archivo existe.";
+                document.getElementById('contenedor-gasolineras').innerHTML = "Error al procesar el JSON.";
             }
         }
 
@@ -58,7 +53,7 @@
             const copyText = document.getElementById("texto-hilo");
             copyText.select();
             document.execCommand("copy");
-            alert("¡Hilo copiado al portapapeles!");
+            alert("¡Hilo copiado!");
         }
 
         generarTodo();
