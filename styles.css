@@ -19,15 +19,20 @@ body {
   position: relative;
 }
 
+/* NUEVO HEADER */
+.header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
 .hidden {
   display: none !important;
 }
 
+/* MODIFICADO */
 .language-selector {
-  position: absolute;
-  top: 0;
-  left: 15px;
-  z-index: 10;
   display: flex;
   gap: 10px;
 }
@@ -351,6 +356,23 @@ body {
   text-align: center;
   color: #64748b;
   padding: 1rem;
+}
+
+/* BOTÓN X */
+.twitter-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  background: #0f172a;
+  color: white;
+  border-radius: 8px;
+  text-decoration: none;
+}
+
+.twitter-btn:hover {
+  background: #000;
 }
 
 @media (max-width: 520px) {
