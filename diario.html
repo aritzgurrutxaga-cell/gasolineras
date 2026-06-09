@@ -23,10 +23,13 @@
 
         async function init() {
             try {
+                // Obtener fecha actual en formato DD/MM/YYYY
+                const hoy = new Date();
+                const fecha = hoy.toLocaleDateString('es-ES');
+                
                 const res = await fetch(`./precios_gasolineras.json?t=${Date.now()}`);
                 const data = await res.json();
                 const prods = ["GIPUZKOA", "ÁLAVA", "NAVARRA", "BIZKAIA"];
-                const fecha = "08/06/2026";
                 let posts = [];
 
                 prods.forEach(p => {
