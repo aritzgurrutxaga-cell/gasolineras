@@ -108,14 +108,15 @@ function t() {
   return TRAD[lang];
 }
 
+// Función blindada con escapes Unicode para evitar corrupciones de sintaxis
 function escapeHtml(valor) {
   const str = valor != null ? String(valor) : "";
   return str
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
+    .replace(/&/g, '\u0026amp;')
+    .replace(/</g, '\u0026lt;')
+    .replace(/>/g, '\u0026gt;')
+    .replace(/"/g, '\u0026quot;')
+    .replace(/'/g, '\u0026#39;');
 }
 
 function mostrarPantalla(nombre) {
@@ -378,8 +379,8 @@ function pintarResultados() {
 
     const distancia = t().distancia_fmt.replace("{d}", g.distancia.toFixed(2));
     
-    // URL oficial y nativa de Google Maps restaurada y comprobada
-    const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${g.lat_num},${g.lon_num}`;
+    // URL estándar oficial de Google Maps corregida con template literals funcionales
+    const mapsUrl = `https://www.google.com/maps?q=${g.lat_num},${g.lon_num}`;
 
     return `
       <article class="gasolinera-card">
