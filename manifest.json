@@ -1,6 +1,6 @@
 {
   "name": "Gasolina.eus",
-  "short_name": "Gasolina",
+  "short_name": "Gasolina.eus",
   "description": "Konparatu prezioak eta aurreztu depositua betetzean.",
   "scope": "./",
   "start_url": "./",
