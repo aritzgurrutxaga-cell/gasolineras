@@ -19,7 +19,6 @@
 <body>
   <main class="app">
 
-    <!-- CABECERA -->
     <div class="header-top">
       <div class="language-selector">
         <button id="btn-eu" class="lang active" type="button">EU</button>
@@ -40,10 +39,6 @@
       <button id="btn-ubicacion" class="btn-principal" type="button">
         <span id="btn-ubicacion-text">📍 Erakutsi gasolindegiak</span>
         <small id="btn-ubicacion-sub">Gomendagarria da kokapena onartzea bilatzeko</small>
-      </button>
-
-      <button id="btn-instalar-app" class="btn-secundario hidden" type="button">
-        📲 Instalar Aplicación
       </button>
     </section>
 
@@ -99,6 +94,20 @@
 
       <div id="resultados"></div>
     </section>
+
+    <div id="pwa-banner" class="pwa-banner hidden">
+      <div class="pwa-banner-content">
+        <div class="pwa-icon">
+          <span class="dot"></span>
+        </div>
+        <div class="pwa-text-container">
+          <p class="pwa-title">gasolina<span>.eus</span></p>
+          <p id="pwa-instruction" class="pwa-desc">Instala la aplicación para una mejor experiencia.</p>
+        </div>
+        <button id="pwa-install-btn" class="pwa-btn">Instalar</button>
+        <button id="pwa-close-btn" class="pwa-close" aria-label="Cerrar">×</button>
+      </div>
+    </div>
 
   </main>
 
