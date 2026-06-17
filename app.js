@@ -50,7 +50,8 @@ const TRAD = {
 let datos = [];
 let municipios = [];
 
-let lang = "eu";
+// Ajuste clave: Idioma por defecto establecido en español
+let lang = "es";
 let tipoCombustible = "Diésel";
 let radioKm = 5;
 
@@ -378,7 +379,8 @@ function pintarResultados() {
 
     const distancia = t().distancia_fmt.replace("{d}", g.distancia.toFixed(2));
     
-    const mapsUrl = `http://googleusercontent.com/maps.google.com/${g.lat_num},${g.lon_num}`;
+    // URL oficial y correcta para trazar rutas en Google Maps
+    const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${g.lat_num},${g.lon_num}`;
 
     return `
       <article class="gasolinera-card">
