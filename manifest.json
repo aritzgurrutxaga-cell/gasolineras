@@ -1,10 +1,9 @@
-
 {
   "name": "Gasolina.eus",
-  "short_name": "Gasolina.eus",
+  "short_name": "Gasolina",
   "description": "Konparatu prezioak eta aurreztu depositua betetzean.",
-  "scope": "/mis-gasolineras/",
-  "start_url": "/mis-gasolineras/index.html",
+  "scope": "./",
+  "start_url": "./",
   "display": "standalone",
   "background_color": "#1e293b",
   "theme_color": "#ef4444",
