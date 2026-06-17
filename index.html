@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="eu">
+<html lang="es">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -19,10 +19,11 @@
 <body>
   <main class="app">
 
+    <!-- CABECERA -->
     <div class="header-top">
       <div class="language-selector">
-        <button id="btn-eu" class="lang active" type="button">EU</button>
-        <button id="btn-es" class="lang" type="button">ES</button>
+        <button id="btn-eu" class="lang" type="button">EU</button>
+        <button id="btn-es" class="lang active" type="button">ES</button>
       </div>
 
       <a href="https://twitter.com/Gasolinaeus" target="_blank" class="twitter-btn">
@@ -34,30 +35,30 @@
 
     <section id="pantalla-inicio" class="screen hidden">
       <h1 class="titulo">gasolina<span>.eus</span></h1>
-      <p id="subtitulo" class="subtitulo">Konparatu prezioak eta aurreztu depositua betetzean.</p>
+      <p id="subtitulo" class="subtitulo">Compara precios en tiempo real y ahorra en cada repostaje.</p>
 
       <button id="btn-ubicacion" class="btn-principal" type="button">
-        <span id="btn-ubicacion-text">📍 Erakutsi gasolindegiak</span>
-        <small id="btn-ubicacion-sub">Gomendagarria da kokapena onartzea bilatzeko</small>
+        <span id="btn-ubicacion-text">📍 Mostrar gasolineras</span>
+        <small id="btn-ubicacion-sub">Es recomendable permitir la ubicación para buscar</small>
       </button>
     </section>
 
     <section id="pantalla-localizando" class="screen hidden">
       <h1 class="titulo">gasolina<span>.eus</span></h1>
-      <p id="texto-localizando" class="mensaje">⏳ Kokapena bilatzen...</p>
+      <p id="texto-localizando" class="mensaje">⏳ Localizando...</p>
     </section>
 
     <section id="pantalla-manual" class="screen hidden">
       <h1 class="titulo">gasolina<span>.eus</span></h1>
-      <p id="texto-municipio" class="texto-centro">📍 Idatzi zure udalerria:</p>
+      <p id="texto-municipio" class="texto-centro">📍 Escribe tu municipio:</p>
 
       <div class="autocomplete">
-        <input id="input-municipio" class="select" type="search" autocomplete="off" placeholder="Bilatu...">
+        <input id="input-municipio" class="select" type="search" autocomplete="off" placeholder="Buscar...">
         <div id="sugerencias-municipio" class="sugerencias hidden"></div>
       </div>
 
       <button id="btn-confirmar" class="btn-principal compacto" type="button">
-        🔍 Bilatu
+        🔍 Buscar
       </button>
     </section>
 
@@ -65,7 +66,7 @@
       <h1 class="titulo">gasolina<span>.eus</span></h1>
 
       <div class="cabecera-buscar">
-        <span id="titulo-buscar">Bilatu</span>
+        <span id="titulo-buscar">Buscar</span>
       </div>
 
       <div class="zona-filtros">
@@ -89,19 +90,20 @@
       </div>
 
       <div class="cabecera-resultados">
-        <span id="titulo-resultados">Emaitzak</span>
+        <span id="titulo-resultados">Resultados</span>
       </div>
 
       <div id="resultados"></div>
     </section>
 
+    <!-- BANNER PWA FLOTANTE -->
     <div id="pwa-banner" class="pwa-banner hidden">
       <div class="pwa-banner-content">
         <div class="pwa-icon">
           <span class="dot"></span>
         </div>
         <div class="pwa-text-container">
-          <p class="pwa-title">gasolina<span>.eus</span></p>
+          <p class="pwa-title">Gasolina<span>.eus</span></p>
           <p id="pwa-instruction" class="pwa-desc">Instala la aplicación para una mejor experiencia.</p>
         </div>
         <button id="pwa-install-btn" class="pwa-btn">Instalar</button>
