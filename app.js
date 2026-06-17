@@ -98,7 +98,6 @@ const btnClearMuni = document.getElementById("btn-clear-muni");
 const sugerenciasMunicipioAjustes = document.getElementById("sugerencias-municipio-ajustes");
 const resultados = document.getElementById("resultados");
 
-// Referencias a los elementos del banner PWA
 const pwaBanner = document.getElementById("pwa-banner");
 const pwaInstallBtn = document.getElementById("pwa-install-btn");
 const pwaCloseBtn = document.getElementById("pwa-close-btn");
@@ -108,15 +107,16 @@ function t() {
   return TRAD[lang];
 }
 
-// Función blindada con escapes Unicode para evitar corrupciones de sintaxis
+// Función 100% blindada dividiendo las cadenas. 
+// Esto evita que ningún procesador rompa el código JavaScript.
 function escapeHtml(valor) {
-  const str = valor != null ? String(valor) : "";
-  return str
-    .replace(/&/g, '\u0026amp;')
-    .replace(/</g, '\u0026lt;')
-    .replace(/>/g, '\u0026gt;')
-    .replace(/"/g, '\u0026quot;')
-    .replace(/'/g, '\u0026#39;');
+  if (valor == null) return "";
+  return String(valor)
+    .replace(/&/g, "&" + "amp;")
+    .replace(/</g, "&" + "lt;")
+    .replace(/>/g, "&" + "gt;")
+    .replace(/"/g, "&" + "quot;")
+    .replace(/'/g, "&" + "#39;");
 }
 
 function mostrarPantalla(nombre) {
@@ -146,7 +146,6 @@ function aplicarIdioma() {
 
   if (tituloBuscar) tituloBuscar.textContent = t().titulo_buscar;
 
-  // Lógica de traducción dinámica para el banner PWA
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
   const isAppInst = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone;
 
@@ -379,8 +378,8 @@ function pintarResultados() {
 
     const distancia = t().distancia_fmt.replace("{d}", g.distancia.toFixed(2));
     
-    // URL estándar oficial de Google Maps corregida con template literals funcionales
-    const mapsUrl = `https://www.google.com/maps?q=${g.lat_num},${g.lon_num}`;
+    // API oficial de Google Maps para trazar direcciones (funciona en móvil y PC)
+    const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${g.lat_num},${g.lon_num}`;
 
     return `
       <article class="gasolinera-card">
