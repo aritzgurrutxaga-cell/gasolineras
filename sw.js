@@ -1,11 +1,11 @@
-const CACHE_NAME = 'gasolina-beta-1-v2'; // Actualizado para forzar la instalación de esta nueva versión
+const CACHE_NAME = 'gasolina-beta-1-v4'; 
 const ASSETS = [
   './',
   './index.html',
-  './styles.css?v=21',
-  './app.js?v=21', // Corregido para que coincida con el index.html
+  './styles.css?v=31',
+  './app.js?v=21',
   './manifest.json',
-  './icon-192.png', // Iconos añadidos para soporte offline total
+  './icon-192.png',
   './icon-512.png'
 ];
 
@@ -57,7 +57,7 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // Estrategia "Cache First" para el resto (HTML, CSS, JS, Iconos)
+  // Estrategia "Cache First" para el resto
   event.respondWith(
     caches.match(event.request)
       .then(response => response || fetch(event.request))
