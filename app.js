@@ -17,7 +17,10 @@ const TRAD = {
     distancia_fmt: "📍 {d} km-ra",
     sin_resultados: "Ez da gasolindegirik aurkitu hautatutako erradioan.",
     municipio_no_valido: "Aukeratu zerrendako udalerri bat.",
-    ubicacion_no_disponible: "Ezin izan da kokapena lortu. Bilatu udalerria eskuz."
+    ubicacion_no_disponible: "Ezin izan da kokapena lortu. Bilatu udalerria eskuz.",
+    pwa_desc: "Instalatu aplikazioa esperientzia hobea izateko.",
+    pwa_desc_ios: "Ukitu Partekatu ikonoa eta hautatu 'Gehitu hasierako pantailan' aplikazioa instalatzeko.",
+    pwa_btn: "Instalatu"
   },
   es: {
     subtitulo: "Compara precios en tiempo real y ahorra en cada repostaje.",
@@ -37,7 +40,10 @@ const TRAD = {
     distancia_fmt: "📍 A {d} km",
     sin_resultados: "No se han encontrado gasolineras en el radio seleccionado.",
     municipio_no_valido: "Selecciona un municipio de la lista.",
-    ubicacion_no_disponible: "No se ha podido obtener la ubicación. Busca el municipio manualmente."
+    ubicacion_no_disponible: "No se ha podido obtener la ubicación. Busca el municipio manualmente.",
+    pwa_desc: "Instala la aplicación para una mejor experiencia.",
+    pwa_desc_ios: "Toca el icono de Compartir y selecciona Añadir a la pantalla de inicio para instalar la app.",
+    pwa_btn: "Instalar"
   }
 };
 
@@ -92,6 +98,12 @@ const btnClearMuni = document.getElementById("btn-clear-muni");
 const sugerenciasMunicipioAjustes = document.getElementById("sugerencias-municipio-ajustes");
 const resultados = document.getElementById("resultados");
 
+// Referencias a los elementos del banner PWA
+const pwaBanner = document.getElementById("pwa-banner");
+const pwaInstallBtn = document.getElementById("pwa-install-btn");
+const pwaCloseBtn = document.getElementById("pwa-close-btn");
+const pwaInstruction = document.getElementById("pwa-instruction");
+
 function t() {
   return TRAD[lang];
 }
@@ -103,7 +115,7 @@ function escapeHtml(valor) {
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
+    .replace(/'/g, "&#39;");
 }
 
 function mostrarPantalla(nombre) {
@@ -132,6 +144,23 @@ function aplicarIdioma() {
   btnConfirmar.textContent = t().btn_confirmar;
 
   if (tituloBuscar) tituloBuscar.textContent = t().titulo_buscar;
+
+  // Lógica de traducción dinámica para el banner PWA
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+  const isAppInst = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone;
+
+  if (pwaInstruction) {
+    if (isIOS && !isAppInst) {
+      pwaInstruction.textContent = t().pwa_desc_ios;
+      pwaInstruction.classList.add("ios-text");
+    } else {
+      pwaInstruction.textContent = t().pwa_desc;
+      pwaInstruction.classList.remove("ios-text");
+    }
+  }
+  if (pwaInstallBtn) {
+    pwaInstallBtn.textContent = t().pwa_btn;
+  }
 
   if (!pantallaResultados.classList.contains("hidden")) {
     pintarResultados();
@@ -349,8 +378,7 @@ function pintarResultados() {
 
     const distancia = t().distancia_fmt.replace("{d}", g.distancia.toFixed(2));
     
-    // Aquí está el cambio específico que soluciona la navegación
-    const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${g.lat_num},${g.lon_num}`;
+    const mapsUrl = `http://googleusercontent.com/maps.google.com/${g.lat_num},${g.lon_num}`;
 
     return `
       <article class="gasolinera-card">
@@ -639,34 +667,55 @@ document.addEventListener("click", e => {
   }
 });
 
-// Controladores para la instalación nativa de la PWA
+// --- NUEVOS CONTROLADORES DE INSTALACIÓN PWA ---
 let deferredPrompt = null;
-const btnInstalarApp = document.getElementById("btn-instalar-app");
+
+function isAppInstalled() {
+  return window.matchMedia('(display-mode: standalone)').matches || navigator.standalone;
+}
+
+const isIOS_PWA = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+
+if (isIOS_PWA && !isAppInstalled()) {
+  if (pwaInstallBtn) {
+    pwaInstallBtn.style.display = "none";
+  }
+  if (pwaBanner) {
+    setTimeout(() => pwaBanner.classList.remove("hidden"), 1500);
+  }
+}
 
 window.addEventListener('beforeinstallprompt', (e) => {
   e.preventDefault();
   deferredPrompt = e;
-  if (btnInstalarApp) {
-    btnInstalarApp.classList.remove("hidden");
+  
+  if (!isIOS_PWA && !isAppInstalled() && pwaBanner) {
+    setTimeout(() => pwaBanner.classList.remove("hidden"), 1500);
   }
 });
 
-if (btnInstalarApp) {
-  btnInstalarApp.addEventListener('click', async () => {
+if (pwaInstallBtn) {
+  pwaInstallBtn.addEventListener('click', async () => {
     if (!deferredPrompt) return;
     deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;
-    console.log(`Instalación: ${outcome}`);
+    console.log(`Resultado de instalación: ${outcome}`);
     deferredPrompt = null;
-    btnInstalarApp.classList.add("hidden");
+    pwaBanner.classList.add("hidden");
+  });
+}
+
+if (pwaCloseBtn) {
+  pwaCloseBtn.addEventListener('click', () => {
+    pwaBanner.classList.add("hidden");
   });
 }
 
 window.addEventListener('appinstalled', () => {
-  console.log('PWA instalada.');
+  console.log('Aplicación instalada correctamente.');
   deferredPrompt = null;
-  if (btnInstalarApp) {
-    btnInstalarApp.classList.add("hidden");
+  if (pwaBanner) {
+    pwaBanner.classList.add("hidden");
   }
 });
 
