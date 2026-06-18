@@ -485,12 +485,17 @@ body {
   color: #e2e8f0;
 }
 
+/* MODIFICADO: Altura fija estricta y centrado interno blindado */
 .pwa-btn {
   background-color: #ef4444;
   color: #ffffff;
   border: none;
   border-radius: 20px;
-  padding: 8px 18px;
+  height: 36px;
+  padding: 0 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   font-family: 'Poppins', sans-serif;
   font-weight: 600;
   font-size: 0.85rem;
